@@ -39,7 +39,7 @@
         <a class="navbar-brand"><i class="fas fa-credit-card me-2 text-primary"></i>PagoTech</a>
         <div class="d-flex align-items-center">
             <span class="me-3 text-muted d-none d-md-inline">Hola, {% if user %}{{ user.nombre }}{% endif %}</span>
-            <a class="btn btn-outline-secondary btn-sm" href="{% url 'index' %}">Salir</a>
+            <a class="btn btn-outline-secondary btn-sm" href="{% url 'logout_cliente' %}">Salir</a>
         </div>
     </div>
 </nav>

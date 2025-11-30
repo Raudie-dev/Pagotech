@@ -101,3 +101,7 @@ def creacion_link(request):
         'user': cliente,
     }
     return render(request, 'creacion_link.html', context)
+
+def logout_cliente(request):
+    request.session.flush()
+    return redirect('index')

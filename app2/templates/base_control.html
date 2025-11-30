@@ -19,7 +19,7 @@
             <a class="navbar-brand"><i class="fas fa-user-cog"></i> Admin</a>
             <div class="d-flex">
                 <span class="navbar-text me-3">Bienvenido, {% if user %}{{ user.nombre }}{% else %}Admin{% endif %}</span>
-                <a class="btn btn-outline-secondary btn-sm" href="{% url 'login' %}">Salir</a>
+                <a class="btn btn-outline-secondary btn-sm" href="{% url 'logout' %}">Salir</a>
             </div>
         </div>
     </nav>

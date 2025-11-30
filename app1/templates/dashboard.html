@@ -7,7 +7,7 @@
         <small class="text-muted">Panel de control de PagoTech</small>
     </div>
     <div>
-        <a href="#" class="btn btn-primary"><i class="fas fa-link me-2"></i> Crear link de pago</a>
+        <a href="{% url 'crear_link' %}" class="btn btn-primary"><i class="fas fa-link me-2"></i> Crear link de pago</a>
     </div>
 </div>
 
@@ -50,8 +50,7 @@
     <div class="card-body">
         <h5 class="card-title">Acciones rápidas</h5>
         <p class="card-text text-muted">Crea links, revisa pagos o configura tu cuenta desde aquí.</p>
-        <a href="#" class="btn btn-outline-primary me-2">Nuevo link</a>
-        <a href="#" class="btn btn-outline-secondary">Ver pagos</a>
+        <a href="{% url 'crear_link' %}" class="btn btn-outline-primary me-2">Nuevo link</a>
     </div>
 </div>
 {% endblock %}

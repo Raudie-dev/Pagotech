@@ -19,10 +19,10 @@ def login(request):
                 return redirect('gestion_usuarios')
             else:
                 messages.error(request, 'Contraseña incorrecta')
-            return render(request, 'login.html')
+            return render(request, 'login_admin.html')
         except User_admin.DoesNotExist:
             messages.error(request, 'Usuario no encontrado')
-            return render(request, 'login.html')
+            return render(request, 'login_admin.html')
 
     return render(request, 'login_admin.html')
 
@@ -39,25 +39,6 @@ def gestion_usuarios(request):
         return redirect('login')
 
     if request.method == 'POST':
-        # Edición enviada desde modal
-        edit_id = request.POST.get('edit_id')
-        if edit_id:
-            nombre = request.POST.get('edit_nombre', '').strip()
-            email = request.POST.get('edit_email', '').strip() or None
-            telefono = request.POST.get('edit_telefono', '').strip() or None
-            aprobado = request.POST.get('edit_aprobado') == 'on'
-            ok, err = admin_crud.update_cliente(edit_id, {
-                'nombre': nombre,
-                'email': email,
-                'telefono': telefono,
-                'aprobado': aprobado,
-            })
-            if ok:
-                messages.success(request, 'Cliente actualizado.')
-            else:
-                messages.error(request, err or 'No se pudo actualizar el cliente.')
-            return redirect('gestion_usuarios')
-
         # Bloquear
         bloquear_id = request.POST.get('bloquear_id')
         if bloquear_id:
@@ -77,6 +58,16 @@ def gestion_usuarios(request):
             else:
                 messages.error(request, err or 'No se pudo desbloquear el cliente.')
             return redirect('gestion_usuarios')
+
+        # Eliminar
+        delete_client_id = request.POST.get('delete_client_id')
+        if delete_client_id:
+            ok, err = admin_crud.delete_cliente(delete_client_id)
+            if ok:
+                messages.success(request, 'Cliente eliminado.')
+            else:
+                messages.error(request, err or 'No se pudo eliminar el cliente.')
+            return redirect('gestion_usuarios')  # corregido para volver a la misma vista
 
     # GET: buscar y mostrar solo clientes aprobados
     q = request.GET.get('q', '').strip()
@@ -100,25 +91,6 @@ def aprobacion(request):
         return redirect('login')
 
     if request.method == 'POST':
-        # Edición enviada desde modal (permitir editar antes de aprobar/bloquear)
-        edit_id = request.POST.get('edit_id')
-        if edit_id:
-            nombre = request.POST.get('edit_nombre', '').strip()
-            email = request.POST.get('edit_email', '').strip() or None
-            telefono = request.POST.get('edit_telefono', '').strip() or None
-            aprobado = request.POST.get('edit_aprobado') == 'on'
-            ok, err = admin_crud.update_cliente(edit_id, {
-                'nombre': nombre,
-                'email': email,
-                'telefono': telefono,
-                'aprobado': aprobado,
-            })
-            if ok:
-                messages.success(request, 'Cliente actualizado.')
-            else:
-                messages.error(request, err or 'No se pudo actualizar el cliente.')
-            return redirect('aprobacion')
-
         # Aprobar
         approve_id = request.POST.get('approve_id')
         if approve_id:
@@ -139,5 +111,19 @@ def aprobacion(request):
                 messages.error(request, err or 'No se pudo bloquear el cliente.')
             return redirect('aprobacion')
 
+        # Eliminar
+        delete_client_id = request.POST.get('delete_client_id')
+        if delete_client_id:
+            ok, err = admin_crud.delete_cliente(delete_client_id)
+            if ok:
+                messages.success(request, 'Cliente eliminado.')
+            else:
+                messages.error(request, err or 'No se pudo eliminar el cliente.')
+            return redirect('aprobacion')
+
     pending_clients = admin_crud.list_pending_clientes()
     return render(request, 'aprobacion.html', {'user': user, 'pending_clients': pending_clients})
+
+def logout(request):
+    request.session.flush()
+    return redirect('login')
