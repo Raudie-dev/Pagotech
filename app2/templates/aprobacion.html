@@ -1,0 +1,118 @@
+{% extends "base_control.html" %}
+{% block title %}Aprobación de registros{% endblock %}
+{% block content %}
+<h2>Registros pendientes de aprobación</h2>
+<div class="table-responsive">
+    <table class="table table-striped mb-0">
+        <thead>
+            <tr>
+                <th>Nombre</th>
+                <th>Correo</th>
+                <th>Teléfono</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for cliente in pending_clients %}
+            <tr>
+                <td>{{ cliente.nombre }}</td>
+                <td>{{ cliente.email|default:"-" }}</td>
+                <td>{{ cliente.telefono|default:"-" }}</td>
+                <td>
+                    {# Botón editar: abre modal con datos del cliente #}
+                    <button
+                        class="btn btn-sm btn-outline-info me-1"
+                        data-bs-toggle="modal"
+                        data-bs-target="#editUserModal"
+                        data-id="{{ cliente.id }}"
+                        data-nombre="{{ cliente.nombre|escape }}"
+                        data-email="{{ cliente.email|default:''|escape }}"
+                        data-telefono="{{ cliente.telefono|default:''|escape }}"
+                        data-aprobado="{{ cliente.aprobado|yesno:'1,0' }}"
+                    >
+                        Editar
+                    </button>
+
+                    <form method="post" style="display:inline;">
+                        {% csrf_token %}
+                        <input type="hidden" name="approve_id" value="{{ cliente.id }}">
+                        <button type="submit" class="btn btn-success btn-sm"><i class="fas fa-check"></i> Aprobar</button>
+                    </form>
+                    <form method="post" style="display:inline;">
+                        {% csrf_token %}
+                        <input type="hidden" name="bloquear_id" value="{{ cliente.id }}">
+                        <button type="submit" class="btn btn-warning btn-sm"><i class="fas fa-ban"></i> Bloquear</button>
+                    </form>
+
+                    {# eliminado: botón/formulario eliminar #}
+                </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="4" class="text-center">No hay registros pendientes.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{# Modal de edición (misma estructura que en gestion_usuarios) #}
+<div class="modal fade" id="editUserModal" tabindex="-1" aria-labelledby="editUserModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form method="post" id="editUserForm">
+        {% csrf_token %}
+        <input type="hidden" name="edit_id" id="edit_id">
+        <div class="modal-header">
+          <h5 class="modal-title" id="editUserModalLabel">Editar usuario</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        </div>
+        <div class="modal-body">
+            <div class="mb-3">
+                <label for="edit_nombre" class="form-label">Nombre</label>
+                <input type="text" class="form-control" name="edit_nombre" id="edit_nombre" required>
+            </div>
+            <div class="mb-3">
+                <label for="edit_email" class="form-label">Correo</label>
+                <input type="email" class="form-control" name="edit_email" id="edit_email">
+            </div>
+            <div class="mb-3">
+                <label for="edit_telefono" class="form-label">Teléfono</label>
+                <input type="text" class="form-control" name="edit_telefono" id="edit_telefono">
+            </div>
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" value="1" id="edit_aprobado" name="edit_aprobado">
+                <label class="form-check-label" for="edit_aprobado">
+                    Aprobado
+                </label>
+            </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Guardar cambios</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+{# Script para rellenar modal al abrirlo #}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var editModal = document.getElementById('editUserModal');
+    editModal.addEventListener('show.bs.modal', function (event) {
+        var button = event.relatedTarget;
+        var id = button.getAttribute('data-id');
+        var nombre = button.getAttribute('data-nombre') || '';
+        var email = button.getAttribute('data-email') || '';
+        var telefono = button.getAttribute('data-telefono') || '';
+        var aprobado = button.getAttribute('data-aprobado') === '1';
+
+        document.getElementById('edit_id').value = id;
+        document.getElementById('edit_nombre').value = nombre;
+        document.getElementById('edit_email').value = email;
+        document.getElementById('edit_telefono').value = telefono;
+        document.getElementById('edit_aprobado').checked = aprobado;
+    });
+});
+</script>
+
+{% endblock %}

@@ -1,7 +1,8 @@
 import os
 import django
-from tkinter import *
-from tkinter import messagebox
+import argparse
+import getpass
+import sys
 from django.contrib.auth.hashers import make_password
 
 # Configura Django
@@ -10,65 +11,72 @@ django.setup()
 
 from app2.models import User_admin
 
-def registrar_usuario():
-    nombre = entry_nombre.get()
-    password = entry_password.get()
-    email = entry_email.get()
-    telefono = entry_telefono.get()
 
+def crear_usuario(nombre: str, password: str, email: str | None, telefono: str | None) -> None:
     if not nombre or not password:
-        messagebox.showerror("Error", "Nombre y contraseña son obligatorios.")
-        return
+        print("Error: 'nombre' y 'password' son obligatorios.")
+        sys.exit(2)
 
     if User_admin.objects.filter(nombre=nombre).exists():
-        messagebox.showerror("Error", "El nombre de usuario ya existe.")
-        return
+        print("Error: El nombre de usuario ya existe.")
+        sys.exit(3)
 
     if email and User_admin.objects.filter(email=email).exists():
-        messagebox.showerror("Error", "El email ya está registrado.")
-        return
+        print("Error: El email ya está registrado.")
+        sys.exit(4)
 
     hashed_password = make_password(password)
     user = User_admin(
         nombre=nombre,
         password=hashed_password,
         email=email if email else None,
-        telefono=telefono if telefono else None
+        telefono=telefono if telefono else None,
     )
     user.save()
-    messagebox.showinfo("Éxito", "Usuario registrado correctamente.")
-    entry_nombre.delete(0, END)
-    entry_password.delete(0, END)
-    entry_email.delete(0, END)
-    entry_telefono.delete(0, END)
+    print("Usuario registrado correctamente:", nombre)
 
-# Interfaz Tkinter
-root = Tk()
-root.title("Registro de Usuario Admin")
-root.geometry("350x300")
-root.resizable(False, False)
 
-Label(root, text="Registro de Usuario", font=("Arial", 16)).pack(pady=10)
+def parse_args():
+    parser = argparse.ArgumentParser(description='Registrar un usuario admin (modo consola)')
+    parser.add_argument('--nombre', '-n', help='Nombre de usuario')
+    parser.add_argument('--password', '-p', help='Contraseña (no recomendado en la línea de comandos)')
+    parser.add_argument('--email', '-e', help='Email del usuario', default=None)
+    parser.add_argument('--telefono', '-t', help='Teléfono del usuario', default=None)
+    parser.add_argument('--no-interactive', action='store_true', help='No pedir entrada interactiva; fallar si faltan campos')
+    return parser.parse_args()
 
-frame = Frame(root)
-frame.pack(pady=10)
 
-Label(frame, text="Nombre:").grid(row=0, column=0, sticky=E, pady=5)
-entry_nombre = Entry(frame, width=25)
-entry_nombre.grid(row=0, column=1, pady=5)
+def main():
+    args = parse_args()
 
-Label(frame, text="Contraseña:").grid(row=1, column=0, sticky=E, pady=5)
-entry_password = Entry(frame, show="*", width=25)
-entry_password.grid(row=1, column=1, pady=5)
+    nombre = args.nombre
+    password = args.password
+    email = args.email
+    telefono = args.telefono
 
-Label(frame, text="Email:").grid(row=2, column=0, sticky=E, pady=5)
-entry_email = Entry(frame, width=25)
-entry_email.grid(row=2, column=1, pady=5)
+    if not nombre:
+        if args.no_interactive:
+            print("Error: --nombre es obligatorio en modo no interactivo")
+            sys.exit(1)
+        nombre = input('Nombre: ').strip()
 
-Label(frame, text="Teléfono:").grid(row=3, column=0, sticky=E, pady=5)
-entry_telefono = Entry(frame, width=25)
-entry_telefono.grid(row=3, column=1, pady=5)
+    if not password:
+        if args.no_interactive:
+            print("Error: --password es obligatorio en modo no interactivo")
+            sys.exit(1)
+        # ocultar contraseña al teclear
+        password = getpass.getpass('Contraseña: ')
 
-Button(root, text="Registrar", command=registrar_usuario, width=15, bg="#4CAF50", fg="white").pack(pady=15)
+    # Normalizar cadenas vacías a None para email/telefono
+    email = email.strip() if (email and email.strip()) else None
+    telefono = telefono.strip() if (telefono and telefono.strip()) else None
 
-root.mainloop()
+    try:
+        crear_usuario(nombre, password, email, telefono)
+    except Exception as e:
+        print('Error al crear el usuario:', str(e))
+        sys.exit(10)
+
+
+if __name__ == '__main__':
+    main()

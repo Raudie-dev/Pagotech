@@ -1,0 +1,57 @@
+{% extends "base_usuario.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-3">
+    <div>
+        <h2 class="mb-0">Dashboard</h2>
+        <small class="text-muted">Panel de control de PagoTech</small>
+    </div>
+    <div>
+        <a href="#" class="btn btn-primary"><i class="fas fa-link me-2"></i> Crear link de pago</a>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+        <div class="card text-center h-100">
+            <div class="card-body">
+                <h6 class="text-muted">Links creados</h6>
+                <h4 class="mb-0">{{ total_links }}</h4>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card text-center h-100">
+            <div class="card-body">
+                <h6 class="text-muted">Pagos recibidos</h6>
+                <h4 class="mb-0">{{ total_payments }}</h4>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card text-center h-100">
+            <div class="card-body">
+                <h6 class="text-muted">Pendientes</h6>
+                <h4 class="mb-0">{{ pending_payments }}</h4>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card text-center h-100">
+            <div class="card-body">
+                <h6 class="text-muted">Cuenta</h6>
+                <h4 class="mb-0">{% if user %}{{ user.nombre }}{% else %}-{% endif %}</h4>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <h5 class="card-title">Acciones rápidas</h5>
+        <p class="card-text text-muted">Crea links, revisa pagos o configura tu cuenta desde aquí.</p>
+        <a href="#" class="btn btn-outline-primary me-2">Nuevo link</a>
+        <a href="#" class="btn btn-outline-secondary">Ver pagos</a>
+    </div>
+</div>
+{% endblock %}

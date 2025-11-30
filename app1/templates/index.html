@@ -3,111 +3,141 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Registros de Prueba</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>PagoTech — Links de pago en cuotas para pequeños negocios</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="{% static 'css/main.css' %}">
 </head>
 <body>
-    <!-- Navbar -->
-    <header class="header">
-        <div class="container header-wrapper">
-            <a href="{% url 'index' %}" class="logo">
-                <i class="fas fa-flask-vial me-2"></i>PruebasApp
+    <header class="bg-white border-bottom fixed-top">
+        <div class="container d-flex align-items-center justify-content-between py-2">
+            <a class="d-flex align-items-center text-decoration-none" href="{% url 'index' %}">
+                <i class="fas fa-credit-card fa-lg text-primary me-2"></i>
+                <span class="h5 mb-0 fw-bold">PagoTech</span>
             </a>
-            <nav>
-                <ul class="nav-list">
-                    <li><a href="{% url 'index' %}" class="active"><i class="fas fa-table"></i> Registros</a></li>
-                    <li><a href="#"><i class="fas fa-info-circle"></i> Acerca</a></li>
-                    <li><a href="#"><i class="fas fa-envelope"></i> Contacto</a></li>
-                </ul>
+            <nav class="d-none d-md-block">
+                <a class="me-3 text-muted" href="#features">Características</a>
+                <a class="me-3 text-muted" href="#how">Cómo funciona</a>
+                <a class="text-muted" href="#contact">Contacto</a>
             </nav>
-        </div>
-    </header>
-
-    <!-- Hero Section -->
-    <section class="welcome-area" style="padding-top: 120px;">
-        <div class="container">
-            <div class="welcome-content">
-                <div class="welcome-text">
-                    <h1><i class="fas fa-database"></i> Consulta de Registros</h1>
-                    <p>
-                        Visualiza y filtra los registros de pruebas de manera sencilla y dinámica.<br>
-                        Utiliza el buscador y los filtros para encontrar la información que necesitas.
-                    </p>
-                </div>
-                <div class="welcome-image">
-                    <img src="{% static 'images/data_hero.png' %}" alt="Registros" style="max-width:350px;">
-                </div>
+            <div>
+                <a href="{% url 'login_cliente' %}" class="btn btn-outline-primary btn-sm me-2">Iniciar sesión</a>
+                <a href="{% url 'register' %}" class="btn btn-primary btn-sm">Registro</a>
             </div>
         </div>
-    </section>
+    </header>
+    <main style="padding-top: 96px;">
+        <section class="py-5 bg-light">
+            <div class="container">
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <h1 class="display-5 fw-bold">Crea links de pago en minutos. Acepta tarjetas y ofrece cuotas.</h1>
+                        <p class="lead text-muted">PagoTech ayuda a pequeños negocios a cobrar con tarjeta de crédito, generando enlaces de pago con opciones de pago en cuotas. Sin integraciones complejas, sin código.</p>
+                        <div class="d-flex gap-2">
+                            <a href="#" class="btn btn-primary btn-lg"><i class="fas fa-link me-2"></i> Crear link de pago</a>
+                            <a href="#how" class="btn btn-outline-secondary btn-lg">Cómo funciona</a>
+                        </div>
+                        <ul class="list-unstyled mt-4 text-muted">
+                            <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Pago con tarjetas Visa/Mastercard/Amex</li>
+                            <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Opción de cuotas para clientes</li>
+                            <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Creación rápida de links y gestión simple</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6 text-center">
+                        <img src="{% static 'images/hero_payment.png' %}" alt="PagoTech" class="img-fluid" style="max-width:420px;">
+                    </div>
+                </div>
+            </div>
+        </section>
 
-    <!-- Tabla de registros -->
-    <section class="section section-light" style="padding-top: 40px;">
-        <div class="container">
-            <h2 class="section-title" style="font-size:2rem;"><i class="fas fa-list"></i> Registros de Prueba</h2>
-            <form method="get" class="row g-3 mb-4">
-                <div class="col-md-5">
-                    <input type="text" name="busqueda" class="form-control" placeholder="Buscar por nombre..." value="{{ busqueda }}">
+        <section id="features" class="py-5">
+            <div class="container">
+                <h2 class="h3 mb-4">Características principales</h2>
+                <div class="row g-4">
+                    <div class="col-sm-6 col-lg-4">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <h5 class="card-title"><i class="fas fa-link fa-fw text-primary me-2"></i> Links rápidos</h5>
+                                <p class="card-text text-muted">Genera un link de pago personalizado con monto, descripción y vencimiento en segundos.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm-6 col-lg-4">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <h5 class="card-title"><i class="fas fa-credit-card fa-fw text-primary me-2"></i> Pago con tarjeta</h5>
+                                <p class="card-text text-muted">Acepta tarjetas de crédito y débito de forma segura, con cumplimiento de estándares.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm-6 col-lg-4">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <h5 class="card-title"><i class="fas fa-calendar-alt fa-fw text-primary me-2"></i> Cuotas flexibles</h5>
+                                <p class="card-text text-muted">Ofrece al cliente pago en cuotas (3, 6, 12) y recibe el pago según tu flujo.</p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="col-md-3">
-                    <select name="socio" class="form-select">
-                        <option value="">-- Socio --</option>
-                        <option value="si" {% if socio == 'si' %}selected{% endif %}>Sí</option>
-                        <option value="no" {% if socio == 'no' %}selected{% endif %}>No</option>
-                    </select>
-                </div>
-                <div class="col-md-2">
-                    <button type="submit" class="btn w-100">
-                        <i class="fas fa-search"></i> Filtrar
-                    </button>
-                </div>
-                <div class="col-md-2">
-                    <a href="{% url 'index' %}" class="btn btn-secondary w-100">
-                        <i class="fas fa-eraser"></i> Limpiar
-                    </a>
-                </div>
-            </form>
-            <table class="table table-striped">
-                <thead>
-                    <tr>
-                        <th>Nombre</th>
-                        <th>Fecha</th>
-                        <th>Socio</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for prueba in pruebas %}
-                    <tr>
-                        <td>{{ prueba.nombre }}</td>
-                        <td>{{ prueba.fecha }}</td>
-                        <td>
-                            {% if prueba.socio %}
-                                <span class="badge bg-success">Sí</span>
-                            {% else %}
-                                <span class="badge bg-secondary">No</span>
-                            {% endif %}
-                        </td>
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="3" class="text-center">No hay registros.</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </section>
+            </div>
+        </section>
 
-    <!-- Footer -->
-    <footer class="footer mt-5">
-        <div class="container footer-content">
-            <a href="{% url 'index' %}" class="footer-logo">
-                <i class="fas fa-flask-vial"></i> PruebasApp
-            </a>
-            <p>&copy; {{ now|date:"Y" }} PruebasApp. Todos los derechos reservados.</p>
+        <section id="how" class="py-5 bg-light">
+            <div class="container">
+                <h2 class="h3 mb-4">Cómo funciona</h2>
+                <div class="row g-4">
+                    <div class="col-md-4">
+                        <div class="text-center p-3">
+                            <div class="mb-3 display-6 text-primary">1</div>
+                            <h5>Crear link</h5>
+                            <p class="text-muted">Define monto, descripción y opciones de cuotas.</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="text-center p-3">
+                            <div class="mb-3 display-6 text-primary">2</div>
+                            <h5>Compartir</h5>
+                            <p class="text-muted">Envía el link vía WhatsApp, email o redes sociales.</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="text-center p-3">
+                            <div class="mb-3 display-6 text-primary">3</div>
+                            <h5>Recibir pago</h5>
+                            <p class="text-muted">El cliente paga con tarjeta y tú recibes la confirmación.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="contact" class="py-5">
+            <div class="container">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <h3 class="mb-2">Comienza hoy</h3>
+                        <p class="text-muted mb-3">Crea tu cuenta gratuita y empieza a emitir links de pago en minutos.</p>
+                    </div>
+                    <div class="col-md-4 text-md-end">
+                        <a href="#" class="btn btn-primary btn-lg">Crear cuenta</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="py-4 bg-white border-top">
+        <div class="container d-flex justify-content-between">
+            <div>
+                <strong>PagoTech</strong> — Soluciones de cobro para pequeños negocios
+            </div>
+            <div class="text-muted">
+                &copy; {{ now|date:"Y" }} PagoTech
+            </div>
         </div>
     </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

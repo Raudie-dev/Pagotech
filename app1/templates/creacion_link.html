@@ -1,0 +1,49 @@
+{% extends "base_usuario.html" %}
+{% block title %}Crear link de pago{% endblock %}
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-3">
+    <div>
+        <h2 class="mb-0">Crear link de pago</h2>
+        <small class="text-muted">Genera un enlace para cobrar con tarjeta en cuotas</small>
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="post" class="row g-3">
+            {% csrf_token %}
+            <div class="col-md-4">
+                <label class="form-label">Monto</label>
+                <input type="number" step="0.01" name="monto" class="form-control" placeholder="Ej. 1500.00" required>
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label">Cuotas</label>
+                <select name="cuotas" class="form-select">
+                    <option value="1">1 (contado)</option>
+                    <option value="3">3</option>
+                    <option value="6">6</option>
+                    <option value="12">12</option>
+                </select>
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label">Tipo de tarjeta</label>
+                <select name="tipo_tarjeta" class="form-select">
+                    <option value="credito">Crédito</option>
+                    <option value="debito">Débito</option>
+                </select>
+            </div>
+
+            <div class="col-12">
+                <label class="form-label">Descripción (opcional)</label>
+                <input type="text" name="descripcion" class="form-control" placeholder="Concepto del cobro">
+            </div>
+
+            <div class="col-12 text-end">
+                <button type="submit" class="btn btn-primary">Crear link</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
