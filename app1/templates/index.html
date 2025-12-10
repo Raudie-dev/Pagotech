@@ -5,81 +5,143 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>PagoTech — Links de pago en cuotas para pequeños negocios</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="{% static 'css/main.css' %}">
 </head>
 <body>
-    <!-- Header Navigation -->
-    <header class="navbar-dark fixed-top">
-        <div class="container d-flex align-items-center justify-content-between py-3">
-            <a class="d-flex align-items-center text-decoration-none logo-brand" href="{% url 'index' %}">
-                <i class="fas fa-credit-card fa-lg me-2" style="color: #dc3545;"></i>
-                <span class="fw-bold">PagoTech</span>
+    <!-- Header -->
+    <header class="header">
+        <div class="container header-wrapper">
+            <a class="logo" href="{% url 'index' %}">
+                <div class="logo-icon">
+                    <img src="{% static 'images/hero_payment.png' %}" alt="PagoTech Logo">
+                </div>
             </a>
-            <nav class="d-none d-md-block">
-                <a class="nav-link" href="#features">Características</a>
-                <a class="nav-link" href="#how">Cómo funciona</a>
-                <a class="nav-link" href="#benefits">Beneficios</a>
-                <a class="nav-link" href="#contact">Contacto</a>
+            
+            <nav class="nav-list">
+                <li><a href="#features">Características</a></li>
+                <li><a href="#how">Cómo funciona</a></li>
+                <li><a href="#pricing">Precios</a></li>
+                <li><a href="#contact">Contacto</a></li>
             </nav>
-            <div class="d-none d-md-flex gap-2">
-                <a href="{% url 'login_cliente' %}" class="btn-nav-outline">Iniciar sesión</a>
-                <a href="{% url 'register' %}" class="btn-nav-primary">Registro</a>
+            
+            <div class="header-actions">
+                <a href="{% url 'login_cliente' %}" class="btn btn-ghost">Iniciar sesión</a>
+                <a href="{% url 'register' %}" class="btn btn-primary">Comenzar gratis</a>
             </div>
-            <!-- Mobile Menu Toggle -->
-            <button class="menu-toggle d-md-none" type="button">
+            
+            <button class="menu-toggle" aria-label="Abrir menú">
                 <span></span>
                 <span></span>
                 <span></span>
             </button>
         </div>
+        
+        <!-- Añadido menú de navegación móvil -->
+        <nav class="mobile-nav" id="mobileNav">
+            <ul class="mobile-nav-list">
+                <li><a href="#features">Características</a></li>
+                <li><a href="#how">Cómo funciona</a></li>
+                <li><a href="#pricing">Precios</a></li>
+                <li><a href="#contact">Contacto</a></li>
+            </ul>
+            <div class="mobile-nav-actions">
+                <a href="{% url 'login_cliente' %}" class="btn btn-outline btn-full">Iniciar sesión</a>
+                <a href="{% url 'register' %}" class="btn btn-primary btn-full">Comenzar gratis</a>
+            </div>
+        </nav>
     </header>
 
-    <!-- Mobile Navigation Menu -->
-    <nav class="nav-list d-md-none">
-        <a class="nav-item" href="#features">Características</a>
-        <a class="nav-item" href="#how">Cómo funciona</a>
-        <a class="nav-item" href="#benefits">Beneficios</a>
-        <a class="nav-item" href="#contact">Contacto</a>
-        <a href="{% url 'login_cliente' %}" class="btn-nav-outline w-100">Iniciar sesión</a>
-        <a href="{% url 'register' %}" class="btn-nav-primary w-100">Registro</a>
-    </nav>
-
-    <main style="padding-top: 80px;">
+    <main>
         <!-- Hero Section -->
-        <section class="hero-section">
+        <section class="hero">
             <div class="container">
-                <div class="row align-items-center min-vh-100">
-                    <div class="col-lg-6 hero-content">
-                        <h1 class="display-4 fw-bold mb-4">Crea links de pago en minutos</h1>
-                        <p class="lead mb-4">Acepta tarjetas de crédito y ofrece opciones de cuotas sin complicaciones. Perfecto para pequeños negocios.</p>
-                        
-                        <div class="d-flex gap-3 mb-4 flex-wrap">
-                            <a href="#" class="btn-hero-primary">
-                                <i class="fas fa-link me-2"></i>Crear link ahora
-                            </a>
-                            <a href="#how" class="btn-hero-secondary">
-                                Ver cómo funciona
-                            </a>
-                        </div>
+                <div class="hero-badge">
+                    <span class="badge-dot"></span>
+                    <span>+2,500 negocios ya usan PagoTech</span>
+                </div>
+                
+                <h1 class="hero-title">
+                    Links de pago instantáneos.<br>
+                    <span class="text-gradient">Cuotas sin complicaciones.</span>
+                </h1>
+                
+                <p class="hero-subtitle">
+                    Crea enlaces de pago en segundos, acepta tarjetas de crédito y ofrece 
+                    cuotas a tus clientes. Sin integraciones complejas, sin código.
+                </p>
+                
+                <div class="hero-actions">
+                    <a href="{% url 'register' %}" class="btn btn-primary btn-lg">
+                        <i class="fas fa-rocket"></i>
+                        Crear mi primer link
+                    </a>
+                    <a href="#how" class="btn btn-outline btn-lg">
+                        Ver demo
+                        <i class="fas fa-play-circle"></i>
+                    </a>
+                </div>
+                
+                <div class="hero-stats">
+                    <div class="stat-item">
+                        <span class="stat-value">$50M+</span>
+                        <span class="stat-label">Procesados</span>
+                    </div>
+                    <div class="stat-divider"></div>
+                    <div class="stat-item">
+                        <span class="stat-value">99.9%</span>
+                        <span class="stat-label">Uptime</span>
+                    </div>
+                    <div class="stat-divider"></div>
+                    <div class="stat-item">
+                        <span class="stat-value">2min</span>
+                        <span class="stat-label">Tiempo de setup</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Hero Visual -->
+            <div class="hero-visual">
+                <div class="payment-card card-1">
+                    <div class="card-header-mini">
+                        <span class="card-logo">PagoTech</span>
+                        <span class="card-badge">Link activo</span>
+                    </div>
+                    <div class="card-amount">$125,000</div>
+                    <div class="card-description">Servicio de consultoría</div>
+                    <div class="card-options">
+                        <span class="option active">1 pago</span>
+                        <span class="option">3 cuotas</span>
+                        <span class="option">6 cuotas</span>
+                    </div>
+                </div>
+                
+                <div class="payment-card card-2">
+                    <div class="card-success">
+                        <i class="fas fa-check-circle"></i>
+                        <span>Pago exitoso</span>
+                    </div>
+                    <div class="card-mini-amount">$45,000</div>
+                </div>
+                
+                <div class="floating-element element">
+                    <i class="fab fa-cc-amex"></i>
+                </div>
+            </div>
+        </section>
 
-                        <ul class="feature-list">
-                            <li><i class="fas fa-check"></i> Pago con Visa/Mastercard/Amex</li>
-                            <li><i class="fas fa-check"></i> Opción de cuotas flexibles</li>
-                            <li><i class="fas fa-check"></i> Sin código, sin integraciones</li>
-                        </ul>
-                    </div>
-                    <div class="col-lg-6 hero-image">
-                        <div class="illustration-box">
-                            <svg viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg">
-                                <rect x="20" y="40" width="260" height="200" fill="none" stroke="#dc3545" stroke-width="2" rx="10"/>
-                                <circle cx="150" cy="90" r="30" fill="#dc3545" opacity="0.2"/>
-                                <path d="M 100 130 Q 150 160 200 130" stroke="#dc3545" stroke-width="2" fill="none"/>
-                                <rect x="70" y="170" width="160" height="20" fill="#dc3545" opacity="0.1" rx="3"/>
-                            </svg>
-                        </div>
-                    </div>
+        <!-- Logos Section -->
+        <section class="logos-section">
+            <div class="container">
+                <p class="logos-title">Respaldado por las mejores pasarelas de pago</p>
+                <div class="logos-grid">
+                    <div class="logo-item"><i class="fab fa-cc-stripe"></i> Stripe</div>
+                    <div class="logo-item"><i class="fab fa-cc-paypal"></i> PayPal</div>
+                    <div class="logo-item"><i class="fas fa-shield-alt"></i> PCI DSS</div>
+                    <div class="logo-item"><i class="fas fa-lock"></i> SSL 256-bit</div>
                 </div>
             </div>
         </section>
@@ -87,133 +149,176 @@
         <!-- Features Section -->
         <section id="features" class="features-section">
             <div class="container">
-                <div class="section-header text-center mb-5">
-                    <h2 class="fw-bold mb-3">Características principales</h2>
-                    <p class="text-muted">Todo lo que necesitas para cobrar en línea</p>
+                <div class="section-header">
+                    <span class="section-tag">Características</span>
+                    <h2 class="section-title">Todo lo que necesitas para cobrar</h2>
+                    <p class="section-subtitle">
+                        Herramientas diseñadas para pequeños negocios que quieren 
+                        profesionalizar sus cobros sin complicaciones técnicas.
+                    </p>
                 </div>
-
-                <div class="row g-4">
-                    <div class="col-md-4">
-                        <div class="feature-card">
-                            <div class="feature-icon">
-                                <i class="fas fa-link"></i>
-                            </div>
-                            <h5>Links rápidos</h5>
-                            <p>Genera un link personalizado con monto, descripción y vencimiento en segundos.</p>
+                
+                <div class="features-grid">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-link"></i>
                         </div>
+                        <h3>Links en segundos</h3>
+                        <p>Genera enlaces de pago personalizados con monto, descripción y fecha de vencimiento. Comparte por WhatsApp, email o redes.</p>
                     </div>
-                    <div class="col-md-4">
-                        <div class="feature-card">
-                            <div class="feature-icon">
-                                <i class="fas fa-credit-card"></i>
-                            </div>
-                            <h5>Pago seguro</h5>
-                            <p>Acepta tarjetas de crédito y débito con los máximos estándares de seguridad.</p>
+                    
+                    <div class="feature-card featured">
+                        <div class="feature-icon">
+                            <i class="fas fa-calendar-check"></i>
                         </div>
+                        <h3>Cuotas flexibles</h3>
+                        <p>Ofrece a tus clientes la opción de pagar en 3, 6 o 12 cuotas. Tú recibes el pago completo, ellos pagan cómodo.</p>
+                        <span class="feature-badge">Popular</span>
                     </div>
-                    <div class="col-md-4">
-                        <div class="feature-card">
-                            <div class="feature-icon">
-                                <i class="fas fa-calendar-alt"></i>
-                            </div>
-                            <h5>Cuotas flexibles</h5>
-                            <p>Ofrece cuotas (3, 6, 12) y recibe el pago según tu flujo de caja.</p>
+                    
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-credit-card"></i>
                         </div>
+                        <h3>Todas las tarjetas</h3>
+                        <p>Acepta Visa, Mastercard, American Express y más. Cumplimiento total con estándares de seguridad PCI DSS.</p>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <h3>Dashboard intuitivo</h3>
+                        <p>Visualiza todos tus cobros, estados de pago y métricas importantes en un panel simple y organizado.</p>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-bell"></i>
+                        </div>
+                        <h3>Notificaciones instantáneas</h3>
+                        <p>Recibe alertas en tiempo real cuando un cliente realiza un pago. Por email, SMS o push notifications.</p>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-mobile-alt"></i>
+                        </div>
+                        <h3>100% responsive</h3>
+                        <p>Tus clientes pueden pagar desde cualquier dispositivo. La experiencia está optimizada para móvil.</p>
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- How It Works Section -->
+        <!-- How it Works Section -->
         <section id="how" class="how-section">
             <div class="container">
-                <div class="section-header text-center mb-5">
-                    <h2 class="fw-bold mb-3">Cómo funciona</h2>
-                    <p class="text-muted">Tres pasos simples para empezar</p>
+                <div class="section-header">
+                    <span class="section-tag">Proceso</span>
+                    <h2 class="section-title">Tan simple como 1, 2, 3</h2>
+                    <p class="section-subtitle">
+                        Empieza a cobrar con tarjeta en minutos. Sin conocimientos técnicos requeridos.
+                    </p>
                 </div>
-
-                <div class="row g-4">
-                    <div class="col-md-4">
-                        <div class="step-card">
-                            <div class="step-number">1</div>
-                            <h5>Crear link</h5>
-                            <p>Define monto, descripción y opciones de cuotas en segundos.</p>
+                
+                <div class="steps-container">
+                    <div class="step-card">
+                        <div class="step-number">01</div>
+                        <div class="step-content">
+                            <h3>Crea tu link</h3>
+                            <p>Define el monto, agrega una descripción y selecciona las opciones de cuotas disponibles.</p>
                         </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="step-card">
-                            <div class="step-number">2</div>
-                            <h5>Compartir</h5>
-                            <p>Envía el link vía WhatsApp, email, SMS o redes sociales.</p>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="step-card">
-                            <div class="step-number">3</div>
-                            <h5>Recibir pago</h5>
-                            <p>El cliente paga y recibes la confirmación al instante.</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Benefits Section -->
-        <section id="benefits" class="benefits-section">
-            <div class="container">
-                <div class="row align-items-center g-5">
-                    <div class="col-lg-6">
-                        <div class="benefits-content">
-                            <h2 class="fw-bold mb-4">Diseñado para pequeños negocios</h2>
-                            <ul class="benefits-list">
-                                <li>
-                                    <div class="benefit-icon"><i class="fas fa-bolt"></i></div>
-                                    <div>
-                                        <h6>Configuración rápida</h6>
-                                        <p>Empieza en menos de 5 minutos sin documentación compleja.</p>
-                                    </div>
-                                </li>
-                                <li>
-                                    <div class="benefit-icon"><i class="fas fa-shield-alt"></i></div>
-                                    <div>
-                                        <h6>100% seguro</h6>
-                                        <p>Cumplimos con estándares internacionales de seguridad.</p>
-                                    </div>
-                                </li>
-                                <li>
-                                    <div class="benefit-icon"><i class="fas fa-chart-line"></i></div>
-                                    <div>
-                                        <h6>Crece sin límites</h6>
-                                        <p>Maneja desde 1 a 1000 transacciones diarias.</p>
-                                    </div>
-                                </li>
-                                <li>
-                                    <div class="benefit-icon"><i class="fas fa-headset"></i></div>
-                                    <div>
-                                        <h6>Soporte 24/7</h6>
-                                        <p>Equipo disponible cuando lo necesites.</p>
-                                    </div>
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
-                    <div class="col-lg-6">
-                        <div class="benefits-image">
-                            <div class="card-mockup">
-                                <div class="mockup-header">Dashboard</div>
-                                <div class="mockup-content">
-                                    <div class="stat-box">
-                                        <div class="stat-value">$24,500</div>
-                                        <div class="stat-label">Ingresos totales</div>
-                                    </div>
-                                    <div class="stat-box">
-                                        <div class="stat-value">145</div>
-                                        <div class="stat-label">Transacciones</div>
-                                    </div>
+                        <div class="step-visual">
+                            <div class="mini-form">
+                                <div class="form-row">
+                                    <span class="form-label">Monto</span>
+                                    <span class="form-value">$50,000</span>
+                                </div>
+                                <div class="form-row">
+                                    <span class="form-label">Descripción</span>
+                                    <span class="form-value">Diseño web</span>
                                 </div>
                             </div>
                         </div>
                     </div>
+                    
+                    <div class="step-connector">
+                        <i class="fas fa-arrow-right"></i>
+                    </div>
+                    
+                    <div class="step-card">
+                        <div class="step-number">02</div>
+                        <div class="step-content">
+                            <h3>Comparte</h3>
+                            <p>Envía el link a tu cliente por WhatsApp, email, SMS o cualquier medio que prefieras.</p>
+                        </div>
+                        <div class="step-visual">
+                            <div class="share-icons">
+                                <span class="share-icon whatsapp"><i class="fab fa-whatsapp"></i></span>
+                                <span class="share-icon email"><i class="fas fa-envelope"></i></span>
+                                <span class="share-icon copy"><i class="fas fa-copy"></i></span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="step-connector">
+                        <i class="fas fa-arrow-right"></i>
+                    </div>
+                    
+                    <div class="step-card">
+                        <div class="step-number">03</div>
+                        <div class="step-content">
+                            <h3>Recibe el pago</h3>
+                            <p>Tu cliente paga con tarjeta, elige cuotas si lo desea, y tú recibes la confirmación al instante.</p>
+                        </div>
+                        <div class="step-visual">
+                            <div class="success-indicator">
+                                <i class="fas fa-check-circle"></i>
+                                <span>¡Pago recibido!</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Pricing Section -->
+        <section id="pricing" class="pricing-section">
+            <div class="container">
+                <div class="section-header">
+                    <span class="section-tag">Precios</span>
+                    <h2 class="section-title">Transparente y simple</h2>
+                    <p class="section-subtitle">
+                        Sin costos ocultos. Solo pagas cuando cobras.
+                    </p>
+                </div>
+                
+                <div class="pricing-card">
+                    <div class="pricing-header">
+                        <h3>Por transacción</h3>
+                        <div class="pricing-amount">
+                            <span class="currency">$</span>
+                            <span class="price">2.9%</span>
+                            <span class="per">+ $500</span>
+                        </div>
+                        <p>Por cada pago exitoso procesado</p>
+                    </div>
+                    
+                    <ul class="pricing-features">
+                        <li><i class="fas fa-check"></i> Links de pago ilimitados</li>
+                        <li><i class="fas fa-check"></i> Dashboard completo</li>
+                        <li><i class="fas fa-check"></i> Soporte por email y chat</li>
+                        <li><i class="fas fa-check"></i> Cuotas sin costo adicional</li>
+                        <li><i class="fas fa-check"></i> Notificaciones en tiempo real</li>
+                        <li><i class="fas fa-check"></i> API disponible</li>
+                    </ul>
+                    
+                    <a href="{% url 'register' %}" class="btn btn-primary btn-lg btn-full">
+                        Comenzar ahora
+                    </a>
+                    
+                    <p class="pricing-note">Sin tarjeta de crédito requerida para empezar</p>
                 </div>
             </div>
         </section>
@@ -221,50 +326,76 @@
         <!-- CTA Section -->
         <section id="contact" class="cta-section">
             <div class="container">
-                <div class="cta-content text-center">
-                    <h2 class="fw-bold mb-3">¿Listo para empezar?</h2>
-                    <p class="mb-4">Crea tu cuenta gratuita hoy y empieza a recibir pagos en minutos.</p>
-                    <a href="#" class="btn-cta-primary">Crear cuenta gratuita</a>
-                    <p class="mt-3 text-muted small">No se requiere tarjeta de crédito • Configuración gratis</p>
+                <div class="cta-content">
+                    <h2>¿Listo para transformar tus cobros?</h2>
+                    <p>Únete a miles de negocios que ya simplifican sus pagos con PagoTech.</p>
+                    <div class="cta-actions">
+                        <a href="{% url 'register' %}" class="btn btn-white btn-lg">
+                            <i class="fas fa-rocket"></i>
+                            Crear cuenta gratis
+                        </a>
+                        <a href="mailto:contacto@pagotech.com" class="btn btn-ghost-white btn-lg">
+                            Hablar con ventas
+                        </a>
+                    </div>
                 </div>
             </div>
         </section>
     </main>
 
     <!-- Footer -->
-    <footer class="footer-section">
+    <footer class="footer">
         <div class="container">
-            <div class="row g-4 mb-4">
-                <div class="col-md-4">
-                    <h6 class="fw-bold mb-3">
-                        <i class="fas fa-credit-card me-2" style="color: #dc3545;"></i>PagoTech
-                    </h6>
-                    <p class="small">Soluciones de cobro simple para pequeños negocios.</p>
+            <div class="footer-grid">
+                <div class="footer-brand">
+                    <a class="logo" href="{% url 'index' %}">
+                        <div class="logo-icon">
+                            <i class="fas fa-bolt"></i>
+                        </div>
+                        <span class="logo-text">PagoTech</span>
+                    </a>
+                    <p>Soluciones de cobro simples y profesionales para pequeños negocios en Latinoamérica.</p>
                 </div>
-                <div class="col-md-4">
-                    <h6 class="fw-bold mb-3">Producto</h6>
-                    <ul class="list-unstyled small">
-                        <li><a href="#">Características</a></li>
-                        <li><a href="#">Precios</a></li>
-                        <li><a href="#">Seguridad</a></li>
+                
+                <div class="footer-links">
+                    <h4>Producto</h4>
+                    <ul>
+                        <li><a href="#features">Características</a></li>
+                        <li><a href="#pricing">Precios</a></li>
+                        <li><a href="#">API</a></li>
                     </ul>
                 </div>
-                <div class="col-md-4">
-                    <h6 class="fw-bold mb-3">Empresa</h6>
-                    <ul class="list-unstyled small">
+                
+                <div class="footer-links">
+                    <h4>Empresa</h4>
+                    <ul>
+                        <li><a href="#">Sobre nosotros</a></li>
                         <li><a href="#">Blog</a></li>
-                        <li><a href="#">Soporte</a></li>
                         <li><a href="#">Contacto</a></li>
                     </ul>
                 </div>
+                
+                <div class="footer-links">
+                    <h4>Legal</h4>
+                    <ul>
+                        <li><a href="#">Privacidad</a></li>
+                        <li><a href="#">Términos</a></li>
+                        <li><a href="#">Seguridad</a></li>
+                    </ul>
+                </div>
             </div>
-            <div class="border-top border-secondary pt-3 text-center small text-muted">
+            
+            <div class="footer-bottom">
                 <p>&copy; {{ now|date:"Y" }} PagoTech. Todos los derechos reservados.</p>
+                <div class="social-links">
+                    <a href="#" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
+                    <a href="#" aria-label="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
+                    <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                </div>
             </div>
         </div>
     </footer>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="{% static 'js/main.js' %}"></script>
 </body>
 </html>
