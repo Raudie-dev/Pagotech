@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Ticket Link {{ link.id }}</title>
+<style>
+	body { font-family: Arial, sans-serif; font-size: 12px; color:#222; margin:20px; }
+	.header { text-align: center; margin-bottom: 10px; }
+	.table { width:100%; border-collapse: collapse; margin-top:10px; }
+	.table th, .table td { border:1px solid #444; padding:8px; text-align:left; }
+	.summary { margin-top:15px; width:100%; }
+	.right { text-align:right; }
+</style>
+</head>
+<body>
+	<div class="header">
+		<h2>Factura / Ticket</h2>
+		<p>Link ID: {{ link.id }}</p>
+	</div>
+
+	<table class="table">
+		<tr><th>Cliente</th><td>{{ cliente.nombre }}</td></tr>
+		<tr><th>Fecha</th><td>{% if link.created_at %}{{ link.created_at|date:"Y-m-d H:i:s" }}{% else %}-{% endif %}</td></tr>
+		<tr><th>Descripción</th><td>{{ link.descripcion }}</td></tr>
+		<tr><th>Tipo de tarjeta</th><td>{% if link.tipo_tarjeta %}{{ link.tipo_tarjeta|title }}{% else %}-{% endif %}</td></tr>
+		<tr><th>Cuotas</th><td>{{ link.cuotas }}</td></tr>
+	</table>
+
+	<table class="table summary">
+		<thead>
+			<tr>
+				<th>Concepto</th>
+				<th class="right">Importe</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr>
+				<td>Importe bruto</td>
+				<td class="right">{{ link.monto }}</td>
+			</tr>
+			<tr>
+				<td>Porcentaje comisión</td>
+				<td class="right">{{ link.commission_percent }}%</td>
+			</tr>
+			<tr>
+				<td>Comisión (plataforma)</td>
+				<td class="right">{{ link.commission_amount }}</td>
+			</tr>
+			<tr>
+				<td><strong>Total a recibir</strong></td>
+				<td class="right"><strong>{{ link.receiver_amount }}</strong></td>
+			</tr>
+		</tbody>
+	</table>
+
+	<p>Link de pago: {% if link.link %}<a href="{{ link.link }}">{{ link.link }}</a>{% else %}-{% endif %}</p>
+</body>
+</html>

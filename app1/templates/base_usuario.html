@@ -3,64 +3,110 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{% block title %}Usuario{% endblock %} - PagoTech</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0a0e27">
+    <title>{% block title %}Panel de Control{% endblock %}</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link rel="stylesheet" href="{% static 'css/main.css' %}">
+    <link rel="stylesheet" href="{% static 'css/paneles-style.css' %}">
     <style>
         body { min-height: 100vh; }
-        /* Sidebar fijo, igual que base_control */
-        .sidebar {
-            width: 220px;
-            position: fixed;
-            top: 56px;
-            left: 0;
-            bottom: 0;
-            padding: 1rem;
-            background:#f8f9fa;
-            border-right:1px solid #e5e5e5;
-            overflow:auto;
+
+        /* Sobrescribir color blanco por defecto de Bootstrap en tablas */
+        /* Preferimos usar la variable definida en paneles-style.css si existe (ej: --panel-bg-table) */
+        .custom-table {
+            /* si paneles-style.css define --panel-bg-table, esto la usará */
+            --bs-table-row-bg: var(--panel-bg-table, transparent);
+            /* fallback a transparente para que se vea el fondo del contenedor */
+            background-color: transparent;
         }
-        .content-area {
-            margin-left: 220px;
-            padding-top: 80px;
-            padding: 20px;
-        }
-        @media (max-width: 575.98px) {
-            /* Ajuste menor en móviles para evitar contenido muy pegado al borde */
-            .content-area { padding-left: 12px; padding-right: 12px; }
+        .custom-table thead th,
+        .custom-table tbody td {
+               background-color: var(--panel-bg-table, #1d163a) !important;
+      
         }
     </style>
 </head>
 <body>
-<nav class="navbar navbar-light bg-white border-bottom fixed-top">
-    <div class="container-fluid">
-        <a class="navbar-brand"><i class="fas fa-credit-card me-2 text-primary"></i>PagoTech</a>
-        <div class="d-flex align-items-center">
-            <span class="me-3 text-muted d-none d-md-inline">Hola, {% if user %}{{ user.nombre }}{% endif %}</span>
-            <a class="btn btn-outline-secondary btn-sm" href="{% url 'logout_cliente' %}">Salir</a>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark fixed-top">
+        <div class="container-fluid">
+            <button class="toggle-sidebar-btn" id="toggleSidebar">
+                <i class="fas fa-bars"></i>
+            </button>
+            <a class="navbar-brand" href="#">
+                <a class="navbar-brand"><i class="fas fa-credit-card me-2 text-primary"></i>PagoTech</a>
+            </a>
+            <div class="d-flex ms-auto">
+                <span class="navbar-text">Bienvenido, {% if user %}{{ user.nombre }}{% else %}Admin{% endif %}</span>
+                <a class="btn btn-outline-secondary btn-sm ms-3" href="{% url 'logout' %}">
+                    <i class="fas fa-sign-out-alt"></i> Salir
+                </a>
+            </div>
         </div>
-    </div>
-</nav>
+    </nav>
 
-<aside class="sidebar">
-    <h6 class="text-muted">Menú</h6>
-    <ul class="nav flex-column">
-        <li class="nav-item"><a class="nav-link" href="{% url 'dashboard' %}"><i class="fas fa-tachometer-alt me-2"></i> Dashboard</a></li>
-        <li class="nav-item"><a class="nav-link" href="{% url 'crear_link' %}"><i class="fas fa-link me-2"></i> Crear link</a></li>
-    </ul>
-</aside>
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <h6>
+            <i class="fas fa-layer-group"></i> Menú
+        </h6>
+        <ul class="nav flex-column">
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'dashboard' %}">
+                    <i class="fas fa-tachometer-alt me-2"></i>
+                    <span> Dashboard</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'crear_link' %}">
+                    <i class="fas fa-link me-2"></i>
+                    <span> Crear link</span>
+                </a>
+            </li>
+        </ul>
+    </aside>
 
-<main class="content-area container-fluid">
-    {% if messages %}
-        {% for message in messages %}
-            <div class="alert alert-{{ message.tags }}">{{ message }}</div>
-        {% endfor %}
-    {% endif %}
-    {% block content %}{% endblock %}
-</main>
+    <!-- Contenido Principal -->
+    <main class="content-area container-fluid">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    <i class="fas fa-check-circle"></i>
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+        {% block content %}{% endblock %}
+    </main>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Toggle sidebar en móvil
+        document.getElementById('toggleSidebar').addEventListener('click', function() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('show');
+        });
+
+        // Cerrar sidebar al hacer clic en un enlace
+        document.querySelectorAll('.sidebar .nav-link').forEach(link => {
+            link.addEventListener('click', function() {
+                const sidebar = document.getElementById('sidebar');
+                if (window.innerWidth <= 768) {
+                    sidebar.classList.remove('show');
+                }
+            });
+        });
+
+        // Cerrar sidebar al cambiar el tamaño de pantalla
+        window.addEventListener('resize', function() {
+            if (window.innerWidth > 768) {
+                document.getElementById('sidebar').classList.remove('show');
+            }
+        });
+    </script>
 </body>
 </html>

@@ -10,13 +10,12 @@
 
 <div class="card mb-4">
     <div class="card-body">
-        <form method="post" class="row g-3">
+        <form id="form-crear-link" method="post" class="row g-3">
             {% csrf_token %}
             <div class="col-md-4">
                 <label class="form-label">Monto</label>
                 <input type="number" step="0.01" name="monto" class="form-control" placeholder="Ej. 1500.00" required>
             </div>
-
             <div class="col-md-4">
                 <label class="form-label">Cuotas</label>
                 <select name="cuotas" class="form-select">
@@ -26,7 +25,6 @@
                     <option value="12">12</option>
                 </select>
             </div>
-
             <div class="col-md-4">
                 <label class="form-label">Tipo de tarjeta</label>
                 <select name="tipo_tarjeta" class="form-select">
@@ -34,16 +32,187 @@
                     <option value="debito">Débito</option>
                 </select>
             </div>
-
             <div class="col-12">
                 <label class="form-label">Descripción (opcional)</label>
                 <input type="text" name="descripcion" class="form-control" placeholder="Concepto del cobro">
             </div>
-
             <div class="col-12 text-end">
-                <button type="submit" class="btn btn-primary">Crear link</button>
+                <button type="button" class="btn btn-primary" id="btn-confirmar-modal">Crear link</button>
             </div>
         </form>
     </div>
 </div>
+
+<!-- Modal de confirmación de creación -->
+<div class="modal fade" id="modalConfirmacion" tabindex="-1" aria-labelledby="modalConfirmacionLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="modalConfirmacionLabel">Confirmar creación</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+      <div class="modal-body">
+        <p>¿Estás seguro que deseas crear este link de pago?</p>
+        <ul class="list-group mb-2" id="resumen-datos-modal">
+          <!-- Los datos se llenan desde el backend vía JS -->
+        </ul>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button type="button" class="btn btn-primary" id="btn-crear-link-final">Sí, crear link</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de link generado/copiar -->
+{% if link_creado %}
+<div class="modal fade show" id="modalLinkGenerado" tabindex="-1" aria-labelledby="modalLinkGeneradoLabel" aria-modal="true" style="display:block;">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="modalLinkGeneradoLabel">¡Link creado exitosamente!</h5>
+        <button type="button" class="btn-close" onclick="window.location.href=window.location.pathname"></button>
+      </div>
+      <div class="modal-body">
+        <div class="alert alert-success" role="alert">
+          El link de pago ha sido generado.
+        </div>
+        <div class="mb-2">
+          <label><strong>Link generado:</strong></label>
+          <div class="input-group">
+            <input type="text" id="link-generado" class="form-control" value="{{ link_creado.url }}" readonly>
+            <button class="btn btn-outline-secondary" type="button" id="btn-copiar-link-generado">Copiar</button>
+          </div>
+        </div>
+        <ul class="list-group mt-3">
+          <li class="list-group-item"><strong>Monto:</strong> ${{ link_creado.monto }}</li>
+          <li class="list-group-item"><strong>Cuotas:</strong> {{ link_creado.cuotas }}</li>
+          <li class="list-group-item"><strong>Tipo de tarjeta:</strong> {{ link_creado.tipo_tarjeta|title }}</li>
+          <li class="list-group-item"><strong>Descripción:</strong> {{ link_creado.descripcion }}</li>
+          <li class="list-group-item"><strong>% Comisión:</strong> {{ link_creado.commission_percent }}%</li>
+          <li class="list-group-item"><strong>Comisión:</strong> ${{ link_creado.commission_amount }}</li>
+          <li class="list-group-item"><strong>A cobrar:</strong> ${{ link_creado.receiver_amount }}</li>
+        </ul>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-success" onclick="window.location.href=window.location.pathname">Listo</button>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+window.addEventListener('DOMContentLoaded', function() {
+    setTimeout(function() {
+        var modal = document.getElementById('modalLinkGenerado');
+        if (modal) modal.classList.add('show');
+    }, 100);
+    document.getElementById('btn-copiar-link-generado').onclick = function() {
+        var input = document.getElementById('link-generado');
+        input.select();
+        document.execCommand('copy');
+        this.textContent = 'Copiado!';
+        setTimeout(() => { this.textContent = 'Copiar'; }, 1500);
+    };
+});
+</script>
+{% endif %}
+
+{# Lista de links creados por el usuario #}
+{% if links %}
+<div class="card">
+	<div class="card-body">
+		<h5>Tus links</h5>
+		<table class="table">
+			<thead>
+				<tr>
+					<th>Link</th>
+					<th>Creado</th>
+					<th>Monto</th>
+					<th>% Comisión</th>
+					<th>Comisión</th>
+					<th>A cobrar</th>
+					<th>Acciones</th>
+				</tr>
+			</thead>
+			<tbody>
+				{% for l in links %}
+				<tr>
+					<td><a href="{{ l.link }}" target="_blank">{{ l.link }}</a></td>
+					<td>{{ l.created_at }}</td>
+					<td>{{ l.monto }}</td>
+					<td>{{ l.commission_percent }}%</td>
+					<td>{{ l.commission_amount }}</td>
+					<td>{{ l.receiver_amount }}</td>
+					<td>
+						<button class="btn btn-sm btn-outline-secondary btn-copy" data-link="{{ l.link }}">Copiar</button>
+						<a class="btn btn-sm btn-outline-primary" href="{% url 'crear_link' %}?download={{ l.id }}">Descargar ticket</a>
+					</td>
+				</tr>
+				{% endfor %}
+			</tbody>
+		</table>
+	</div>
+</div>
+{% endif %}
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var modalConfirmacion = new bootstrap.Modal(document.getElementById('modalConfirmacion'));
+    var btnAbrirModal = document.getElementById('btn-confirmar-modal');
+    var btnCrearFinal = document.getElementById('btn-crear-link-final');
+    var formCrearLink = document.getElementById('form-crear-link');
+    var resumenDatos = document.getElementById('resumen-datos-modal');
+
+    function obtenerComisionPct(tipoTarjeta) {
+        if (tipoTarjeta === 'debito') return 3.49;
+        if (tipoTarjeta === 'credito') return 3.99;
+        return 0;
+    }
+
+    btnAbrirModal.addEventListener('click', function(e) {
+        e.preventDefault();
+        var monto = parseFloat(formCrearLink.monto.value) || 0;
+        var cuotas = formCrearLink.cuotas.value;
+        var tipoTarjeta = formCrearLink.tipo_tarjeta.value;
+        var descripcion = formCrearLink.descripcion.value || '-';
+        var comisionPct = obtenerComisionPct(tipoTarjeta);
+        var comision = +(monto * comisionPct / 100).toFixed(2);
+        var aCobrar = +(monto - comision).toFixed(2);
+
+        resumenDatos.innerHTML = `
+          <li class="list-group-item"><strong>Monto:</strong> $${monto.toFixed(2)}</li>
+          <li class="list-group-item"><strong>Cuotas:</strong> ${cuotas}</li>
+          <li class="list-group-item"><strong>Tipo de tarjeta:</strong> ${tipoTarjeta.charAt(0).toUpperCase() + tipoTarjeta.slice(1)}</li>
+          <li class="list-group-item"><strong>Descripción:</strong> ${descripcion}</li>
+          <li class="list-group-item"><strong>% Comisión:</strong> ${comisionPct}%</li>
+          <li class="list-group-item"><strong>Comisión:</strong> $${comision.toFixed(2)}</li>
+          <li class="list-group-item"><strong>A cobrar:</strong> $${aCobrar.toFixed(2)}</li>
+        `;
+        modalConfirmacion.show();
+    });
+
+    btnCrearFinal.addEventListener('click', function() {
+        formCrearLink.appendChild(Object.assign(document.createElement('input'), {type:'hidden', name:'confirm', value:'1'}));
+        formCrearLink.submit();
+    });
+
+    // Copiar al portapapeles para la tabla de links
+    document.addEventListener('click', function(e){
+        if(e.target && e.target.classList.contains('btn-copy')){
+            const link = e.target.getAttribute('data-link');
+            if(navigator.clipboard){
+                navigator.clipboard.writeText(link).then(()=> {
+                    alert('Link copiado al portapapeles');
+                });
+            } else {
+                const ta = document.createElement('textarea');
+                ta.value = link; document.body.appendChild(ta);
+                ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+                alert('Link copiado al portapapeles');
+            }
+        }
+    });
+});
+</script>
 {% endblock %}
