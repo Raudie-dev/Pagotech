@@ -88,7 +88,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Animate elements on scroll
   const animateOnScroll = () => {
-    const elements = document.querySelectorAll(".feature-card, .step-card, .pricing-card")
+    const elements = document.querySelectorAll(".feature-card, .step-card, .step-connector,.pricing-card")
 
     const observer = new IntersectionObserver(
       (entries) => {
