@@ -76,6 +76,7 @@ WSGI_APPLICATION = 'proyecto.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
+"""  Entorno local - SQLite """
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
@@ -83,6 +84,10 @@ DATABASES = {
     }
 }
 
+
+
+
+# Entorno producción - Mysql
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
