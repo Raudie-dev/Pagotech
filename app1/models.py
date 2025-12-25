@@ -27,6 +27,9 @@ class LinkPago(models.Model):
     cuotas = models.PositiveSmallIntegerField(default=1)
     tipo_tarjeta = models.CharField(max_length=10, choices=TIPO_TARJETA_CHOICES, default='credito')
     descripcion = models.TextField(null=True, blank=True)
+    order_id = models.CharField(max_length=50, unique=True, null=True, blank=True)
+    pagado = models.BooleanField(default=False)
+    cuotas_elegidas = models.IntegerField(default=1)
 
     # comisión y montos calculados
     commission_percent = models.DecimalField(max_digits=5, decimal_places=2, default=Decimal('0.00'))
@@ -54,5 +57,6 @@ class LinkPago(models.Model):
         lines.append(f"Comisión (plataforma): {self.commission_amount:.2f}")
         lines.append(f"Total a recibir (cliente): {self.receiver_amount:.2f}")
         lines.append(f"Link de pago: {self.link}")
+        lines.append(f"Estado del pago: {'PAGADO' if self.pagado else 'PENDIENTE'}")
         self.invoice_text = "\n".join(lines)
         return self.invoice_text

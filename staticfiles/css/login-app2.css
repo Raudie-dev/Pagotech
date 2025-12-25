@@ -1,0 +1,193 @@
+/* ===========================================
+   PagoTech - Login Theme
+   =========================================== */
+
+:root {
+  --primary: #e63946;
+  --primary-dark: #c1121f;
+  --primary-light: rgba(230, 57, 70, 0.15);
+  --background: #0a0a0b;
+  --surface: #111113;
+  --surface-elevated: #1a1a1d;
+  --text-primary: #ffffff;
+  --text-secondary: #a1a1aa;
+  --text-muted: #71717a;
+  --border-strong: rgba(255, 255, 255, 0.12);
+  --radius-md: 12px;
+  --radius-lg: 20px;
+  --shadow-glow: 0 0 40px rgba(230, 57, 70, 0.15);
+  --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+body.admin-login {
+  background-color: var(--background);
+  color: var(--text-primary);
+  font-family: "Inter", sans-serif;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  overflow: hidden;
+  position: relative;
+}
+
+/* Efecto de fondo similar al Hero */
+body.admin-login::before {
+  content: "";
+  position: absolute;
+  width: 150%;
+  height: 150%;
+  background: radial-gradient(circle at 50% 50%, rgba(230, 57, 70, 0.05) 0%, transparent 50%);
+  z-index: 0;
+}
+
+.login-card {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 420px;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  padding: 40px;
+  box-shadow: var(--shadow-glow);
+}
+
+.login-header {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.logo-container {
+  margin-bottom: 16px;
+  display: flex;
+  justify-content: center;
+}
+
+.logo-img {
+  height: 50px;
+  filter: drop-shadow(0 0 10px rgba(230, 57, 70, 0.3));
+}
+
+.login-subtitle {
+  color: var(--text-secondary);
+  font-size: 14px;
+  margin-bottom: 8px;
+}
+
+.role-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  background: var(--primary-light);
+  border: 1px solid rgba(230, 57, 70, 0.3);
+  border-radius: 99px;
+  color: var(--primary);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* Formulario */
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+}
+
+.input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-icon {
+  position: absolute;
+  left: 16px;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+.form-control {
+  width: 100%;
+  background: var(--surface-elevated) !important;
+  border: 1px solid var(--border-strong) !important;
+  border-radius: var(--radius-md) !important;
+  padding: 12px 16px 12px 45px !important;
+  color: var(--text-primary) !important;
+  transition: var(--transition);
+}
+
+.form-control:focus {
+  outline: none;
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 4px rgba(230, 57, 70, 0.1) !important;
+}
+
+.password-toggle {
+  position: absolute;
+  right: 12px;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 4px;
+  transition: var(--transition);
+}
+
+.password-toggle:hover {
+  color: var(--text-primary);
+}
+
+/* Botón Principal */
+.btn-login {
+  width: 100%;
+  background: var(--primary);
+  color: white;
+  border: none;
+  border-radius: var(--radius-md);
+  padding: 14px;
+  font-weight: 600;
+  font-size: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  cursor: pointer;
+  transition: var(--transition);
+  margin-top: 10px;
+}
+
+.btn-login:hover {
+  background: var(--primary-dark);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 20px rgba(230, 57, 70, 0.4);
+}
+
+/* Alertas */
+.alert-danger {
+  background: rgba(230, 57, 70, 0.1);
+  border: 1px solid rgba(230, 57, 70, 0.2);
+  color: #ff6b6b;
+  font-size: 13px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px;
+  margin-bottom: 20px;
+}
+
+.login-footer {
+  text-align: center;
+  margin-top: 30px;
+  color: var(--text-muted);
+  font-size: 12px;
+}

@@ -1,0 +1,254 @@
+/* ===========================================
+   PagoTech - Usuarios Custom Styles (Fintech)
+   =========================================== */
+
+/* --- Animaciones de Entrada --- */
+@keyframes slideUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-slide-up {
+    animation: slideUp 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+/* --- Tarjetas de Estadísticas (Stats) --- */
+.hover-lift {
+    transition: all 0.3s ease;
+    cursor: default;
+}
+
+.hover-lift:hover {
+    transform: translateY(-5px);
+    border-color: rgba(230, 57, 70, 0.3) !important;
+    background: var(--surface-elevated);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+}
+
+.icon-box {
+    width: 50px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    transition: all 0.3s ease;
+}
+
+/* Iluminación de Iconos (Glare Effect) */
+.icon-box i.text-danger { text-shadow: 0 0 15px rgba(230, 57, 70, 0.6); color: #ff4d4d !important; }
+.icon-box i.text-success { text-shadow: 0 0 15px rgba(16, 185, 129, 0.6); color: #00ff88 !important; }
+.icon-box i.text-info { text-shadow: 0 0 15px rgba(59, 130, 246, 0.6); color: #3b82f6 !important; }
+
+/* --- Contenedor de Tabla Sólido --- */
+.custom-table-container {
+    background: #111113 !important; /* var(--surface) */
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    overflow: hidden;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+}
+
+/* Estilo Interno de la Tabla */
+.custom-dark-table thead th {
+    background: rgba(255, 255, 255, 0.02);
+    color: rgba(255, 255, 255, 0.5) !important;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding: 18px 15px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.custom-dark-table tbody td {
+    padding: 18px 15px;
+    color: #d1d5db;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.user-row {
+    transition: background-color 0.2s ease;
+}
+
+.user-row:hover {
+    background-color: rgba(255, 255, 255, 0.02) !important;
+}
+
+/* --- Tipografía y Textos de Tabla --- */
+.user-name-text {
+    color: #ffffff !important;
+    font-weight: 600;
+    font-size: 0.95rem;
+    margin-bottom: 2px;
+}
+
+.user-sub-text {
+    color: rgba(255, 255, 255, 0.4) !important;
+    font-size: 0.8rem;
+}
+
+/* --- Avatar Estilo Fintech --- */
+.user-avatar {
+    width: 42px;
+    height: 42px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #1e1e20 0%, #111113 100%);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #e63946; /* Rojo PagoTech */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 1.1rem;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+    flex-shrink: 0;
+}
+
+/* --- Badges Modernos con Punto (Dot) --- */
+.badge-status {
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 10px;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-width: 1px;
+    border-style: solid;
+}
+
+.status-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+}
+
+.status-approved {
+    background: rgba(16, 185, 129, 0.1);
+    color: #10b981;
+    border-color: rgba(16, 185, 129, 0.2);
+}
+.status-approved .status-dot { background: #10b981; box-shadow: 0 0 8px #10b981; }
+
+.status-blocked {
+    background: rgba(230, 57, 70, 0.1);
+    color: #e63946;
+    border-color: rgba(230, 57, 70, 0.2);
+}
+.status-blocked .status-dot { background: #e63946; box-shadow: 0 0 8px #e63946; }
+
+.status-pending {
+    background: rgba(245, 158, 11, 0.1);
+    color: #f59e0b;
+    border-color: rgba(245, 158, 11, 0.2);
+}
+.status-pending .status-dot { background: #f59e0b; box-shadow: 0 0 8px #f59e0b; }
+
+/* --- Botones de Acción --- */
+.btn-action-dark {
+    width: 36px;
+    height: 36px;
+    background: #1a1a1d;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #9ca3af;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    transition: all 0.2s;
+}
+
+.btn-action-dark:hover {
+    background: #252529;
+    color: #ffffff;
+    border-color: rgba(255, 255, 255, 0.3);
+    transform: translateY(-2px);
+}
+
+.btn-icon-success:hover { color: #10b981 !important; }
+.btn-icon-danger:hover { color: #e63946 !important; }
+
+/* --- Formularios e Inputs (Enhanced) --- */
+.search-group .form-control {
+    background-color: #161618 !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    color: #ffffff !important;
+    border-radius: 12px;
+    padding: 12px 16px 12px 45px;
+    transition: all 0.3s ease;
+}
+
+.search-group .form-control:focus {
+    border-color: #e63946 !important;
+    box-shadow: 0 0 0 4px rgba(230, 57, 70, 0.15) !important;
+    background-color: #1a1a1d !important;
+}
+
+.search-group i {
+    color: rgba(255, 255, 255, 0.3);
+    font-size: 0.9rem;
+}
+
+/* Labels Estilo Fintech */
+.form-label-custom {
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+    display: block;
+}
+
+/* --- Modales y Dropdowns --- */
+.modal-content {
+    background: #111113 !important;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 20px;
+}
+
+.dropdown-menu {
+    background: #1a1a1d;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+    padding: 8px;
+}
+
+.dropdown-item {
+    color: #d1d5db;
+    border-radius: 8px;
+    padding: 10px 15px;
+    font-size: 0.9rem;
+}
+
+.dropdown-item:hover {
+    background: rgba(230, 57, 70, 0.1);
+    color: #ff4d4d;
+}
+
+/* --- Ajustes Responsivos --- */
+@media (max-width: 991px) {
+    .table-responsive {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+}
+
+@media (min-width: 992px) {
+    .table-responsive {
+        overflow: visible !important; /* Permite que los dropdowns no se corten */
+    }
+}
+
+@media (max-width: 768px) {
+    .btn span { display: none; }
+    .icon-box { width: 42px; height: 42px; }
+    .user-avatar { width: 36px; height: 36px; font-size: 1rem; }
+    .card-body .h2 { font-size: 1.5rem; }
+}

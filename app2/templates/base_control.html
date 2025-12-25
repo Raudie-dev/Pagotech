@@ -4,109 +4,195 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="theme-color" content="#0a0e27">
-    <title>{% block title %}Panel de Control{% endblock %}</title>
+    <title>{% block title %}PagoTech | Admin Panel{% endblock %}</title>
+    
+    <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- PagoTech Custom CSS -->
     <link rel="stylesheet" href="{% static 'css/paneles-style.css' %}">
+    
     <style>
-        body { min-height: 100vh; }
-
-        /* Sobrescribir color blanco por defecto de Bootstrap en tablas */
-        /* Preferimos usar la variable definida en paneles-style.css si existe (ej: --panel-bg-table) */
-        .custom-table {
-            /* si paneles-style.css define --panel-bg-table, esto la usará */
-            --bs-table-row-bg: var(--panel-bg-table, transparent);
-            /* fallback a transparente para que se vea el fondo del contenedor */
-            background-color: transparent;
+        /* Estilos para que los Toasts luzcan bien con tu tema */
+        .toast-container {
+            z-index: 2000; /* Asegurar que esté por encima de modales y navbar */
         }
-        .custom-table thead th,
-        .custom-table tbody td {
-               background-color: var(--panel-bg-table, #1d163a) !important;
-      
+        .toast {
+            background-color: var(--surface-elevated, #1a1d21); /* Color oscuro */
+            border: 1px solid rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+        }
+        .bg-success { background-color: #10b981 !important; }
+        .bg-danger { background-color: #e63946 !important; }
+        .bg-warning { background-color: #f59e0b !important; }
+        .bg-info { background-color: #3b82f6 !important; }
+        
+        /* Ajuste de margen para que el navbar fixed no lo tape */
+        @media (min-width: 768px) {
+            .toast-container { margin-top: 70px; }
         }
     </style>
+
+    <!-- CSS adicional por página -->
+    {% block extra_css %}{% endblock %}
 </head>
 <body>
+
+    <!-- Toast Container (Las notificaciones flotantes aparecerán aquí) -->
+    <div class="toast-container position-fixed top-0 end-0 p-3">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="toast align-items-center text-white {% if message.tags == 'success' %}bg-success{% elif message.tags == 'error' or message.tags == 'danger' %}bg-danger{% elif message.tags == 'warning' %}bg-warning{% else %}bg-info{% endif %} border-0 shadow-lg" 
+                     role="alert" aria-live="assertive" aria-atomic="true">
+                    <div class="d-flex">
+                        <div class="toast-body d-flex align-items-center">
+                            <i class="fas {% if message.tags == 'success' %}fa-check-circle{% elif message.tags == 'error' or message.tags == 'danger' %}fa-exclamation-triangle{% elif message.tags == 'warning' %}fa-exclamation-circle{% else %}fa-info-circle{% endif %} me-2"></i>
+                            <div>
+                                <strong class="d-block text-uppercase small" style="font-size: 10px; opacity: 0.8;">Notificación</strong>
+                                {{ message }}
+                            </div>
+                        </div>
+                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                    </div>
+                </div>
+            {% endfor %}
+        {% endif %}
+    </div>
+
     <!-- Navbar -->
     <nav class="navbar navbar-expand-lg navbar-dark fixed-top">
-        <div class="container-fluid">
-            <button class="toggle-sidebar-btn" id="toggleSidebar">
+        <div class="container-fluid px-4">
+            <button class="toggle-sidebar-btn d-md-none me-3" id="toggleSidebar">
                 <i class="fas fa-bars"></i>
             </button>
-            <a class="navbar-brand" href="#">
-                <i class="fas fa-user-cog"></i> Admin
+            
+            <a class="navbar-brand d-flex align-items-center" href="#">
+                <i class="fas fa-bolt text-danger me-2"></i>
+                <span class="text-white">PAGO<span class="text-danger">TECH</span></span>
             </a>
-            <div class="d-flex ms-auto">
-                <span class="navbar-text">Bienvenido, {% if user %}{{ user.nombre }}{% else %}Admin{% endif %}</span>
-                <a class="btn btn-outline-secondary btn-sm ms-3" href="{% url 'logout' %}">
-                    <i class="fas fa-sign-out-alt"></i> Salir
-                </a>
+
+            <div class="d-flex ms-auto align-items-center">
+                <div class="d-none d-sm-block text-end me-3">
+                    <small class="text-muted d-block" style="font-size: 10px;">ADMINISTRADOR</small>
+                    <span class="fw-bold text-white">{% if user %}{{ user.nombre }}{% else %}Admin{% endif %}</span>
+                </div>
+                <div class="dropdown">
+                    <button class="btn btn-dark btn-sm rounded-circle p-0" style="width: 35px; height: 35px;" data-bs-toggle="dropdown">
+                        <i class="fas fa-user-circle text-white"></i>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end dropdown-menu-dark">
+                        <li>
+                            <a class="dropdown-item text-danger" href="{% url 'logout' %}">
+                                <i class="fas fa-sign-out-alt me-2"></i> Cerrar Sesión
+                            </a>
+                        </li>
+                    </ul>
+                </div>
             </div>
         </div>
     </nav>
 
     <!-- Sidebar -->
     <aside class="sidebar" id="sidebar">
-        <h6>
-            <i class="fas fa-layer-group"></i> Menú
-        </h6>
+        <h6>Principal</h6>
         <ul class="nav flex-column">
             <li class="nav-item">
-                <a class="nav-link" href="{% url 'gestion_usuarios' %}">
+                <a class="nav-link {% if request.resolver_match.url_name == 'gestion_usuarios' %}active{% endif %}" href="{% url 'gestion_usuarios' %}">
                     <i class="fas fa-users-cog"></i>
-                    <span>Gestión usuarios</span>
+                    <span>Gestión de Usuarios</span>
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" href="{% url 'aprobacion' %}">
+                <a class="nav-link {% if request.resolver_match.url_name == 'aprobacion' %}active{% endif %}" href="{% url 'aprobacion' %}">
                     <i class="fas fa-user-check"></i>
                     <span>Aprobaciones</span>
                 </a>
             </li>
         </ul>
+        {% comment %}  
+        <h6 class="mt-4">Sistema</h6>
+        <ul class="nav flex-column">
+            <li class="nav-item">
+                <a class="nav-link text-muted" href="#">
+                    <i class="fas fa-cog"></i>
+                    <span>Configuración</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link text-muted" href="#">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Reportes</span>
+                </a>
+            </li>
+        </ul>
+        {% endcomment %}
     </aside>
 
-    <!-- Contenido Principal -->
-    <main class="content-area container-fluid">
-        {% if messages %}
-            {% for message in messages %}
-                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-                    <i class="fas fa-check-circle"></i>
-                    {{ message }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
-                </div>
-            {% endfor %}
-        {% endif %}
+    <!-- Main Content -->
+    <main class="content-area" id="main-content">
+        <!-- Ya no hay alertas directas aquí, ahora son Toasts -->
         {% block content %}{% endblock %}
     </main>
 
     <!-- Scripts -->
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Toggle sidebar en móvil
-        document.getElementById('toggleSidebar').addEventListener('click', function() {
-            const sidebar = document.getElementById('sidebar');
-            sidebar.classList.toggle('show');
-        });
+        // ============================================
+        // Sidebar Toggle for Mobile
+        // ============================================
+        const toggleBtn = document.getElementById('toggleSidebar');
+        const sidebar = document.getElementById('sidebar');
+        
+        if (toggleBtn) {
+            toggleBtn.addEventListener('click', () => {
+                sidebar.classList.toggle('show');
+            });
+        }
 
-        // Cerrar sidebar al hacer clic en un enlace
-        document.querySelectorAll('.sidebar .nav-link').forEach(link => {
-            link.addEventListener('click', function() {
-                const sidebar = document.getElementById('sidebar');
-                if (window.innerWidth <= 768) {
+        document.addEventListener('click', (e) => {
+            if (window.innerWidth <= 768) {
+                if (!sidebar.contains(e.target) && !toggleBtn.contains(e.target)) {
                     sidebar.classList.remove('show');
                 }
+            }
+        });
+
+        // ============================================
+        // Inicializar y Mostrar Toasts Automáticamente
+        // ============================================
+        document.addEventListener('DOMContentLoaded', function() {
+            var toastElList = [].slice.call(document.querySelectorAll('.toast'))
+            var toastList = toastElList.map(function (toastEl) {
+                // Configuramos para que dure 5 segundos
+                var toast = new bootstrap.Toast(toastEl, { delay: 5000 });
+                toast.show();
+                return toast;
             });
         });
 
-        // Cerrar sidebar al cambiar el tamaño de pantalla
-        window.addEventListener('resize', function() {
-            if (window.innerWidth > 768) {
-                document.getElementById('sidebar').classList.remove('show');
-            }
+        // ============================================
+        // Smooth Scroll
+        // ============================================
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                const href = this.getAttribute('href');
+                if (href !== '#' && href !== '') {
+                    e.preventDefault();
+                    const target = document.querySelector(href);
+                    if (target) {
+                        target.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'start'
+                        });
+                    }
+                }
+            });
         });
     </script>
+    
+    <!-- JavaScript adicional por página -->
+    {% block extra_js %}{% endblock %}
 </body>
 </html>

@@ -1,136 +1,161 @@
 {% extends "base_control.html" %}
-{% block title %}Aprobación de registros{% endblock %}
+{% load static %}
+{% block title %}PagoTech | Aprobaciones{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/usuarios-custom.css' %}">
+{% endblock %}
+
 {% block content %}
 
-<div class="mb-3">
-    <h2>
-        <i class="fas fa-user-check"></i> Registros pendientes
-    </h2>
+<!-- Header -->
+<div class="d-flex justify-content-between align-items-end mb-4">
+    <div>
+        <h2 class="mb-1 text-white">
+            <i class="fas fa-user-check text-danger me-2"></i> Aprobaciones
+        </h2>
+        <p class="text-black small mb-0">Revisa y gestiona las solicitudes de nuevos registros en el sistema.</p>
+    </div>
+</div>
+
+<!-- Tarjeta de Resumen Rápido -->
+<div class="row g-4 mb-4">
+    <div class="col-md-4">
+        <!-- La clase border-danger activa el color en el CSS -->
+        <div class="card h-100 hover-lift border-start border-danger border-4">
+            <div class="card-body d-flex align-items-center">
+                <!-- Quitamos clases manuales de Bootstrap para usar el estilo del CSS -->
+                <div class="icon-box me-3">
+                    <i class="fas fa-clock text-danger h4 mb-0"></i>
+                </div>
+                <div class="flex-grow-1">
+                    <!-- Cambiado text-black por text-muted para visibilidad -->
+                    <div class="card-subtitle text-muted mb-1">Pendientes de Revisión</div>
+                    <div class="h2 fw-bold mb-0 text-white">{{ pending_clients|length }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <!-- Tabla de Registros Pendientes -->
-<div class="table-responsive">
-    <table class="table table-hover custom-table">
-        <thead>
-            <tr>
-                <th><i class="fas fa-user"></i> Nombre</th>
-                <th><i class="fas fa-envelope"></i> Correo</th>
-                <th><i class="fas fa-phone"></i> Teléfono</th>
-                <th><i class="fas fa-cogs"></i> Acciones</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for cliente in pending_clients %}
-            <tr>
-                <td>{{ cliente.nombre }}</td>
-                <td>{{ cliente.email|default:"-" }}</td>
-                <td>{{ cliente.telefono|default:"-" }}</td>
-                <td>
-                    <button
-                        class="btn btn-outline-info me-1"
-                        data-bs-toggle="modal"
-                        data-bs-target="#editUserModal"
-                        data-id="{{ cliente.id }}"
-                        data-nombre="{{ cliente.nombre|escape }}"
-                        data-email="{{ cliente.email|default:''|escape }}"
-                        data-telefono="{{ cliente.telefono|default:''|escape }}"
-                        data-aprobado="{{ cliente.aprobado|yesno:'1,0' }}"
-                    >
-                        <i class="fas fa-edit"></i> Editar
-                    </button>
-
-                    <form method="post" style="display:inline;">
-                        {% csrf_token %}
-                        <input type="hidden" name="approve_id" value="{{ cliente.id }}">
-                        <button type="submit" class="btn btn-success" title="Aprobar registro">
-                            <i class="fas fa-check"></i> Aprobar
-                        </button>
-                    </form>
-
-                    <form method="post" style="display:inline;">
-                        {% csrf_token %}
-                        <input type="hidden" name="bloquear_id" value="{{ cliente.id }}">
-                        <button type="submit" class="btn btn-warning" title="Bloquear registro">
-                            <i class="fas fa-ban"></i> Bloquear
-                        </button>
-                    </form>
-                </td>
-            </tr>
-            {% empty %}
-            <tr>
-                <td colspan="4" class="text-center" style="padding: 2rem;">
-                    <i class="fas fa-check-circle" style="font-size: 2rem; color: var(--color-success); margin-bottom: 0.5rem;"></i>
-                    <p>No hay registros pendientes.</p>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-</div>
-
-<!-- Modal de edición -->
-<div class="modal fade" id="editUserModal" tabindex="-1" aria-labelledby="editUserModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content">
-      <form method="post" id="editUserForm">
-        {% csrf_token %}
-        <input type="hidden" name="edit_id" id="edit_id">
-        <div class="modal-header">
-          <h5 class="modal-title" id="editUserModalLabel">
-              <i class="fas fa-user-edit"></i> Editar usuario
-          </h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-        </div>
-        <div class="modal-body">
-            <div class="mb-3">
-                <label for="edit_nombre" class="form-label">
-                    <i class="fas fa-user"></i> Nombre
-                </label>
-                <input type="text" class="form-control" name="edit_nombre" id="edit_nombre" required>
-            </div>
-            <div class="mb-3">
-                <label for="edit_email" class="form-label">
-                    <i class="fas fa-envelope"></i> Correo
-                </label>
-                <input type="email" class="form-control" name="edit_email" id="edit_email">
-            </div>
-            <div class="mb-3">
-                <label for="edit_telefono" class="form-label">
-                    <i class="fas fa-phone"></i> Teléfono
-                </label>
-                <input type="text" class="form-control" name="edit_telefono" id="edit_telefono">
-            </div>
-            <div class="form-check">
-                <input class="form-check-input" type="checkbox" value="1" id="edit_aprobado" name="edit_aprobado">
-                <label class="form-check-label" for="edit_aprobado">
-                    <i class="fas fa-check"></i> Aprobado
-                </label>
-            </div>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-              <i class="fas fa-times"></i> Cancelar
-          </button>
-          <button type="submit" class="btn btn-primary">
-              <i class="fas fa-save"></i> Guardar cambios
-          </button>
-        </div>
-      </form>
+<div class="custom-table-container animate-slide-up">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0 custom-dark-table">
+            <thead>
+                <tr>
+                    <th class="ps-4">USUARIO PENDIENTE</th>
+                    <th>CONTACTO</th>
+                    <th class="text-center">ESTADO</th>
+                    <th class="text-end pe-4">ACCIONES</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for cliente in pending_clients %}
+                <tr class="user-row">
+                    <td class="ps-4">
+                        <div class="d-flex align-items-center">
+                            <div class="user-avatar me-3" style="color: #f59e0b; border-color: rgba(245, 158, 11, 0.2);">
+                                {{ cliente.nombre|slice:":1"|upper }}
+                            </div>
+                            <div>
+                                <div class="user-name-text">{{ cliente.nombre }}</div>
+                                <small class="user-sub-text">Pendiente de validación</small>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="d-flex flex-column">
+                            <span class="text-white small">{{ cliente.email|default:"-" }}</span>
+                            <small class="user-sub-text">{{ cliente.telefono|default:"Sin teléfono" }}</small>
+                        </div>
+                    </td>
+                    <td class="text-center">
+                        <span class="badge-status status-pending">
+                            <div class="status-dot" style="background: #f59e0b; box-shadow: 0 0 8px #f59e0b;"></div>
+                            ESPERANDO
+                        </span>
+                    </td>
+                    <td class="text-end pe-4">
+                        <div class="d-flex justify-content-end gap-2">
+                            <form method="post" class="d-inline">
+                                {% csrf_token %}
+                                <input type="hidden" name="approve_id" value="{{ cliente.id }}">
+                                <button type="submit" class="btn btn-sm btn-success btn-icon" style="background: #10b981; border:none; width:36px; height:36px; border-radius:8px; color:white;">
+                                    <i class="fas fa-check"></i>
+                                </button>
+                            </form>
+                            <button class="btn btn-sm btn-action-dark" data-bs-toggle="modal" data-bs-target="#editUserModal"
+                                    data-id="{{ cliente.id }}" data-nombre="{{ cliente.nombre }}"
+                                    data-email="{{ cliente.email|default:'' }}" data-telefono="{{ cliente.telefono|default:'' }}">
+                                <i class="fas fa-pen"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
-  </div>
 </div>
 
+<!-- Modal para Editar Usuario (Estilo PagoTech) -->
+<div class="modal fade" id="editUserModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content shadow-lg">
+            <form method="post" id="editUserForm">
+                {% csrf_token %}
+                <input type="hidden" name="edit_id" id="edit_id">
+                <div class="modal-header">
+                    <h5 class="modal-title text-white fw-bold">
+                        <i class="fas fa-user-edit text-danger me-2"></i> Revisar Registro
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label class="form-label text-secondary small fw-bold">Nombre Completo</label>
+                            <input type="text" class="form-control" name="edit_nombre" id="edit_nombre" required>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label text-secondary small fw-bold">Correo Electrónico</label>
+                            <input type="email" class="form-control" name="edit_email" id="edit_email">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label text-secondary small fw-bold">Teléfono</label>
+                            <input type="tel" class="form-control" name="edit_telefono" id="edit_telefono">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-dark px-4" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary px-4">
+                        <i class="fas fa-save me-2"></i>Guardar y Validar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     var editModal = document.getElementById('editUserModal');
     editModal.addEventListener('show.bs.modal', function (event) {
         var button = event.relatedTarget;
+        
+        // Extraer info de los atributos data-*
         var id = button.getAttribute('data-id');
         var nombre = button.getAttribute('data-nombre') || '';
         var email = button.getAttribute('data-email') || '';
         var telefono = button.getAttribute('data-telefono') || '';
         var aprobado = button.getAttribute('data-aprobado') === '1';
 
+        // Llenar los campos del modal
         document.getElementById('edit_id').value = id;
         document.getElementById('edit_nombre').value = nombre;
         document.getElementById('edit_email').value = email;
@@ -139,5 +164,4 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 </script>
-
 {% endblock %}

@@ -4,43 +4,49 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="theme-color" content="#0a0e27">
-    <title>{% block title %}Panel de Control{% endblock %}</title>
+    <meta name="theme-color" content="#0a0a0b">
+    <title>{% block title %}PagoTech | Panel{% endblock %}</title>
+    
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="{% static 'css/paneles-style.css' %}">
-    <style>
-        body { min-height: 100vh; }
-
-        /* Sobrescribir color blanco por defecto de Bootstrap en tablas */
-        /* Preferimos usar la variable definida en paneles-style.css si existe (ej: --panel-bg-table) */
-        .custom-table {
-            /* si paneles-style.css define --panel-bg-table, esto la usará */
-            --bs-table-row-bg: var(--panel-bg-table, transparent);
-            /* fallback a transparente para que se vea el fondo del contenedor */
-            background-color: transparent;
-        }
-        .custom-table thead th,
-        .custom-table tbody td {
-               background-color: var(--panel-bg-table, #1d163a) !important;
-      
-        }
-    </style>
+    <link rel="stylesheet" href="{% static 'css/dashboard-custom.css' %}">
 </head>
 <body>
+
+    <!-- Toast Container dinámico -->
+    <div class="toast-container position-fixed top-0 end-0 p-3">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="toast align-items-center text-white {% if message.tags == 'success' %}bg-success{% else %}bg-danger{% endif %} border-0 shadow-lg" role="alert">
+                    <div class="d-flex">
+                        <div class="toast-body">
+                            <i class="fas {% if message.tags == 'success' %}fa-check-circle{% else %}fa-exclamation-circle{% endif %} me-2"></i> 
+                            {{ message }}
+                        </div>
+                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                    </div>
+                </div>
+            {% endfor %}
+        {% endif %}
+    </div>
+
     <!-- Navbar -->
     <nav class="navbar navbar-expand-lg navbar-dark fixed-top">
-        <div class="container-fluid">
-            <button class="toggle-sidebar-btn" id="toggleSidebar">
+        <div class="container-fluid px-4">
+            <button class="toggle-sidebar-btn d-md-none me-3" id="toggleSidebar" style="display: block;">
                 <i class="fas fa-bars"></i>
             </button>
-            <a class="navbar-brand" href="#">
-                <a class="navbar-brand"><i class="fas fa-credit-card me-2 text-primary"></i>PagoTech</a>
+            <a class="navbar-brand d-flex align-items-center" href="{% url 'dashboard' %}">
+                <i class="fas fa-bolt text-danger me-2"></i>
+                <span>PAGO<span class="text-danger">TECH</span></span>
             </a>
-            <div class="d-flex ms-auto">
-                <span class="navbar-text">Bienvenido, {% if user %}{{ user.nombre }}{% else %}Admin{% endif %}</span>
-                <a class="btn btn-outline-secondary btn-sm ms-3" href="{% url 'logout' %}">
-                    <i class="fas fa-sign-out-alt"></i> Salir
+            <div class="d-flex ms-auto align-items-center">
+                <span class="text-muted d-none d-sm-inline me-3 small">
+                    Hola, <span class="text-white fw-bold">{% if user %}{{ user.nombre }}{% else %}Usuario{% endif %}</span>
+                </span>
+                <a class="btn btn-dark btn-sm rounded-3 border-strong" href="{% url 'logout_cliente' %}">
+                    <i class="fas fa-sign-out-alt text-danger"></i>
                 </a>
             </div>
         </div>
@@ -48,65 +54,59 @@
 
     <!-- Sidebar -->
     <aside class="sidebar" id="sidebar">
-        <h6>
-            <i class="fas fa-layer-group"></i> Menú
-        </h6>
+        <div class="px-4 mb-4 mt-2">
+            <h6 class="text-muted">Panel de Usuario</h6>
+        </div>
         <ul class="nav flex-column">
             <li class="nav-item">
-                <a class="nav-link" href="{% url 'dashboard' %}">
-                    <i class="fas fa-tachometer-alt me-2"></i>
-                    <span> Dashboard</span>
+                <a class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}" href="{% url 'dashboard' %}">
+                    <i class="fas fa-tachometer-alt"></i> Dashboard
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" href="{% url 'crear_link' %}">
-                    <i class="fas fa-link me-2"></i>
-                    <span> Crear link</span>
+                <a class="nav-link {% if request.resolver_match.url_name == 'crear_link' %}active{% endif %}" href="{% url 'crear_link' %}">
+                    <i class="fas fa-link"></i> Crear Link
                 </a>
             </li>
         </ul>
     </aside>
 
-    <!-- Contenido Principal -->
-    <main class="content-area container-fluid">
-        {% if messages %}
-            {% for message in messages %}
-                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-                    <i class="fas fa-check-circle"></i>
-                    {{ message }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
-                </div>
-            {% endfor %}
-        {% endif %}
-        {% block content %}{% endblock %}
+    <main class="content-area">
+        <div class="container-fluid">
+            {% block content %}{% endblock %}
+        </div>
     </main>
 
-    <!-- Scripts -->
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Toggle sidebar en móvil
-        document.getElementById('toggleSidebar').addEventListener('click', function() {
-            const sidebar = document.getElementById('sidebar');
-            sidebar.classList.toggle('show');
+        // Función Global para Toasts
+        function showToast(message, type = 'success') {
+            const container = document.querySelector('.toast-container');
+            const toastHtml = `
+                <div class="toast align-items-center text-white bg-${type} border-0 shadow-lg" role="alert">
+                    <div class="d-flex">
+                        <div class="toast-body">
+                            <i class="fas ${type==='success'?'fa-check-circle':'fa-exclamation-circle'} me-2"></i> ${message}
+                        </div>
+                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                    </div>
+                </div>`;
+            container.insertAdjacentHTML('beforeend', toastHtml);
+            const toastEl = container.lastElementChild;
+            new bootstrap.Toast(toastEl, {delay: 3000}).show();
+        }
+
+        // Sidebar Toggle
+        document.getElementById('toggleSidebar').addEventListener('click', () => {
+            document.getElementById('sidebar').classList.toggle('show');
         });
 
-        // Cerrar sidebar al hacer clic en un enlace
-        document.querySelectorAll('.sidebar .nav-link').forEach(link => {
-            link.addEventListener('click', function() {
-                const sidebar = document.getElementById('sidebar');
-                if (window.innerWidth <= 768) {
-                    sidebar.classList.remove('show');
-                }
-            });
-        });
-
-        // Cerrar sidebar al cambiar el tamaño de pantalla
-        window.addEventListener('resize', function() {
-            if (window.innerWidth > 768) {
-                document.getElementById('sidebar').classList.remove('show');
-            }
+        // Auto-show Django Messages
+        document.addEventListener('DOMContentLoaded', () => {
+            const toastElList = [].slice.call(document.querySelectorAll('.toast'));
+            toastElList.map(toastEl => new bootstrap.Toast(toastEl).show());
         });
     </script>
+    {% block extra_js %}{% endblock %}
 </body>
 </html>

@@ -29,7 +29,6 @@
                 </div>
             </nav>
             
-            
             <button class="menu-toggle" aria-label="Abrir menú">
                 <span></span>
                 <span></span>
@@ -40,14 +39,12 @@
 
     <main class="auth-main">
         <div class="auth-container auth-register">
-            <!-- Lado izquierdo: Formulario -->
             <div class="auth-form-section">
                 <div class="auth-header">
                     <h1>Crear tu cuenta</h1>
                     <p>Comienza a cobrar con links de pago en minutos</p>
                 </div>
 
-                <!-- Alertas de error -->
                 {% if errors %}
                 <div class="alert alert-danger">
                     <i class="fas fa-exclamation-circle"></i>
@@ -61,84 +58,58 @@
                 </div>
                 {% endif %}
 
-                <form class="auth-form" method="post" novalidate>
+                <form class="auth-form" id="registerForm" method="post" novalidate>
                     {% csrf_token %}
                     
                     <div class="form-group">
                         <label for="nombre">Nombre completo</label>
-                        <div class="input-wrapper">
+                        <div class="input-wrapper" id="wrapper-nombre">
                             <i class="fas fa-user input-icon"></i>
-                            <input 
-                                type="text"
-                                id="nombre" 
-                                name="nombre" 
-                                placeholder="Tu nombre"
-                                value="{{ data.nombre|default:'' }}"
-                                required
-                            >
+                            <input type="text" id="nombre" name="nombre" placeholder="Tu nombre" value="{{ data.nombre|default:'' }}" required>
                         </div>
+                        <span class="error-msg" id="msg-nombre">El nombre debe tener al menos 3 caracteres.</span>
                     </div>
 
                     <div class="form-group">
                         <label for="email">Correo electrónico</label>
-                        <div class="input-wrapper">
+                        <div class="input-wrapper" id="wrapper-email">
                             <i class="fas fa-envelope input-icon"></i>
-                            <input 
-                                type="email"
-                                id="email" 
-                                name="email" 
-                                placeholder="tu@correo.com"
-                                value="{{ data.email|default:'' }}"
-                            >
+                            <input type="email" id="email" name="email" placeholder="tu@correo.com" value="{{ data.email|default:'' }}">
                         </div>
+                        <span class="error-msg" id="msg-email">Ingresa un correo electrónico válido.</span>
                     </div>
 
                     <div class="form-group">
                         <label for="telefono">Teléfono (opcional)</label>
-                        <div class="input-wrapper">
+                        <div class="input-wrapper" id="wrapper-telefono">
                             <i class="fas fa-phone input-icon"></i>
-                            <input 
-                                type="tel"
-                                id="telefono" 
-                                name="telefono" 
-                                placeholder="+57 300 000 0000"
-                                value="{{ data.telefono|default:'' }}"
-                            >
+                            <input type="tel" id="telefono" name="telefono" placeholder="+57 300 000 0000" value="{{ data.telefono|default:'' }}">
                         </div>
+                        <span class="error-msg" id="msg-telefono">Solo se permiten números.</span>
                     </div>
 
                     <div class="form-group">
                         <label for="password">Contraseña</label>
-                        <div class="input-wrapper">
+                        <div class="input-wrapper" id="wrapper-password">
                             <i class="fas fa-lock input-icon"></i>
-                            <input 
-                                type="password" 
-                                id="password" 
-                                name="password" 
-                                placeholder="Mínimo 8 caracteres"
-                                required
-                            >
+                            <input type="password" id="password" name="password" placeholder="Mínimo 8 caracteres, Mayús y Símbolo" required>
                             <button type="button" class="password-toggle" onclick="togglePassword('password')">
                                 <i class="fas fa-eye"></i>
                             </button>
                         </div>
+                        <span class="error-msg" id="msg-password">Debe tener 8+ caracteres, una Mayúscula y un Símbolo.</span>
                     </div>
 
                     <div class="form-group">
                         <label for="password2">Confirmar contraseña</label>
-                        <div class="input-wrapper">
+                        <div class="input-wrapper" id="wrapper-password2">
                             <i class="fas fa-lock input-icon"></i>
-                            <input 
-                                type="password" 
-                                id="password2" 
-                                name="password2" 
-                                placeholder="Confirma tu contraseña"
-                                required
-                            >
+                            <input type="password" id="password2" name="password2" placeholder="Confirma tu contraseña" required>
                             <button type="button" class="password-toggle" onclick="togglePassword('password2')">
                                 <i class="fas fa-eye"></i>
                             </button>
                         </div>
+                        <span class="error-msg" id="msg-password2">Las contraseñas no coinciden.</span>
                     </div>
 
                     <p class="form-note">
@@ -146,7 +117,7 @@
                         Tu cuenta requiere aprobación manual del administrador.
                     </p>
 
-                    <button type="submit" class="btn btn-primary btn-lg btn-full">
+                    <button type="submit" id="btnSubmit" class="btn btn-primary btn-lg btn-full" disabled>
                         <i class="fas fa-rocket"></i>
                         Crear cuenta gratis
                     </button>
@@ -157,7 +128,6 @@
                 </div>
             </div>
 
-            <!-- Lado derecho: Contenido visual -->
             <div class="auth-visual-section">
                 <div class="auth-visual-content">
                     <div class="visual-badge">
@@ -166,26 +136,12 @@
                     </div>
                     <h2>Sin complicaciones</h2>
                     <p>Crea tu cuenta en segundos y comienza a recibir pagos con links.</p>
-                    
                     <ul class="visual-features">
-                        <li>
-                            <i class="fas fa-check-circle"></i>
-                            <span>Configuración en 2 minutos</span>
-                        </li>
-                        <li>
-                            <i class="fas fa-credit-card"></i>
-                            <span>Acepta todas las tarjetas</span>
-                        </li>
-                        <li>
-                            <i class="fas fa-coins"></i>
-                            <span>Comisiones transparentes</span>
-                        </li>
-                        <li>
-                            <i class="fas fa-shield-alt"></i>
-                            <span>100% seguro y certificado</span>
-                        </li>
+                        <li><i class="fas fa-check-circle"></i><span>Configuración en 2 minutos</span></li>
+                        <li><i class="fas fa-credit-card"></i><span>Acepta todas las tarjetas</span></li>
+                        <li><i class="fas fa-coins"></i><span>Comisiones transparentes</span></li>
+                        <li><i class="fas fa-shield-alt"></i><span>100% seguro y certificado</span></li>
                     </ul>
-
                     <div class="visual-stats">
                         <div class="stat">
                             <span class="stat-number">2,500+</span>
@@ -206,17 +162,80 @@
         function togglePassword(fieldId) {
             const passwordInput = document.getElementById(fieldId);
             const toggleBtn = passwordInput.parentElement.querySelector('.password-toggle i');
-            
             if (passwordInput.type === 'password') {
                 passwordInput.type = 'text';
-                toggleBtn.classList.remove('fa-eye');
-                toggleBtn.classList.add('fa-eye-slash');
+                toggleBtn.classList.replace('fa-eye', 'fa-eye-slash');
             } else {
                 passwordInput.type = 'password';
-                toggleBtn.classList.remove('fa-eye-slash');
-                toggleBtn.classList.add('fa-eye');
+                toggleBtn.classList.replace('fa-eye-slash', 'fa-eye');
             }
         }
+
+        document.addEventListener("DOMContentLoaded", () => {
+            const btn = document.getElementById('btnSubmit');
+            const inputs = {
+                nombre: document.getElementById('nombre'),
+                email: document.getElementById('email'),
+                telefono: document.getElementById('telefono'),
+                password: document.getElementById('password'),
+                password2: document.getElementById('password2')
+            };
+
+            const regex = {
+                nombre: /^[a-zA-ZÀ-ÿ\s]{3,40}$/,
+                email: /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/,
+                password: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_\-+=\[\]{}|:;"'<>,.?/~`])[A-Za-z\d!@#$%^&*()_\-+=\[\]{}|:;"'<>,.?/~`]{8,}$/
+            };
+
+            const validateField = (field) => {
+                const val = inputs[field].value.trim();
+                let isValid = true;
+
+                // Lógica de validación por campo
+                if (field === 'nombre') isValid = regex.nombre.test(val);
+                if (field === 'email') isValid = regex.email.test(val);
+                if (field === 'password') {
+                    isValid = regex.password.test(val);
+                    // Si cambiamos el password principal, re-validamos la confirmación
+                    if (inputs.password2.value !== "") validateField('password2');
+                }
+                if (field === 'password2') {
+                    isValid = (val === inputs.password.value && val !== "");
+                }
+                if (field === 'telefono') isValid = val === "" || /^[0-9+\s]+$/.test(val);
+
+                const wrapper = document.getElementById(`wrapper-${field}`);
+                const msg = document.getElementById(`msg-${field}`);
+
+                // --- LÓGICA SOLICITADA: Quitar error si cumple requisitos ---
+                if (isValid) {
+                    wrapper.classList.remove('invalid');
+                    if (msg) msg.style.display = 'none';
+                } else {
+                    // Solo mostramos error si el usuario ya escribió algo
+                    if (val !== "") {
+                        wrapper.classList.add('invalid');
+                        if (msg) msg.style.display = 'block';
+                    }
+                }
+                checkForm();
+            };
+
+            const checkForm = () => {
+                const isNombre = regex.nombre.test(inputs.nombre.value.trim());
+                const isEmail = regex.email.test(inputs.email.value.trim());
+                const isPass = regex.password.test(inputs.password.value);
+                const isPass2 = (inputs.password.value === inputs.password2.value && inputs.password2.value !== "");
+                
+                btn.disabled = !(isNombre && isEmail && isPass && isPass2);
+            };
+
+            // Escuchar eventos en cada input
+            Object.keys(inputs).forEach(key => {
+                inputs[key].addEventListener('input', () => validateField(key));
+                inputs[key].addEventListener('blur', () => validateField(key));
+            });
+        });
     </script>
 </body>
 </html>

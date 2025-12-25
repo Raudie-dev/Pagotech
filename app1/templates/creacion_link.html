@@ -1,218 +1,559 @@
 {% extends "base_usuario.html" %}
-{% block title %}Crear link de pago{% endblock %}
+{% load static %}
+{% block title %}PagoTech | Crear Link{% endblock %}
+
+
 {% block content %}
-<div class="d-flex align-items-center justify-content-between mb-3">
-    <div>
-        <h2 class="mb-0">Crear link de pago</h2>
-        <small class="text-muted">Genera un enlace para cobrar con tarjeta en cuotas</small>
+<div class="mb-5">
+    <div class="d-flex align-items-center justify-content-between">
+        <div>
+            <h2 class="text-white fw-bold mb-2 animate-slide-up">Crear Link de Pago</h2>
+            <p class="text-muted mb-0">Genera una orden de cobro instantánea con PayZen Latam.</p>
+        </div>
+        <div class="stats-mini d-none d-lg-flex gap-3">
+            <div class="stat-pill">
+                <i class="fas fa-shield-check text-success me-2"></i>
+                <span class="text-white-50 small">Pago Seguro</span>
+            </div>
+            <div class="stat-pill">
+                <i class="fas fa-bolt text-warning me-2"></i>
+                <span class="text-white-50 small">Instantáneo</span>
+            </div>
+        </div>
     </div>
 </div>
 
-<div class="card mb-4">
-    <div class="card-body">
-        <form id="form-crear-link" method="post" class="row g-3">
+<!-- Tarjeta del Formulario con Efecto Glass -->
+<div class="card-glass mb-5 animate-fade-in">
+    <div class="card-body p-4 p-lg-5">
+        <form id="form-crear-link" method="post">
             {% csrf_token %}
-            <div class="col-md-4">
-                <label class="form-label">Monto</label>
-                <input type="number" step="0.01" name="monto" class="form-control" placeholder="Ej. 1500.00" required>
-            </div>
-            <div class="col-md-4">
-                <label class="form-label">Cuotas</label>
-                <select name="cuotas" class="form-select">
-                    <option value="1">1 (contado)</option>
-                    <option value="3">3</option>
-                    <option value="6">6</option>
-                    <option value="12">12</option>
-                </select>
-            </div>
-            <div class="col-md-4">
-                <label class="form-label">Tipo de tarjeta</label>
-                <select name="tipo_tarjeta" class="form-select">
-                    <option value="credito">Crédito</option>
-                    <option value="debito">Débito</option>
-                </select>
-            </div>
-            <div class="col-12">
-                <label class="form-label">Descripción (opcional)</label>
-                <input type="text" name="descripcion" class="form-control" placeholder="Concepto del cobro">
-            </div>
-            <div class="col-12 text-end">
-                <button type="button" class="btn btn-primary" id="btn-confirmar-modal">Crear link</button>
+            
+            <div class="row g-4">
+                <!-- MONTO -->
+                <div class="col-md-6 col-lg-4">
+                    <label class="form-label-enhanced">
+                        <i class="fas fa-dollar-sign text-primary me-2"></i>
+                        Monto a Cobrar
+                    </label>
+                    <div class="input-wrapper">
+                        <div class="input-icon">
+                            <i class="fas fa-dollar-sign"></i>
+                        </div>
+                        <input 
+                            type="number" 
+                            step="0.01" 
+                            name="monto" 
+                            class="form-control-enhanced" 
+                            placeholder="0.00" 
+                            required
+                            id="input-monto">
+                        <div class="input-suffix">ARS</div>
+                    </div>
+                    <small class="form-hint">Ingresa el monto total a cobrar</small>
+                </div>
+
+                {% comment %}  
+                <!-- CUOTAS -->
+                <div class="col-md-6 col-lg-4">
+                    <label class="form-label-enhanced">
+                        <i class="fas fa-calendar-alt text-danger me-2"></i>
+                        Plan de Cuotas
+                    </label>
+                    <div class="select-wrapper">
+                        <select name="cuotas" class="form-select-enhanced" id="select-cuotas">
+                            <option value="1">1 pago (Contado)</option>
+                            <option value="3">3 cuotas mensuales</option>
+                            <option value="6">6 cuotas mensuales</option>
+                            <option value="12">12 cuotas mensuales</option>
+                        </select>
+                        <i class="fas fa-chevron-down select-arrow"></i>
+                    </div>
+                    <small class="form-hint">Selecciona el plan de financiamiento</small>
+                </div>
+                {% endcomment %}
+
+                <!-- TIPO TARJETA -->
+                <div class="col-md-12 col-lg-4">
+                    <label class="form-label-enhanced">
+                        <i class="fas fa-credit-card text-info me-2"></i>
+                        Medio de Pago
+                    </label>
+                    <div class="select-wrapper">
+                        <select name="tipo_tarjeta" class="form-select-enhanced" id="select-tipo">
+                            <option value="debito">Débito (3.49% comisión)</option>
+                            <option value="credito" selected>Crédito (3.99% comisión)</option>
+                        </select>
+                        <i class="fas fa-chevron-down select-arrow"></i>
+                    </div>
+                    <small class="form-hint">La comisión se descuenta automáticamente</small>
+                </div>
+
+                <!-- PREVIEW DE CÁLCULO EN TIEMPO REAL -->
+                <div class="col-12">
+                    <div class="calculation-preview" id="calc-preview" style="display: none;">
+                        <div class="row g-3 align-items-center">
+                            <div class="col-md-4">
+                                <div class="calc-item">
+                                    <span class="calc-label">Monto Bruto</span>
+                                    <span class="calc-value text-white" id="preview-bruto">$0.00</span>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="calc-item">
+                                    <span class="calc-label">Comisión</span>
+                                    <span class="calc-value text-danger" id="preview-comision">-$0.00</span>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="calc-item highlight">
+                                    <span class="calc-label">Recibirás</span>
+                                    <span class="calc-value text-success fw-bold" id="preview-neto">$0.00</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- DESCRIPCIÓN -->
+                <div class="col-12">
+                    <label class="form-label-enhanced">
+                        <i class="fas fa-pen-nib text-warning me-2"></i>
+                        Concepto o Descripción
+                        <span class="optional-badge">Opcional</span>
+                    </label>
+                    <div class="input-wrapper">
+                        <div class="input-icon">
+                            <i class="fas fa-align-left"></i>
+                        </div>
+                        <input 
+                            type="text" 
+                            name="descripcion" 
+                            class="form-control-enhanced" 
+                            placeholder="Ej: Pago de servicios profesionales..."
+                            maxlength="100"
+                            id="input-descripcion">
+                    </div>
+                    <small class="form-hint">Máximo 100 caracteres</small>
+                </div>
+
+                <!-- BOTÓN ACCIÓN -->
+                <div class="col-12 mt-4">
+                    <button 
+                        type="button" 
+                        class="btn-generate-link" 
+                        id="btn-confirmar-modal">
+                        <span class="btn-content">
+                            <i class="fas fa-link me-2"></i>
+                            GENERAR ENLACE SEGURO
+                            <i class="fas fa-arrow-right ms-2"></i>
+                        </span>
+                        <div class="btn-shine"></div>
+                    </button>
+                </div>
             </div>
         </form>
     </div>
 </div>
 
-<!-- Modal de confirmación de creación -->
-<div class="modal fade" id="modalConfirmacion" tabindex="-1" aria-labelledby="modalConfirmacionLabel" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="modalConfirmacionLabel">Confirmar creación</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-      </div>
-      <div class="modal-body">
-        <p>¿Estás seguro que deseas crear este link de pago?</p>
-        <ul class="list-group mb-2" id="resumen-datos-modal">
-          <!-- Los datos se llenan desde el backend vía JS -->
-        </ul>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-        <button type="button" class="btn btn-primary" id="btn-crear-link-final">Sí, crear link</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Modal de link generado/copiar -->
-{% if link_creado %}
-<div class="modal fade show" id="modalLinkGenerado" tabindex="-1" aria-labelledby="modalLinkGeneradoLabel" aria-modal="true" style="display:block;">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="modalLinkGeneradoLabel">¡Link creado exitosamente!</h5>
-        <button type="button" class="btn-close" onclick="window.location.href=window.location.pathname"></button>
-      </div>
-      <div class="modal-body">
-        <div class="alert alert-success" role="alert">
-          El link de pago ha sido generado.
-        </div>
-        <div class="mb-2">
-          <label><strong>Link generado:</strong></label>
-          <div class="input-group">
-            <input type="text" id="link-generado" class="form-control" value="{{ link_creado.url }}" readonly>
-            <button class="btn btn-outline-secondary" type="button" id="btn-copiar-link-generado">Copiar</button>
-          </div>
-        </div>
-        <ul class="list-group mt-3">
-          <li class="list-group-item"><strong>Monto:</strong> ${{ link_creado.monto }}</li>
-          <li class="list-group-item"><strong>Cuotas:</strong> {{ link_creado.cuotas }}</li>
-          <li class="list-group-item"><strong>Tipo de tarjeta:</strong> {{ link_creado.tipo_tarjeta|title }}</li>
-          <li class="list-group-item"><strong>Descripción:</strong> {{ link_creado.descripcion }}</li>
-          <li class="list-group-item"><strong>% Comisión:</strong> {{ link_creado.commission_percent }}%</li>
-          <li class="list-group-item"><strong>Comisión:</strong> ${{ link_creado.commission_amount }}</li>
-          <li class="list-group-item"><strong>A cobrar:</strong> ${{ link_creado.receiver_amount }}</li>
-        </ul>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-success" onclick="window.location.href=window.location.pathname">Listo</button>
-      </div>
-    </div>
-  </div>
-</div>
-<script>
-window.addEventListener('DOMContentLoaded', function() {
-    setTimeout(function() {
-        var modal = document.getElementById('modalLinkGenerado');
-        if (modal) modal.classList.add('show');
-    }, 100);
-    document.getElementById('btn-copiar-link-generado').onclick = function() {
-        var input = document.getElementById('link-generado');
-        input.select();
-        document.execCommand('copy');
-        this.textContent = 'Copiado!';
-        setTimeout(() => { this.textContent = 'Copiar'; }, 1500);
-    };
-});
-</script>
-{% endif %}
-
-{# Lista de links creados por el usuario #}
+<!-- Tabla de Links Recientes -->
 {% if links %}
-<div class="card">
-	<div class="card-body">
-		<h5>Tus links</h5>
-		<table class="table">
-			<thead>
-				<tr>
-					<th>Link</th>
-					<th>Creado</th>
-					<th>Monto</th>
-					<th>% Comisión</th>
-					<th>Comisión</th>
-					<th>A cobrar</th>
-					<th>Acciones</th>
-				</tr>
-			</thead>
-			<tbody>
-				{% for l in links %}
-				<tr>
-					<td><a href="{{ l.link }}" target="_blank">{{ l.link }}</a></td>
-					<td>{{ l.created_at }}</td>
-					<td>{{ l.monto }}</td>
-					<td>{{ l.commission_percent }}%</td>
-					<td>{{ l.commission_amount }}</td>
-					<td>{{ l.receiver_amount }}</td>
-					<td>
-						<button class="btn btn-sm btn-outline-secondary btn-copy" data-link="{{ l.link }}">Copiar</button>
-						<a class="btn btn-sm btn-outline-primary" href="{% url 'crear_link' %}?download={{ l.id }}">Descargar ticket</a>
-					</td>
-				</tr>
-				{% endfor %}
-			</tbody>
-		</table>
-	</div>
+<div class="table-section animate-slide-up">
+    <div class="section-header">
+        <div class="d-flex align-items-center">
+            <div class="header-icon">
+                <i class="fas fa-history"></i>
+            </div>
+            <div>
+                <h5 class="mb-0 text-white fw-bold">Historial de Cobros</h5>
+                <small class="text-muted">Últimos enlaces generados</small>
+            </div>
+        </div>
+        <div class="badge-count">
+            <span>{{ links|length }}</span> link{{ links|length|pluralize }}
+        </div>
+    </div>
+    
+    <div class="table-responsive">
+        <table class="table-modern">
+            <thead>
+                <tr>
+                    <th class="ps-4">Link de Pago</th>
+                    <th>Descripción</th>
+                    <th>Monto</th>
+                    <th>Neto a Recibir</th>
+                    <th>Estado</th>
+                    <th>Cuotas</th>
+                    <th class="text-end pe-4">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for l in links %}
+                <tr class="table-row-hover">
+                    <td class="ps-4">
+                        <div class="d-flex align-items-center">
+                            <div class="link-icon"><i class="fas fa-link"></i></div>
+                            <div class="link-info">
+                                <code class="link-code">{{ l.link|truncatechars:30 }}</code>
+                                <small class="link-meta">{{ l.created_at|timesince }}</small>
+                            </div>
+                        </div>
+                    </td>
+                    <td>{{ l.descripcion }}</td>
+                    <td>${{ l.monto }}</td>
+                    <td><span class="net-amount">${{ l.receiver_amount }}</span></td>
+                    
+                    <!-- ESTADO CON BOTÓN DE REFRESH -->
+                    <td>
+                        <div class="d-flex align-items-center gap-2" id="status-container-{{ l.id }}">
+                            {% if l.pagado %}
+                                <span class="status-badge" style="background: rgba(16, 185, 129, 0.1); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.2); padding: 5px 12px; border-radius: 20px; font-size: 11px;">
+                                    <i class="fas fa-check-circle me-1"></i> Pagado
+                                </span>
+                                <a href="{% url 'ticket_pdf' l.id %}" target="_blank" class="btn-action btn-download" title="Ver Recibo">
+                                    <i class="fas fa-file-invoice"></i>
+                                </a>
+                            {% else %}
+                                <!-- Usamos una clase 'js-check-status' para que el JS sepa que debe verificar este link -->
+                                <span class="status-badge badge-pendiente js-check-status" 
+                                    data-id="{{ l.id }}" 
+                                    style="background: rgba(245, 158, 11, 0.1); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.2); padding: 5px 12px; border-radius: 20px; font-size: 11px;">
+                                    <i class="fas fa-sync-alt fa-spin me-1"></i> Verificando...
+                                </span>
+                            {% endif %}
+                        </div>
+                    </td>
+                    <td>
+                        <span id="cuotas-text-{{ l.id }}">
+                            {% if l.pagado %}
+                                {{ l.cuotas_elegidas }} cuota{{ l.cuotas_elegidas|pluralize }}
+                            {% else %}
+                                --
+                            {% endif %}
+                        </span>
+                    </td>
+                    <td class="text-end pe-4">
+                        <div class="action-buttons">
+                            <button class="btn-action btn-copy" data-link="{{ l.link }}"><i class="fas fa-copy"></i></button>
+                            <a href="{{ l.link }}" target="_blank" class="btn-action btn-external"><i class="fas fa-external-link-alt"></i></a>
+                        </div>
+                    </td>
+
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- PAGINACIÓN -->
+<!-- Controles de Paginación para Links -->
+<div class="pagination-container d-flex flex-column flex-md-row justify-content-between align-items-center p-4 border-top border-secondary border-opacity-10">
+    
+    <!-- Información de resultados -->
+    <div class="pagination-info mb-3 mb-md-0">
+        Mostrando <span class="text-white fw-bold">{{ links.start_index }}</span> - 
+        <span class="text-white fw-bold">{{ links.end_index }}</span> de 
+        <span class="text-danger fw-bold">{{ links.paginator.count }}</span> registros
+    </div>
+    
+    <nav aria-label="Navegación de páginas">
+        <ul class="pagination pagination-sm mb-0">
+            
+            <!-- Botón Primero y Anterior -->
+            {% if links.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?page=1{% if q %}&q={{ q }}{% endif %}" title="Primero">
+                    <i class="fas fa-angle-double-left"></i>
+                </a>
+            </li>
+            <li class="page-item">
+                <a class="page-link" href="?page={{ links.previous_page_number }}{% if q %}&q={{ q }}{% endif %}">
+                    <i class="fas fa-chevron-left me-1"></i> Anterior
+                </a>
+            </li>
+            {% else %}
+            <li class="page-item disabled">
+                <span class="page-link"><i class="fas fa-chevron-left"></i></span>
+            </li>
+            {% endif %}
+
+            <!-- Números de Páginas Dinámicos -->
+            {% for num in links.paginator.page_range %}
+                {% if links.number == num %}
+                    <li class="page-item active">
+                        <span class="page-link">{{ num }}</span>
+                    </li>
+                {% elif num > links.number|add:'-3' and num < links.number|add:'3' %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ num }}{% if q %}&q={{ q }}{% endif %}">{{ num }}</a>
+                    </li>
+                {% endif %}
+            {% endfor %}
+
+            <!-- Botón Siguiente y Último -->
+            {% if links.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ links.next_page_number }}{% if q %}&q={{ q }}{% endif %}">
+                    Siguiente <i class="fas fa-chevron-right ms-1"></i>
+                </a>
+            </li>
+            <li class="page-item">
+                <a class="page-link" href="?page={{ links.paginator.num_pages }}{% if q %}&q={{ q }}{% endif %}" title="Último">
+                    <i class="fas fa-angle-double-right"></i>
+                </a>
+            </li>
+            {% else %}
+            <li class="page-item disabled">
+                <span class="page-link"><i class="fas fa-chevron-right"></i></span>
+            </li>
+            {% endif %}
+
+        </ul>
+    </nav>
+</div>
 </div>
 {% endif %}
 
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    var modalConfirmacion = new bootstrap.Modal(document.getElementById('modalConfirmacion'));
-    var btnAbrirModal = document.getElementById('btn-confirmar-modal');
-    var btnCrearFinal = document.getElementById('btn-crear-link-final');
-    var formCrearLink = document.getElementById('form-crear-link');
-    var resumenDatos = document.getElementById('resumen-datos-modal');
+<!-- MODAL DE CONFIRMACIÓN -->
+<div class="modal fade" id="modalConfirmacion" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content modal-dark">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-shield-check text-primary me-2"></i>
+                    Confirmar Generación de Enlace
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="confirmation-summary" id="resumen-datos-modal">
+                    <!-- JS llena esto -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    Cancelar
+                </button>
+                <button type="button" id="btn-crear-link-final" class="btn btn-primary">
+                    <i class="fas fa-check me-2"></i>
+                    Crear Link Ahora
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 
-    function obtenerComisionPct(tipoTarjeta) {
-        if (tipoTarjeta === 'debito') return 3.49;
-        if (tipoTarjeta === 'credito') return 3.99;
-        return 0;
+<!-- MODAL DE ÉXITO -->
+{% if link_creado %}
+<div class="modal fade" id="modalLinkGenerado" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content modal-success">
+            <div class="modal-body text-center p-5">
+                <div class="success-animation mb-4">
+                    <div class="success-circle">
+                        <i class="fas fa-check"></i>
+                    </div>
+                </div>
+                <h3 class="text-white fw-bold mb-2">¡Enlace Generado!</h3>
+                <p class="text-white-50 mb-4">Tu link de pago está listo para compartir</p>
+                
+                <div class="link-generated-box mb-4">
+                    <input 
+                        type="text" 
+                        id="link-generado-input" 
+                        class="link-generated-input" 
+                        value="{{ link_creado.url }}" 
+                        readonly>
+                    <button class="btn-copy-success" id="btn-copiar-link-final">
+                        <i class="fas fa-copy"></i>
+                    </button>
+                </div>
+                
+                <div class="d-grid gap-2">
+                    <a href="{{ link_creado.url }}" target="_blank" class="btn btn-primary">
+                        <i class="fas fa-external-link-alt me-2"></i>
+                        Abrir Enlace
+                    </a>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        Cerrar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    // --- LÓGICA EXISTENTE (MODALES Y FORMULARIO) ---
+    const modalConfirmacion = new bootstrap.Modal(document.getElementById('modalConfirmacion'));
+    const form = document.getElementById('form-crear-link');
+    const inputMonto = document.getElementById('input-monto');
+    const selectTipo = document.getElementById('select-tipo');
+    const calcPreview = document.getElementById('calc-preview');
+
+    // Animación de entrada
+    setTimeout(() => {
+        const card = document.querySelector('.card-glass');
+        if(card) {
+            card.style.opacity = '1';
+            card.style.transform = 'translateY(0)';
+        }
+    }, 100);
+
+    // Cálculo en tiempo real
+    function updatePreview() {
+        const monto = parseFloat(inputMonto.value) || 0;
+        if (monto > 0) {
+            const tarjeta = selectTipo.value;
+            const pct = tarjeta === 'debito' ? 3.49 : 3.99;
+            const comision = (monto * pct / 100);
+            const neto = (monto - comision);
+
+            document.getElementById('preview-bruto').textContent = `$${monto.toLocaleString('es-AR', {minimumFractionDigits: 2})}`;
+            document.getElementById('preview-comision').textContent = `-$${comision.toLocaleString('es-AR', {minimumFractionDigits: 2})}`;
+            document.getElementById('preview-neto').textContent = `$${neto.toLocaleString('es-AR', {minimumFractionDigits: 2})}`;
+            
+            calcPreview.style.display = 'block';
+            setTimeout(() => calcPreview.classList.add('show'), 10);
+        } else {
+            calcPreview.classList.remove('show');
+            setTimeout(() => calcPreview.style.display = 'none', 300);
+        }
     }
 
-    btnAbrirModal.addEventListener('click', function(e) {
-        e.preventDefault();
-        var monto = parseFloat(formCrearLink.monto.value) || 0;
-        var cuotas = formCrearLink.cuotas.value;
-        var tipoTarjeta = formCrearLink.tipo_tarjeta.value;
-        var descripcion = formCrearLink.descripcion.value || '-';
-        var comisionPct = obtenerComisionPct(tipoTarjeta);
-        var comision = +(monto * comisionPct / 100).toFixed(2);
-        var aCobrar = +(monto - comision).toFixed(2);
+    inputMonto.addEventListener('input', updatePreview);
+    selectTipo.addEventListener('change', updatePreview);
 
-        resumenDatos.innerHTML = `
-          <li class="list-group-item"><strong>Monto:</strong> $${monto.toFixed(2)}</li>
-          <li class="list-group-item"><strong>Cuotas:</strong> ${cuotas}</li>
-          <li class="list-group-item"><strong>Tipo de tarjeta:</strong> ${tipoTarjeta.charAt(0).toUpperCase() + tipoTarjeta.slice(1)}</li>
-          <li class="list-group-item"><strong>Descripción:</strong> ${descripcion}</li>
-          <li class="list-group-item"><strong>% Comisión:</strong> ${comisionPct}%</li>
-          <li class="list-group-item"><strong>Comisión:</strong> $${comision.toFixed(2)}</li>
-          <li class="list-group-item"><strong>A cobrar:</strong> $${aCobrar.toFixed(2)}</li>
+    // Botones de copiar en tabla
+    document.querySelectorAll('.btn-copy').forEach(btn => {
+        btn.onclick = function() {
+            const link = this.getAttribute('data-link');
+            navigator.clipboard.writeText(link).then(() => {
+                const originalHTML = this.innerHTML;
+                this.innerHTML = '<i class="fas fa-check"></i>';
+                showNotification('¡Enlace copiado!', 'success');
+                setTimeout(() => this.innerHTML = originalHTML, 2000);
+            });
+        };
+    });
+
+    // Modal de éxito (después de crear link)
+    if(document.getElementById('modalLinkGenerado')) {
+        new bootstrap.Modal(document.getElementById('modalLinkGenerado')).show();
+        document.getElementById('btn-copiar-link-final').onclick = function() {
+            const val = document.getElementById('link-generado-input').value;
+            navigator.clipboard.writeText(val).then(() => {
+                this.innerHTML = '<i class="fas fa-check"></i>';
+                showNotification('¡Enlace copiado!', 'success');
+            });
+        };
+    }
+
+    // Modal de confirmación previo a enviar
+    document.getElementById('btn-confirmar-modal').addEventListener('click', () => {
+        const monto = parseFloat(form.monto.value) || 0;
+        if(monto <= 0) {
+            showNotification('Ingresa un monto válido', 'error');
+            inputMonto.focus();
+            return;
+        }
+        
+        const tarjeta = form.tipo_tarjeta.value;
+        // const cuotas = form.cuotas.value;
+        const pct = tarjeta === 'debito' ? 3.49 : 3.99;
+        const comision = (monto * pct / 100);
+        const neto = (monto - comision);
+
+        document.getElementById('resumen-datos-modal').innerHTML = `
+            <div class="summary-row">
+                <span class="summary-label">Monto Bruto</span>
+                <span class="summary-value">$${monto.toLocaleString('es-AR', {minimumFractionDigits: 2})}</span>
+            </div>
+            <div class="summary-row">
+                <span class="summary-label">Tipo de Tarjeta</span>
+                <span class="summary-value">${tarjeta === 'debito' ? 'Débito' : 'Crédito'}</span>
+            </div>
+            <div class="summary-divider"></div>
+            <div class="summary-row text-danger">
+                <span class="summary-label">Comisión (${pct}%)</span>
+                <span class="summary-value">-$${comision.toLocaleString('es-AR', {minimumFractionDigits: 2})}</span>
+            </div>
+            <div class="summary-divider"></div>
+            <div class="summary-row summary-total">
+                <span class="summary-label">Recibirás</span>
+                <span class="summary-value text-success">$${neto.toLocaleString('es-AR', {minimumFractionDigits: 2})}</span>
+            </div>
+            <p class="text-muted small mt-2">* El cliente podrá elegir las cuotas en la pasarela de pago.</p>
         `;
         modalConfirmacion.show();
     });
 
-    btnCrearFinal.addEventListener('click', function() {
-        formCrearLink.appendChild(Object.assign(document.createElement('input'), {type:'hidden', name:'confirm', value:'1'}));
-        formCrearLink.submit();
+    document.getElementById('btn-crear-link-final').addEventListener('click', function() {
+        this.disabled = true;
+        this.innerHTML = `<span class="spinner-border spinner-border-sm me-2"></span> Creando...`;
+        const hidden = document.createElement('input');
+        hidden.type = 'hidden'; hidden.name = 'confirm'; hidden.value = '1';
+        form.appendChild(hidden);
+        form.submit();
     });
 
-    // Copiar al portapapeles para la tabla de links
-    document.addEventListener('click', function(e){
-        if(e.target && e.target.classList.contains('btn-copy')){
-            const link = e.target.getAttribute('data-link');
-            if(navigator.clipboard){
-                navigator.clipboard.writeText(link).then(()=> {
-                    alert('Link copiado al portapapeles');
-                });
-            } else {
-                const ta = document.createElement('textarea');
-                ta.value = link; document.body.appendChild(ta);
-                ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
-                alert('Link copiado al portapapeles');
-            }
-        }
+    // --- NUEVA LÓGICA DE VERIFICACIÓN AUTOMÁTICA (AJAX) ---
+    const pendingLinks = document.querySelectorAll('.js-check-status');
+
+    pendingLinks.forEach(badge => {
+        const linkId = badge.getAttribute('data-id');
+        
+        // Llamada al endpoint asíncrono
+        fetch(`/verificar-pago-ajax/${linkId}/`)
+            .then(response => response.json())
+            .then(data => {
+                const container = document.getElementById(`status-container-${linkId}`);
+                if (data.pagado) {
+                    // Actualizar a estado PAGADO
+                    container.innerHTML = `
+                        <span class="status-badge" style="background: rgba(16, 185, 129, 0.1); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.2); padding: 5px 12px; border-radius: 20px; font-size: 11px;">
+                            <i class="fas fa-check-circle me-1"></i> Pagado
+                        </span>
+                        <a href="/ticket_pdf/${linkId}/" target="_blank" class="btn-action btn-download" title="Ver Recibo">
+                            <i class="fas fa-file-invoice"></i>
+                        </a>
+                    `;
+                    // Actualizar texto de cuotas
+                    const cuotasSpan = document.getElementById(`cuotas-text-${linkId}`);
+                    if (cuotasSpan) {
+                        cuotasSpan.innerText = `${data.cuotas} cuota${data.cuotas > 1 ? 's' : ''}`;
+                    }
+
+                    showNotification(`¡Pago confirmado para el link #${linkId}!`, 'success');
+                } else {
+                    // Cambiar "Verificando..." por "Pendiente" estático
+                    badge.innerHTML = '<i class="fas fa-clock me-1"></i> Pendiente';
+                    badge.classList.remove('fa-spin');
+                }
+            })
+            .catch(err => {
+                console.error("Error verificando link:", linkId, err);
+                badge.innerHTML = '<i class="fas fa-clock me-1"></i> Pendiente';
+            });
     });
 });
+
+// Función de notificaciones Toast
+function showNotification(message, type = 'success') {
+    const notification = document.createElement('div');
+    notification.className = `notification notification-${type}`;
+    notification.innerHTML = `<i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'} me-2"></i>${message}`;
+    document.body.appendChild(notification);
+    setTimeout(() => notification.classList.add('show'), 10);
+    setTimeout(() => {
+        notification.classList.remove('show');
+        setTimeout(() => notification.remove(), 300);
+    }, 3000);
+}
 </script>
 {% endblock %}

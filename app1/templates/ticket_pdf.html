@@ -1,58 +1,290 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="es">
-<head>
-<meta charset="utf-8">
-<title>Ticket Link {{ link.id }}</title>
-<style>
-	body { font-family: Arial, sans-serif; font-size: 12px; color:#222; margin:20px; }
-	.header { text-align: center; margin-bottom: 10px; }
-	.table { width:100%; border-collapse: collapse; margin-top:10px; }
-	.table th, .table td { border:1px solid #444; padding:8px; text-align:left; }
-	.summary { margin-top:15px; width:100%; }
-	.right { text-align:right; }
-</style>
-</head>
-<body>
-	<div class="header">
-		<h2>Factura / Ticket</h2>
-		<p>Link ID: {{ link.id }}</p>
-	</div>
+  <head>
+    <meta charset="utf-8" />
+    <title>Comprobante PagoTech #{{ link.id }}</title>
+    <style>
+      @page {
+        size: a4;
+        margin: 1cm; /* Margen optimizado */
+      }
+	  
+      body {
+        font-family: "Helvetica", Arial, sans-serif;
+        color: #111113;
+        line-height: 1.3;
+        margin: 0;
+        padding: 0;
+        font-size: 12px;
+      }
 
-	<table class="table">
-		<tr><th>Cliente</th><td>{{ cliente.nombre }}</td></tr>
-		<tr><th>Fecha</th><td>{% if link.created_at %}{{ link.created_at|date:"Y-m-d H:i:s" }}{% else %}-{% endif %}</td></tr>
-		<tr><th>Descripción</th><td>{{ link.descripcion }}</td></tr>
-		<tr><th>Tipo de tarjeta</th><td>{% if link.tipo_tarjeta %}{{ link.tipo_tarjeta|title }}{% else %}-{% endif %}</td></tr>
-		<tr><th>Cuotas</th><td>{{ link.cuotas }}</td></tr>
-	</table>
+      .wrapper {
+        max-width: 100%;
+        margin: 0 auto;
+      }
+	  
+      /* Header Compacto */
+      .header-table {
+        width: 100%;
+        border-bottom: 2px solid #e63946;
+        padding-bottom: 10px;
+        margin-bottom: 15px;
+      }
 
-	<table class="table summary">
-		<thead>
-			<tr>
-				<th>Concepto</th>
-				<th class="right">Importe</th>
-			</tr>
-		</thead>
-		<tbody>
-			<tr>
-				<td>Importe bruto</td>
-				<td class="right">{{ link.monto }}</td>
-			</tr>
-			<tr>
-				<td>Porcentaje comisión</td>
-				<td class="right">{{ link.commission_percent }}%</td>
-			</tr>
-			<tr>
-				<td>Comisión (plataforma)</td>
-				<td class="right">{{ link.commission_amount }}</td>
-			</tr>
-			<tr>
-				<td><strong>Total a recibir</strong></td>
-				<td class="right"><strong>{{ link.receiver_amount }}</strong></td>
-			</tr>
-		</tbody>
-	</table>
+      .brand-name {
+        font-size: 24px;
+        font-weight: bold;
+        color: #e63946;
+        letter-spacing: -1px;
+      }
 
-	<p>Link de pago: {% if link.link %}<a href="{{ link.link }}">{{ link.link }}</a>{% else %}-{% endif %}</p>
-</body>
+      .ticket-id {
+        text-align: right;
+        color: #71717a;
+        font-size: 11px;
+      }
+
+      /* Badge de Estado */
+      .status-container {
+        text-align: right;
+        margin-bottom: 20px;
+      }
+
+      .status-badge {
+        display: inline-block;
+        background-color: #f0fff9; /* Verde esmeralda muy tenue de fondo */
+        color: #06d6a0; /* Verde Esmeralda PagoTech */
+        padding: 6px 16px;
+        border-radius: 50px; /* Bordes totalmente circulares (pill) */
+        font-size: 10px;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border: 1px solid #06d6a0; /* Borde sólido para dar estructura */
+        position: relative;
+      }
+
+      /* El pequeño checkmark decorativo */
+      .status-badge::before {
+        content: "●";
+        margin-right: 6px;
+        font-size: 12px;
+        vertical-align: middle;
+      }
+
+      /* Secciones */
+      .section-title {
+        font-size: 11px;
+        font-weight: bold;
+        color: #e63946;
+        border-bottom: 1px solid #f4f4f5;
+        padding-bottom: 4px;
+        margin-bottom: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      /* Info en 2 columnas para ahorrar espacio vertical */
+      .info-grid {
+        width: 100%;
+        margin-bottom: 15px;
+        border-collapse: collapse;
+      }
+
+      .info-grid td {
+        padding: 4px 0;
+        width: 25%;
+      }
+
+      .label {
+        color: #71717a;
+        font-weight: bold;
+        font-size: 10px;
+        text-transform: uppercase;
+      }
+      .value {
+        color: #111113;
+        width: 25%;
+      }
+
+      /* Tabla de Resumen */
+      .summary-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 15px;
+      }
+
+      .summary-table th {
+        background-color: #1a1a1d;
+        color: #ffffff;
+        font-size: 10px;
+        padding: 8px;
+        text-align: left;
+        text-transform: uppercase;
+      }
+
+      .summary-table td {
+        padding: 10px 8px;
+        border-bottom: 1px solid #f4f4f5;
+      }
+
+      .total-row {
+        background-color: #f8fafc;
+      }
+
+      .total-text {
+        font-weight: bold;
+        color: #111113;
+      }
+
+      .total-amount {
+        font-size: 16px;
+        font-weight: bold;
+        color: #e63946;
+      }
+
+      /* Footer con QR lateral */
+      .footer-table {
+        width: 100%;
+        margin-top: 20px;
+        border-top: 1px solid #f4f4f5;
+        padding-top: 15px;
+      }
+
+      .footer-info {
+        font-size: 10px;
+        color: #a1a1aa;
+        line-height: 1.4;
+      }
+
+      .qr-section {
+        text-align: right;
+        width: 100px;
+      }
+
+      .link-text {
+        font-family: monospace;
+        color: #c1121f;
+        font-size: 9px;
+        word-break: break-all;
+      }
+
+      .right {
+        text-align: right;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrapper">
+      <!-- Encabezado -->
+      <table class="header-table">
+        <tr>
+          <td class="brand-name">PAGOTECH</td>
+          <td class="ticket-id">
+            COMPROBANTE DE OPERACIÓN<br />
+            <strong>ID: #{{ link.id }}</strong>
+          </td>
+        </tr>
+      </table>
+
+      <!-- Estado -->
+      <div class="status-container">
+        <span class="status-badge">Pago Procesado con Éxito</span>
+      </div>
+
+      <!-- Detalles -->
+      <div class="section-title">Información de la Transacción</div>
+      <table class="info-grid">
+        <tr>
+          <td class="label">Cliente:</td>
+          <td class="value">{{ cliente.nombre }}</td>
+          <td class="label">Fecha y Hora:</td>
+          <td class="value">
+            {% if link.created_at %}{{ link.created_at|date:"d/m/Y H:i" }}{%
+            else %}-{% endif %}
+          </td>
+        </tr>
+        <tr>
+          <td class="label">Concepto:</td>
+          <td class="value">
+            {{ link.descripcion|default:"Pago de servicio" }}
+          </td>
+          <td class="label">Método:</td>
+          <td class="value">{{ link.tipo_tarjeta|title }}</td>
+        </tr>
+        <tr>
+          <td class="label">Operación:</td>
+          <td class="value">Venta Online</td>
+          <td class="label">Cuotas:</td>
+          <td class="value">{{ link.cuotas }} cuota(s)</td>
+        </tr>
+      </table>
+
+      <!-- Tabla Financiera -->
+      <div class="section-title">Desglose de Pago</div>
+      <table class="summary-table">
+        <thead>
+          <tr>
+            <th>Descripción</th>
+            <th class="right">Subtotal</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Monto original de la transacción</td>
+            <td class="right">ARS {{ link.monto }}</td>
+          </tr>
+          <tr>
+            <td style="color: #71717a">
+              Comisión por gestión de plataforma ({{ link.commission_percent
+              }}%)
+            </td>
+            <td class="right" style="color: #c1121f">
+              - ARS {{ link.commission_amount }}
+            </td>
+          </tr>
+          <tr class="total-row">
+            <td class="total-text">MONTO NETO ACREDITADO</td>
+            <td class="right total-amount">ARS {{ link.receiver_amount }}</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- Footer -->
+      <table class="footer-table">
+        <tr>
+          <td class="footer-info">
+            <strong>PagoTech Latam</strong><br />
+            Este documento es un comprobante válido de la acreditación de fondos
+            en su cuenta.<br />
+            La transacción ha sido verificada bajo protocolos de seguridad
+            PCI-DSS.<br /><br />
+            URL de verificación:<br />
+            <span class="link-text">{{ link.link }}</span>
+          </td>
+          <td class="qr-section">
+            <!-- API de QR para validación visual formal -->
+            <img
+              src="https://api.qrserver.com/v1/create-qr-code/?size=65x65&data={{ link.link|urlencode }}"
+              width="65"
+              height="65"
+              alt="QR Code"
+            /><br />
+            <span style="font-size: 8px; color: #a1a1aa">VALIDAR AQUÍ</span>
+          </td>
+        </tr>
+      </table>
+
+      <div
+        style="
+          text-align: center;
+          margin-top: 20px;
+          font-size: 9px;
+          color: #d1d1d6;
+        "
+      >
+        &copy; {% now "Y" %} PagoTech - Procesado de forma segura
+      </div>
+    </div>
+  </body>
 </html>

@@ -1,4 +1,41 @@
+function showToast(message, type = 'success') {
+  const container = document.querySelector('.toast-container');
+  if (!container) return; // Seguridad por si no existe el contenedor
+
+  const toastHtml = `
+      <div class="toast align-items-center text-white bg-${type} border-0 shadow-lg" role="alert" aria-live="assertive" aria-atomic="true">
+          <div class="d-flex">
+              <div class="toast-body">
+                  <i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'} me-2"></i> ${message}
+              </div>
+              <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+          </div>
+      </div>`;
+  
+  container.insertAdjacentHTML('beforeend', toastHtml);
+  const toastEl = container.lastElementChild;
+  const bsToast = new bootstrap.Toast(toastEl, { delay: 5000 });
+  bsToast.show();
+}
+
 document.addEventListener("DOMContentLoaded", () => {
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get('registered') === '1') {
+    // 1. Mostrar la notificación
+    showToast('Usuario creado con éxito. Esperando aprobación del administrador.', 'success');
+    
+    // 2. Limpiar la URL para que no vuelva a salir al recargar
+    const newUrl = window.location.pathname;
+    window.history.replaceState({}, document.title, newUrl);
+  }
+
+  // --- AUTO-MOSTRAR MENSAJES DE DJANGO ---
+  const existingToasts = document.querySelectorAll('.toast-container .toast');
+  existingToasts.forEach(toastEl => {
+    const bsToast = new bootstrap.Toast(toastEl);
+    bsToast.show();
+  });
+
   const menuToggle = document.querySelector(".menu-toggle")
   const mobileNav = document.querySelector(".mobile-nav")
 

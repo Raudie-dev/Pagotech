@@ -1,56 +1,78 @@
 {% extends "base_usuario.html" %}
-{% block title %}Dashboard{% endblock %}
+{% block title %}PagoTech | Dashboard{% endblock %}
+
 {% block content %}
-<div class="d-flex align-items-center justify-content-between mb-3">
+<div class="d-flex align-items-center justify-content-between mb-5">
     <div>
-        <h2 class="mb-0">Dashboard</h2>
-        <small class="text-muted">Panel de control de PagoTech</small>
+        <h2 class="mb-1 text-white fw-bold">Dashboard</h2>
+        <p class="text-muted mb-0">Bienvenido al resumen de tu negocio</p>
     </div>
-    <div>
-        <a href="{% url 'crear_link' %}" class="btn btn-primary"><i class="fas fa-link me-2"></i> Crear link de pago</a>
-    </div>
+    <a href="{% url 'crear_link' %}" class="btn btn-primary px-4 shadow">
+        <i class="fas fa-plus me-2"></i> Nuevo Link
+    </a>
 </div>
 
-<div class="row g-3 mb-4">
-    <div class="col-6 col-md-3">
-        <div class="card text-center h-100">
-            <div class="card-body">
-                <h6 class="text-muted">Links creados</h6>
-                <h4 class="mb-0">{{ total_links }}</h4>
+<div class="row g-4 mb-5">
+    <!-- Links -->
+    <div class="col-md-3 col-sm-6">
+        <div class="card h-100 hover-lift border-0 border-start border-info border-4">
+            <div class="card-body d-flex align-items-center">
+                <div class="icon-box me-3 flex-shrink-0">
+                    <i class="fas fa-link text-info h4 mb-0"></i>
+                </div>
+                <div>
+                    <div class="card-subtitle text-muted mb-1" style="font-size: 0.7rem;">LINKS CREADOS</div>
+                    <div class="h3 fw-bold text-white mb-0">{{ total_links|default:"0" }}</div>
+                </div>
             </div>
         </div>
     </div>
-    <div class="col-6 col-md-3">
-        <div class="card text-center h-100">
-            <div class="card-body">
-                <h6 class="text-muted">Pagos recibidos</h6>
-                <h4 class="mb-0">{{ total_payments }}</h4>
-            </div>
-        </div>
-    </div>
-    <div class="col-6 col-md-3">
-        <div class="card text-center h-100">
-            <div class="card-body">
-                <h6 class="text-muted">Pendientes</h6>
-                <h4 class="mb-0">{{ pending_payments }}</h4>
-            </div>
-        </div>
-    </div>
-    <div class="col-6 col-md-3">
-        <div class="card text-center h-100">
-            <div class="card-body">
-                <h6 class="text-muted">Cuenta</h6>
-                <h4 class="mb-0">{% if user %}{{ user.nombre }}{% else %}-{% endif %}</h4>
-            </div>
-        </div>
-    </div>
-</div>
 
-<div class="card">
-    <div class="card-body">
-        <h5 class="card-title">Acciones rápidas</h5>
-        <p class="card-text text-muted">Crea links, revisa pagos o configura tu cuenta desde aquí.</p>
-        <a href="{% url 'crear_link' %}" class="btn btn-outline-primary me-2">Nuevo link</a>
+    <!-- Pagos -->
+    <div class="col-md-3 col-sm-6">
+        <div class="card h-100 hover-lift border-0 border-start border-success border-4">
+            <div class="card-body d-flex align-items-center">
+                <div class="icon-box me-3 flex-shrink-0">
+                    <i class="fas fa-hand-holding-usd text-success h4 mb-0"></i>
+                </div>
+                <div>
+                    <div class="card-subtitle text-muted mb-1" style="font-size: 0.7rem;">PAGOS RECIBIDOS</div>
+                    <div class="h3 fw-bold text-white mb-0">{{ total_payments|default:"0" }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pendientes -->
+    <div class="col-md-3 col-sm-6">
+        <div class="card h-100 hover-lift border-0 border-start border-warning border-4">
+            <div class="card-body d-flex align-items-center">
+                <div class="icon-box me-3 flex-shrink-0">
+                    <i class="fas fa-hourglass-half text-warning h4 mb-0"></i>
+                </div>
+                <div>
+                    <div class="card-subtitle text-muted mb-1" style="font-size: 0.7rem;">PENDIENTES</div>
+                    <div class="h3 fw-bold text-white mb-0">{{ pending_payments|default:"0" }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cuenta -->
+    <div class="col-md-3 col-sm-6">
+        <div class="card h-100 hover-lift border-0 border-start border-danger border-4">
+            <div class="card-body d-flex align-items-center">
+                <div class="icon-box me-3 flex-shrink-0">
+                    <i class="fas fa-user-circle text-danger h4 mb-0"></i>
+                </div>
+                <div class="overflow-hidden">
+                    <div class="card-subtitle text-muted mb-1" style="font-size: 0.7rem;">USUARIO ACTIVO</div>
+                    <div class="h5 fw-bold text-white text-truncate mb-0">
+                        {% if user %}{{ user.nombre }}{% else %}Mi Cuenta{% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 {% endblock %}

@@ -1,95 +1,125 @@
 <!DOCTYPE html>
 <html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel de Acceso</title>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PagoTech | Acceso</title>
     {% load static %}
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <!-- Estilos personalizados -->
-    <link rel="stylesheet" href="{% static 'css/login-styles.css' %}">
-</head>
-<body class="admin-login">
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+    />
+    <!-- Google Fonts (Inter) -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{% static 'css/login-app2.css' %}" />
+  </head>
+  <body class="admin-login">
     <div class="login-card">
-        <!-- Logo y título -->
-        <div class="login-header">
-            <div class="logo-container">
-                <img src="{% static 'images/logo.png' %}" alt="Logo" class="logo-img">
-            </div>
-            <p class="login-subtitle">Panel de Acceso</p>
-            <div class="role-badge">
-                <i class="fas fa-sign-in-alt"></i>
-                <span>Acceso</span>
-            </div>
+      <div class="login-header">
+        <div class="logo-container">
+          <!-- Fallback por si la imagen no carga -->
+          <img
+            src="{% static 'images/hero_payment.png' %}"
+            alt="PagoTech"
+            class="logo-img"
+            onerror="this.style.display='none'; document.getElementById('logo-text').style.display='block'"
+          />
+          <h2
+            id="logo-text"
+            style="display: none; color: var(--primary); font-weight: 800"
+          >
+            <i class="fas fa-bolt text-danger me-2"></i>
+            <span class="text-white"
+              >PAGO<span class="text-danger">TECH</span></span
+            >
+          </h2>
         </div>
-        
-        <!-- Mensajes de error -->
-        {% if messages %}
-        <div class="alert alert-danger">
-            <i class="fas fa-exclamation-circle"></i>
-            <div>
-                {% for message in messages %}
-                    <p>{{ message }}</p>
-                {% endfor %}
-            </div>
+        <div class="role-badge">
+          <i class="fas fa-shield-alt"></i>
+          <span>Iniciar Sesión</span>
         </div>
-        {% endif %}
-        
-        <!-- Formulario de inicio de sesión -->
-        <form class="login-form" method="post">
-            {% csrf_token %}
-            <div class="form-group">
-                <label for="nombre">Usuario</label>
-                <div class="input-wrapper">
-                    <i class="fas fa-user input-icon"></i>
-                    <input type="text" class="form-control" id="nombre" name="nombre" placeholder="Ingresa tu usuario" required autofocus>
-                </div>
-            </div>
-            
-            <div class="form-group">
-                <label for="password">Contraseña</label>
-                <div class="input-wrapper">
-                    <i class="fas fa-lock input-icon"></i>
-                    <input type="password" class="form-control" id="password" name="password" placeholder="Ingresa tu contraseña" required>
-                    <button type="button" class="password-toggle" onclick="togglePassword()">
-                        <i class="fas fa-eye"></i>
-                    </button>
-                </div>
-            </div>
-            <button type="submit" class="btn-login">
-                <i class="fas fa-sign-in-alt"></i>
-                <span>Ingresar</span>
+      </div>
+
+      {% if messages %}
+      <div class="alert alert-danger">
+        <i class="fas fa-exclamation-circle"></i>
+        <div>
+          {% for message in messages %}
+          <p style="margin: 0">{{ message }}</p>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
+      <form class="login-form" method="post">
+        {% csrf_token %}
+        <div class="form-group">
+          <label for="nombre">Usuario</label>
+          <div class="input-wrapper">
+            <i class="fas fa-user input-icon"></i>
+            <input
+              type="text"
+              class="form-control"
+              id="nombre"
+              name="nombre"
+              placeholder="Nombre de usuario"
+              required
+              autofocus
+            />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="password">Contraseña</label>
+          <div class="input-wrapper">
+            <i class="fas fa-lock input-icon"></i>
+            <input
+              type="password"
+              class="form-control"
+              id="password"
+              name="password"
+              placeholder="••••••••"
+              required
+            />
+            <button
+              type="button"
+              class="password-toggle"
+              onclick="togglePassword()"
+            >
+              <i id="eye-icon" class="fas fa-eye"></i>
             </button>
-        </form>
-        
-        <div class="login-footer">
-            <p>© </p>
+          </div>
         </div>
+
+        <button type="submit" class="btn-login">
+          <span>Entrar al Sistema</span>
+          <i class="fas fa-arrow-right"></i>
+        </button>
+      </form>
+
+      <div class="login-footer">
+        <p>&copy; {% now "Y" %} PagoTech. Todos los derechos reservados.</p>
+      </div>
     </div>
 
-    <!-- Bootstrap JS y dependencias -->
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.min.js"></script>
-    
-    <!-- Scripts adicionales -->
     <script>
-        function togglePassword() {
-            const passwordInput = document.getElementById('password');
-            const toggleBtn = document.querySelector('.password-toggle i');
-            
-            if (passwordInput.type === 'password') {
-                passwordInput.type = 'text';
-                toggleBtn.classList.remove('fa-eye');
-                toggleBtn.classList.add('fa-eye-slash');
-            } else {
-                passwordInput.type = 'password';
-                toggleBtn.classList.remove('fa-eye-slash');
-                toggleBtn.classList.add('fa-eye');
-            }
+      function togglePassword() {
+        const passwordInput = document.getElementById("password");
+        const icon = document.getElementById("eye-icon");
+
+        if (passwordInput.type === "password") {
+          passwordInput.type = "text";
+          icon.classList.replace("fa-eye", "fa-eye-slash");
+        } else {
+          passwordInput.type = "password";
+          icon.classList.replace("fa-eye-slash", "fa-eye");
         }
+      }
     </script>
-</body>
+  </body>
 </html>
