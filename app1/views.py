@@ -8,7 +8,11 @@ from decimal import Decimal, InvalidOperation
 from django.http import HttpResponse, Http404, JsonResponse
 from django.core.paginator import Paginator
 from django.template.loader import get_template
-from xhtml2pdf import pisa # Importar xhtml2pdf
+from django.conf import settings
+from django.template.loader import render_to_string
+from weasyprint import HTML
+import tempfile
+
 
 def index(request):
     return render(request, 'index.html')
@@ -208,19 +212,25 @@ def ticket_pdf(request, link_id):
 
     try:
         link = LinkPago.objects.get(id=link_id, cliente_id=user_id)
-        template = get_template('ticket_pdf.html') 
-        context = {'link': link, 'cliente': link.cliente}
-        html = template.render(context)
+        
+        # 1. Preparar contexto
+        context = {
+            'link': link, 
+            'cliente': link.cliente,
+            'current_year': 2024 # O usa django.utils.timezone
+        }
 
-        response = HttpResponse(content_type='application/pdf')
-        # Si quitas el filename, el navegador suele forzar más la vista previa
-        response['Content-Disposition'] = 'inline' 
-        
-        pisa_status = pisa.CreatePDF(html, dest=response)
-        
-        if pisa_status.err:
-            return HttpResponse('Error al generar PDF', status=500)
-            
+        # 2. Renderizar HTML a string
+        html_string = render_to_string('ticket_pdf.html', context)
+
+        # 3. Crear el PDF
+        # base_url permite que WeasyPrint encuentre imágenes o CSS locales si los hubiera
+        html = HTML(string=html_string, base_url=request.build_absolute_uri())
+        pdf_file = html.write_pdf()
+
+        # 4. Enviar respuesta
+        response = HttpResponse(pdf_file, content_type='application/pdf')
+        response['Content-Disposition'] = 'inline; filename="comprobante.pdf"'
         return response
 
     except LinkPago.DoesNotExist:

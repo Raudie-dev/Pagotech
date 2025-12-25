@@ -200,8 +200,7 @@
           <td class="value">{{ cliente.nombre }}</td>
           <td class="label">Fecha y Hora:</td>
           <td class="value">
-            {% if link.created_at %}{{ link.created_at|date:"d/m/Y H:i" }}{%
-            else %}-{% endif %}
+            {% if link.created_at %}{{ link.created_at|date:"d/m/Y H:i" }}{%else %}-{% endif %}
           </td>
         </tr>
         <tr>
@@ -236,8 +235,7 @@
           </tr>
           <tr>
             <td style="color: #71717a">
-              Comisión por gestión de plataforma ({{ link.commission_percent
-              }}%)
+              Comisión por gestión de plataforma ({{ link.commission_percent}}%)
             </td>
             <td class="right" style="color: #c1121f">
               - ARS {{ link.commission_amount }}
