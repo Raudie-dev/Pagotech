@@ -84,9 +84,6 @@ DATABASES = {
     }
 }
 
-
-
-
 # Entorno producción - Mysql
 
 # Password validation
