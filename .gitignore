@@ -1,1 +1,74 @@
+# ====================================================================
+# GITIGNORE PARA PAGOTECH (DJANGO + MYSQL)
+# ====================================================================
+
+# --- Python / Caché ---
+# Ignora todas las carpetas __pycache__ en cualquier nivel del proyecto
+**/__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.pyd
+
+# --- Django ---
+*.log
+*.pot
+local_settings.py
+.env
+db.sqlite3-journal
+
+# Base de datos SQLite
+# (Nota: Generalmente se ignora, pero si quieres versionar tu pagotech.sqlite3 
+# por ahora, deja esta línea comentada o borrada)
+# db.sqlite3
+
+# --- Migraciones ---
+# Ignorar solo la caché de las migraciones para no ensuciar el repo
+# Mantenemos los archivos .py de las migraciones porque son necesarios
+**/migrations/__pycache__/
+**/migrations/*.pyc
+
+# --- Archivos Estáticos y Media ---
+# Ignoramos la carpeta donde se recopilan los estáticos (collectstatic)
+/staticfiles/
+
+# Carpeta Media (Subidas de usuarios)
+# Generalmente se ignora el contenido pero se mantiene la carpeta
+# Descomenta la siguiente línea si no quieres subir las fotos/archivos de prueba
+# /media/
+
+# --- Entornos Virtuales ---
 venv/
+env/
+.venv/
+ENV/
+env.bak/
+venv.bak/
+bin/
+include/
+lib/
+lib64/
+share/
+pyvenv.cfg
+
+# --- IDEs y Editores ---
+.vscode/
+.idea/
+*.swp
+*.swo
+.project
+.pydevproject
+.settings/
+
+# --- Archivos de Sistema / XAMPP ---
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+*.bak
+*.tmp
+*.old
+
+# --- Otros ---
+/assets/.sass-cache/
+.cache/
