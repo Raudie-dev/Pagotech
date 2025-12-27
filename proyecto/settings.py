@@ -12,22 +12,25 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 
 from pathlib import Path
 import os
+import environ
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# Inicializar environ y leer el archivo .env
+env = environ.Env()
+environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-4y8s5^1l@i@bz90rjcqxuda!6oknb4m&_d+w2b()k&5ec68j&6'
+SECRET_KEY = env('SECRET_KEY', default='clave-secreta-de-emergencia')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = env.bool('DEBUG', default=True)
 
-ALLOWED_HOSTS = ["*"]
-
+ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['*'])
 
 # Application definition
 
@@ -38,8 +41,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'app1',# Control y loging
-    'app2',# Index y llamada a DB
+    'app1', # Control y loging
+    'app2', # Index y llamada a DB
 ]
 
 MIDDLEWARE = [
@@ -76,15 +79,37 @@ WSGI_APPLICATION = 'proyecto.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-"""  Entorno local - SQLite """
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'pagotech.sqlite3',
-    }
-}
+ENVIRONMENT = env('ENVIRONMENT', default='LOCAL')
 
-# Entorno producción - Mysql
+if ENVIRONMENT == 'PROD':
+    # Datos de producción (MySQL)
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.mysql',
+            'NAME': env('DB_NAME'),
+            'USER': env('DB_USER'),
+            'PASSWORD': env('DB_PASSWORD'),
+            'HOST': env('DB_HOST'),
+            'PORT': env('DB_PORT'),
+            'OPTIONS': {
+                'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+            },
+        }
+    }
+else:
+    # Datos de desarrollo (SQLite)
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / env('DB_NAME_SQLITE', default='db.sqlite3'),
+        }
+    }
+
+# Payzen Configuration
+PAYZEN_SHOP_ID = env('PAYZEN_SHOP_ID', default='')
+PAYZEN_REST_PASS = env('PAYZEN_REST_PASS', default='')
+PAYZEN_URL = env('PAYZEN_URL', default='https://api.payzen.lat/api-payment/V4/Charge/CreatePaymentOrder')
+PAYZEN_CHECK_URL = env('PAYZEN_CHECK_URL', default='https://api.payzen.lat/api-payment/V4/Order/Get')
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
