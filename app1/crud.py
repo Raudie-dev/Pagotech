@@ -1,7 +1,7 @@
 import base64
 import requests
 import uuid
-from decimal import Decimal
+from decimal import Decimal, ROUND_HALF_UP
 from datetime import datetime, timedelta
 from typing import Optional, Tuple, List, Dict, Any
 from django.conf import settings 
@@ -10,8 +10,8 @@ from django.contrib.auth.hashers import make_password
 from django.template.loader import render_to_string
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.validators import validate_email
-
-from .models import Cliente, LinkPago
+from app2.models import ParametroFinanciero, CuotaConfig # Importante para los cálculos
+from .models import LinkPago, Cliente
 
 # Configuraciones de Payzen desde settings.py
 PAYZEN_SHOP_ID = settings.PAYZEN_SHOP_ID
@@ -141,23 +141,64 @@ def get_dashboard_stats(cliente_pk: Any) -> Dict[str, Any]:
         'pending_payments': pending_payments
     }
 
-def create_link(cliente_pk, monto, cuotas=1, tipo_tarjeta='credito', descripcion=None):
+def create_link(cliente_pk, monto_contado, cuotas=1, tipo_tarjeta='credito', descripcion=None):
+    """
+    Crea un link de pago trasladando el costo financiero al cliente final
+    basado en la configuración de la App2 (Excel de Tasas).
+    """
     cliente = get_cliente(cliente_pk)
     if not cliente:
         return None, ['Cliente no encontrado.']
 
+    # 1. Obtener Configuración Financiera de la App2
+    config = ParametroFinanciero.objects.first()
+    if not config:
+        # Fallback de seguridad si no hay config creada
+        config = ParametroFinanciero.objects.create(iva=21, iva_financiacion=10.5, comision_pago_tech=4, arancel_plataforma=1.8)
+
+    # 2. Obtener el Plan de Cuotas si corresponde
+    plan = None
+    if cuotas > 1:
+        plan = CuotaConfig.objects.filter(numero_cuota=cuotas, activa=True).first()
+        if not plan:
+            return None, [f'El plan de {cuotas} cuotas no está disponible o no existe.']
+
     try:
-        monto_dec = Decimal(str(monto))
-    except:
-        return None, ['Monto inválido.']
+        # 3. Lógica del Excel: Cálculo de Tasas con IVA
+        monto_original = Decimal(str(monto_contado))
+        iva_factor = (Decimal(str(config.iva)) / 100) + 1
+        
+        # Comisión PT con IVA
+        comision_pt_iva = Decimal(str(config.comision_pago_tech)) * iva_factor
+        # Arancel Plataforma con IVA
+        arancel_iva = Decimal(str(config.arancel_plataforma)) * iva_factor
+        
+        # Tasa de Financiación con IVA (Solo si es crédito y hay más de 1 cuota)
+        tasa_iva = Decimal('0')
+        if tipo_tarjeta == 'credito' and plan:
+            iva_finan_factor = (Decimal(str(config.iva_financiacion)) / 100) + 1
+            tasa_iva = Decimal(str(plan.tasa_base)) * iva_finan_factor
+        
+        # Total Descuentos % (Columna Roja del Excel)
+        total_desc_pct = comision_pt_iva + arancel_iva + tasa_iva
+        
+        # 4. Cálculo del Coeficiente (Columna Amarilla del Excel)
+        # Coeficiente = 1 / (1 - (Total Descuentos / 100))
+        divisor = 1 - (total_desc_pct / 100)
+        coeficiente = 1 / divisor
+        
+        # 5. Monto Final a Cobrar (Traslado de costo)
+        monto_final_venta = (monto_original * coeficiente).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+        
+        # Cálculo de montos para el registro
+        commission_amount = (monto_final_venta * (total_desc_pct / 100)).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+        receiver_amount = (monto_final_venta - commission_amount).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
 
-    tipo = tipo_tarjeta if tipo_tarjeta in ('debito', 'credito') else 'credito'
-    perc_map = {'debito': Decimal('3.49'), 'credito': Decimal('3.99')}
-    perc = perc_map[tipo]
-    commission_amount = (monto_dec * perc / Decimal('100')).quantize(Decimal('0.01'))
-    receiver_amount = (monto_dec - commission_amount).quantize(Decimal('0.01'))
+    except Exception as e:
+        return None, [f'Error en el cálculo financiero: {str(e)}']
 
-    amount_in_cents = int(monto_dec * 100)
+    # 6. Preparación de Payload para PayZen
+    amount_in_cents = int(monto_final_venta * 100)
     order_id = f"PAY-{uuid.uuid4().hex[:10].upper()}" 
 
     payload = {
@@ -168,6 +209,7 @@ def create_link(cliente_pk, monto, cuotas=1, tipo_tarjeta='credito', descripcion
         "merchantComment": f"Cliente: {cliente.nombre} - {descripcion or ''}"
     }
 
+    # Configuración de cuotas en PayZen si el plan lo requiere
     if cuotas > 1:
         schedules = []
         monto_cuota = amount_in_cents // cuotas
@@ -178,31 +220,37 @@ def create_link(cliente_pk, monto, cuotas=1, tipo_tarjeta='credito', descripcion
             schedules.append({"date": fecha, "amount": valor})
         payload["transactionOptions"] = {"installmentOptions": {"schedules": schedules}}
 
+    # 7. Llamada a la API de PayZen
     try:
-        # <--- CAMBIO: Usa PAYZEN_URL del settings
-        response = requests.post(PAYZEN_URL, json=payload, headers=get_payzen_auth_header())
+        from .crud import get_payzen_auth_header # Asegúrate de importar esto o tenerlo definido
+        from django.conf import settings
+        
+        response = requests.post(settings.PAYZEN_URL, json=payload, headers=get_payzen_auth_header())
         res_data = response.json()
 
         if res_data.get("status") == "SUCCESS":
             payment_url = res_data["answer"]["paymentURL"]
+            
+            # Guardamos el link con la lógica de traslación de costos
             link_obj = LinkPago.objects.create(
                 cliente=cliente,
                 order_id=order_id,
-                monto=monto_dec,
+                monto=monto_final_venta, # Monto inflado (Precio Venta)
                 cuotas=cuotas,
-                tipo_tarjeta=tipo,
+                tipo_tarjeta=tipo_tarjeta,
                 descripcion=descripcion or '',
-                commission_percent=perc,
-                commission_amount=commission_amount,
-                receiver_amount=receiver_amount,
+                commission_percent=total_desc_pct, # % total que se descuenta según Excel
+                commission_amount=commission_amount, # Monto que se queda la plataforma
+                receiver_amount=receiver_amount, # Monto neto (Igual al monto_contado ingresado)
                 link=payment_url
             )
             return link_obj, []
         else:
             error_detail = res_data.get("answer", {}).get("errorMessage", "Error desconocido")
             return None, [f"Error de Pasarela: {error_detail}"]
+            
     except Exception as e:
-        return None, [f"Error de conexión: {str(e)}"]
+        return None, [f"Error de conexión con la pasarela: {str(e)}"]
 
 def list_links_for_cliente(cliente_pk: Any):
     return LinkPago.objects.filter(cliente_id=cliente_pk).order_by('-created_at')
@@ -237,7 +285,6 @@ def verificar_estado_pago(link_id):
         if not link.order_id: return False
         if link.pagado: return True
 
-        # <--- CAMBIO: Usa PAYZEN_CHECK_URL del settings
         payload = {"orderId": link.order_id}
         response = requests.post(PAYZEN_CHECK_URL, json=payload, headers=get_payzen_auth_header())
         res_data = response.json()
@@ -245,9 +292,22 @@ def verificar_estado_pago(link_id):
         if res_data.get("status") == "SUCCESS":
             answer = res_data.get("answer", {})
             transactions = answer.get("transactions", [])
+            
             for tx in transactions:
                 if tx.get("status") in ["AUTHORISED", "CAPTURED", "PAID"]:
+                    # --- CAMBIO AQUÍ: Buscar en múltiples lugares del JSON ---
+                    # 1. Intentar en la raíz de la transacción
                     cuotas_api = tx.get("installmentNumber")
+                    
+                    # 2. Intentar en paymentMethodDetails (Común en REST API)
+                    if not cuotas_api:
+                        card_details = tx.get("paymentMethodDetails", {}).get("card", {})
+                        cuotas_api = card_details.get("installmentNumber")
+                    
+                    # 3. Intentar en los detalles del medio de pago
+                    if not cuotas_api:
+                        cuotas_api = tx.get("transactionDetails", {}).get("cardDetails", {}).get("installmentNumber")
+
                     link.cuotas_elegidas = int(cuotas_api) if cuotas_api else 1
                     link.pagado = True
                     link.save()

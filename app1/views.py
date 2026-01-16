@@ -12,7 +12,7 @@ from django.conf import settings
 from django.template.loader import render_to_string
 from weasyprint import HTML
 import tempfile
-
+from app2.models import ParametroFinanciero, CuotaConfig # Importar de la otra app
 
 def index(request):
     return render(request, 'index.html')
@@ -88,91 +88,68 @@ def dashboard(request):
     return render(request, 'dashboard.html', context)
 
 def creacion_link(request):
-    # 1. Validación de Sesión
     user_id = request.session.get('user_id')
-    if not user_id: 
-        return redirect('login_cliente')
-    
+    if not user_id: return redirect('login_cliente')
     cliente = crud.get_cliente(user_id)
-    if not cliente:
-        return redirect('login_cliente')
+    
+    # --- NUEVO: Obtener planes para el Select ---
+    planes_activos = CuotaConfig.objects.filter(activa=True).order_by('numero_cuota')
 
-    # 2. Manejo de POST (Preview y Creación)
     if request.method == 'POST':
-        # --- CASO A: AJAX Preview ---
+        # --- CASO A: AJAX Preview (Cálculo exacto del Excel) ---
         if 'preview' in request.POST:
-            monto = request.POST.get('monto', '0')
+            monto_contado = Decimal(request.POST.get('monto', '0'))
+            cuotas_num = int(request.POST.get('cuotas', '1'))
             tipo = request.POST.get('tipo_tarjeta', 'credito')
-            try:
-                m_dec = Decimal(monto)
-                perc = Decimal('3.49') if tipo == 'debito' else Decimal('3.99')
-                com = (m_dec * perc / 100).quantize(Decimal('0.01'))
-                return JsonResponse({
-                    'monto': str(m_dec), 
-                    'tipo': tipo, 
-                    'commission_amount': str(com), 
-                    'receiver_amount': str(m_dec - com)
-                })
-            except: 
-                return JsonResponse({'error': 'Monto inválido'}, status=400)
+            
+            # Buscamos la configuración y el plan
+            config = ParametroFinanciero.objects.first()
+            plan = CuotaConfig.objects.filter(numero_cuota=cuotas_num).first()
+            
+            # Calculamos Coeficiente (Lógica Excel)
+            iva_f = (1 + config.iva / 100)
+            com_pt_iva = (config.comision_pago_tech * iva_f)
+            arancel_iva = (config.arancel_plataforma * iva_f)
+            tasa_iva = (plan.tasa_base * (1 + config.iva_financiacion / 100)) if (plan and tipo == 'credito' and cuotas_num > 1) else Decimal('0')
+            
+            total_desc_pct = com_pt_iva + arancel_iva + tasa_iva
+            coeficiente = 1 / (1 - (total_desc_pct / 100))
+            
+            monto_final_venta = monto_contado * coeficiente
+            comision_monto = monto_final_venta * (total_desc_pct / 100)
 
-        # --- CASO B: Confirmación Final (Crear el Link) ---
+            return JsonResponse({
+                'monto_venta': round(float(monto_final_venta), 2), 
+                'comision': round(float(comision_monto), 2), 
+                'neto': round(float(monto_contado), 2) # Lo que recibe es el monto ingresado
+            })
+
+        # --- CASO B: Confirmación Final ---
         if 'confirm' in request.POST:
-            monto = request.POST.get('monto', '').strip()
-            # cuotas = request.POST.get('cuotas', '1')
+            monto_contado = request.POST.get('monto', '').strip()
+            cuotas = request.POST.get('cuotas', '1')
             tipo = request.POST.get('tipo_tarjeta', 'credito')
             desc = request.POST.get('descripcion', '').strip()
 
-            link_obj, errors = crud.create_link(
-                user_id, 
-                monto, 
-                #int(cuotas),
-                1,
-                tipo, 
-                desc)
+            # Enviamos al CRUD para que procese con las nuevas tasas
+            link_obj, errors = crud.create_link(user_id, monto_contado, int(cuotas), tipo, desc)
             
             if not errors:
-                # GUARDAMOS EN SESIÓN para mostrar el modal después del redirect
-                request.session['link_recien_creado'] = {
-                    'url': link_obj.link,
-                    'monto': str(link_obj.monto),
-                    'commission_amount': str(link_obj.commission_amount),
-                    'receiver_amount': str(link_obj.receiver_amount)
-                }
+                request.session['link_recien_creado'] = {'url': link_obj.link}
                 messages.success(request, "¡Enlace de pago generado con éxito!")
-                
-                # REDIRECCIÓN CRÍTICA: Esto evita que se re-envíe el formulario al refrescar
-                # y fuerza a Django a volver a cargar la lista de links actualizada.
                 return redirect('crear_link')
             else:
-                for e in errors: 
-                    messages.error(request, e)
+                for e in errors: messages.error(request, e)
 
-    # 3. Lógica de descarga PDF (vía GET)
-    download_id = request.GET.get('download')
-    if download_id:
-        filename, pdf_bytes, errors = crud.generate_pdf_for_link(download_id, user_id)
-        if not errors:
-            resp = HttpResponse(pdf_bytes, content_type='application/pdf')
-            resp['Content-Disposition'] = f'attachment; filename="{filename}"'
-            return resp
-        for e in errors: messages.error(request, e)
-
-    # 4. PREPARACIÓN DE DATOS PARA EL RENDER (GET)
-    
-    # Recuperamos el link de la sesión si existe (y lo borramos de la sesión con .pop)
-    link_creado_context = request.session.pop('link_recien_creado', None)
-
-    # Obtenemos la lista de links (aquí ya aparecerá el nuevo porque es una petición nueva)
+    # Render normal
     all_links = crud.list_links_for_cliente(user_id)
     paginator = Paginator(all_links, 10)
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
+    page_obj = paginator.get_page(request.GET.get('page'))
 
     return render(request, 'creacion_link.html', {
         'user': cliente, 
         'links': page_obj,
-        'link_creado': link_creado_context,
+        'planes': planes_activos, # Pasamos los planes reales al HTML
     })
     
 def verificar_estado_pago_ajax(request, link_id):

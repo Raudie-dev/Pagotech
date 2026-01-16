@@ -1,0 +1,301 @@
+{% extends "base_control.html" %}
+{% load static %}
+{% block title %}PagoTech | Configuración Financiera{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/usuarios-custom.css' %}">
+<style>
+    .input-group-text-custom {
+        background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.1); color: var(--text-muted);
+    }
+    .form-control-dark {
+        background: rgba(0,0,0,0.2) !important; border: 1px solid rgba(255,255,255,0.1) !important;
+        color: white !important; font-size: 0.85rem;
+    }
+    .form-control-dark:focus { border-color: #e63946 !important; box-shadow: 0 0 0 0.25rem rgba(230, 57, 70, 0.25); }
+    
+    .help-icon { font-size: 0.85rem; color: #6c757d; cursor: help; margin-left: 6px; transition: color 0.2s; }
+    .help-icon:hover { color: #e63946; }
+    
+    .tooltip-inner {
+        background-color: #1a1d21 !important; border: 1px solid rgba(255,255,255,0.2);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.5); max-width: 250px; text-align: left; padding: 10px; font-size: 0.75rem;
+    }
+    /* Estilo para el Modal de Advertencia/Peligro */
+.modal-confirm-danger .modal-content {
+    background-color: #1a1d21;
+    border: 1px solid #e63946 !important;
+    box-shadow: 0 0 20px rgba(230, 57, 70, 0.15);
+}
+
+.modal-confirm-danger .modal-header {
+    background: linear-gradient(90deg, rgba(230, 57, 70, 0.2) 0%, rgba(26, 29, 33, 0) 100%);
+    border-bottom: 1px solid rgba(230, 57, 70, 0.3);
+}
+
+.modal-confirm-danger .modal-title {
+    color: #ff4d4d; /* Un rojo un poco más brillante */
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-size: 0.9rem;
+}
+
+.modal-confirm-danger .btn-danger {
+    background-color: #e63946;
+    border: none;
+    box-shadow: 0 4px 12px rgba(230, 57, 70, 0.3);
+}
+
+.modal-confirm-danger .btn-danger:hover {
+    background-color: #ff4d4d;
+    transform: translateY(-1px);
+}
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- Header -->
+<div class="d-flex justify-content-between align-items-end mb-4 text-white">
+    <div>
+        <h2 class="mb-1"><i class="fas fa-percentage text-danger me-2"></i> Configuración Financiera</h2>
+        <p class="text-muted small mb-0">Gestión de costos y simulación de coeficientes bancarios.</p>
+    </div>
+</div>
+
+<!-- Tarjetas de Resumen con Tooltips -->
+<div class="row g-4 mb-5">
+    <div class="col-md-3">
+        <div class="card h-100 hover-lift border-start border-info border-4">
+            <div class="card-body d-flex align-items-center">
+                <div class="icon-box me-3"><i class="fas fa-file-invoice-dollar text-info h4 mb-0"></i></div>
+                <div class="flex-grow-1">
+                    <div class="card-subtitle text-muted mb-1 small fw-bold">
+                        IVA GENERAL 
+                        <i class="fas fa-question-circle help-icon" data-bs-toggle="tooltip" title="Alicuota base aplicada a comisiones y aranceles."></i>
+                    </div>
+                    <div class="h2 fw-bold mb-0 text-white">{{ config.iva }}%</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card h-100 hover-lift border-start border-success border-4">
+            <div class="card-body d-flex align-items-center">
+                <div class="icon-box me-3"><i class="fas fa-hand-holding-usd text-success h4 mb-0"></i></div>
+                <div class="flex-grow-1">
+                    <div class="card-subtitle text-muted mb-1 small fw-bold">
+                        COMISIÓN PT (+IVA)
+                        <i class="fas fa-question-circle help-icon" data-bs-toggle="tooltip" title="Costo efectivo que PagoTech descuenta por cada transacción."></i>
+                    </div>
+                    <div class="h2 fw-bold mb-0 text-white">{{ com_pt_iva|stringformat:".2f" }}%</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card h-100 hover-lift border-start border-warning border-4">
+            <div class="card-body d-flex align-items-center">
+                <div class="icon-box me-3"><i class="fas fa-credit-card text-warning h4 mb-0"></i></div>
+                <div class="flex-grow-1">
+                    <div class="card-subtitle text-muted mb-1 small fw-bold">
+                        PLANES ACTIVOS
+                        <i class="fas fa-question-circle help-icon" data-bs-toggle="tooltip" title="Cantidad de planes financieros habilitados actualmente."></i>
+                    </div>
+                    <div class="h2 fw-bold mb-0 text-white">{{ proyecciones|length }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card h-100 hover-lift border-start border-danger border-4">
+            <div class="card-body d-flex align-items-center">
+                <div class="icon-box me-3"><i class="fas fa-university text-danger h4 mb-0"></i></div>
+                <div class="flex-grow-1">
+                    <div class="card-subtitle text-muted mb-1 small fw-bold">
+                        ARANCEL (+IVA)
+                        <i class="fas fa-question-circle help-icon" data-bs-toggle="tooltip" title="Costo final de la plataforma de pagos (Payway) con impuestos incluidos."></i>
+                    </div>
+                    <div class="h2 fw-bold mb-0 text-white">{{ arancel_iva|stringformat:".2f" }}%</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Columna Izquierda: Parámetros Base -->
+    <div class="col-lg-3">
+        <div class="custom-table-container p-4 shadow-lg animate-slide-up">
+            <h5 class="text-white mb-4 small fw-bold text-uppercase border-bottom border-secondary pb-2"><i class="fas fa-sliders-h me-2 text-danger"></i>Parámetros Base</h5>
+            <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="update_general" value="1">
+                <div class="mb-3">
+                    <label class="form-label text-secondary small fw-bold">IVA CONSUMIDOR FINAL <i class="fas fa-question-circle help-icon" data-bs-toggle="tooltip" title="Normalmente 21%. Se usa para PT y Aranceles."></i></label>
+                    <div class="input-group"><input type="number" step="0.01" name="iva" class="form-control form-control-dark" value="{{ config.iva }}"><span class="input-group-text input-group-text-custom">%</span></div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label text-secondary small fw-bold">IVA TASA FINANCIACIÓN <i class="fas fa-question-circle help-icon" data-bs-toggle="tooltip" title="Normalmente 10.5%. Aplicado sobre los intereses bancarios."></i></label>
+                    <div class="input-group"><input type="number" step="0.01" name="iva_financiacion" class="form-control form-control-dark" value="{{ config.iva_financiacion }}"><span class="input-group-text input-group-text-custom">%</span></div>
+                </div>
+                <div class="mb-3 border-top border-secondary pt-3 mt-4">
+                    <label class="form-label text-secondary small fw-bold text-danger">COMISIÓN PAGO TECH <i class="fas fa-question-circle help-icon" data-bs-toggle="tooltip" title="Comisión de ganancia neta de la plataforma."></i></label>
+                    <div class="input-group"><input type="number" step="0.01" name="comision_pago_tech" class="form-control form-control-dark" value="{{ config.comision_pago_tech }}"><span class="input-group-text input-group-text-custom">%</span></div>
+                </div>
+                <div class="mb-4">
+                    <label class="form-label text-secondary small fw-bold text-danger">ARANCEL PLATAFORMA <i class="fas fa-question-circle help-icon" data-bs-toggle="tooltip" title="Costo neto de la pasarela de pagos."></i></label>
+                    <div class="input-group"><input type="number" step="0.01" name="arancel_plataforma" class="form-control form-control-dark" value="{{ config.arancel_plataforma }}"><span class="input-group-text input-group-text-custom">%</span></div>
+                </div>
+                <button type="submit" class="btn btn-primary w-100 py-2 fw-bold"><i class="fas fa-save me-2"></i> ACTUALIZAR BASE</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Columna Derecha: Tabla -->
+    <div class="col-lg-9">
+        <div class="custom-table-container shadow-lg animate-slide-up">
+            <div class="table-header border-bottom border-strong d-flex justify-content-between align-items-center p-3">
+                <div>
+                    <h6 class="mb-0 text-white fw-bold">Matriz de Coeficientes y Tasas</h6>
+                    <small class="user-sub-text">Simulación basada en $1.000.000 de contado</small>
+                </div>
+                <button class="btn btn-sm btn-outline-danger px-3" data-bs-toggle="modal" data-bs-target="#addPlanModal"><i class="fas fa-plus me-1"></i> Nuevo Plan</button>
+            </div>
+            
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0 custom-dark-table">
+                    <thead>
+                        <tr>
+                            <th class="ps-4" style="width: 20%;">
+                                NOMBRE 
+                                <i class="fas fa-info-circle help-icon" data-bs-toggle="tooltip" title="Nombre identificador del plan que se mostrará en el sistema."></i>
+                            </th>
+                            <th class="text-center" style="width: 120px;">
+                                CUOTAS 
+                                <i class="fas fa-info-circle help-icon" data-bs-toggle="tooltip" title="Cantidad de pagos para este plan."></i>
+                            </th>
+                            <th style="width: 150px;">
+                                TASA BASE 
+                                <i class="fas fa-info-circle help-icon" data-bs-toggle="tooltip" title="Costo financiero directo del banco (Columna verde)."></i>
+                            </th>
+                            <th class="text-center">
+                                DESC. TOTAL 
+                                <i class="fas fa-info-circle help-icon" data-bs-toggle="tooltip" title="Suma total de descuentos con IVA."></i>
+                            </th>
+                            <th class="text-center">
+                                COEFICIENTE 
+                                <i class="fas fa-info-circle help-icon" data-bs-toggle="tooltip" title="Factor: Precio Contado x Coeficiente = Precio Venta."></i>
+                            </th>
+                            <th class="text-center">
+                                ESTADO 
+                                <i class="fas fa-info-circle help-icon" data-bs-toggle="tooltip" title="Habilita o deshabilita este plan en el frontend."></i>
+                            </th>
+                            <th class="text-end pe-4">
+                                ACCIONES
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in proyecciones %}
+                        <tr class="user-row border-bottom border-opacity-10">
+                            <form method="post">
+                                {% csrf_token %}
+                                <input type="hidden" name="update_cuota" value="1"><input type="hidden" name="cuota_id" value="{{ item.obj.id }}">
+                                <td class="ps-4"><input type="text" name="edit_nombre" class="form-control form-control-sm form-control-dark" value="{{ item.obj.nombre }}"></td>
+                                <td class="text-center"><input type="number" name="edit_numero" class="form-control form-control-sm form-control-dark mx-auto text-center" style="width: 70px;" value="{{ item.obj.numero_cuota }}"></td>
+                                <td><div class="input-group input-group-sm" style="width: 130px;"><input type="number" step="0.01" name="edit_tasa" class="form-control form-control-dark" value="{{ item.obj.tasa_base }}"><span class="input-group-text bg-dark border-secondary text-muted small">%</span></div></td>
+                                <td class="text-center"><span class="badge-status" style="background: rgba(230, 57, 70, 0.1); color: #e63946; border: 1px solid rgba(230, 57, 70, 0.2); padding: 5px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 700;">{{ item.total_descuentos }}%</span></td>
+                                <td class="text-center"><span class="text-success fw-bold">{{ item.coeficiente }}</span></td>
+                                <td class="text-center"><div class="form-check form-switch d-inline-block"><input class="form-check-input" type="checkbox" name="activa" {% if item.obj.activa %}checked{% endif %}></div></td>
+                                <td class="text-end pe-4">
+                                    <div class="d-flex justify-content-end gap-2">
+                                        <button type="submit" class="btn btn-sm btn-action-dark text-info"><i class="fas fa-save"></i></button>
+                                        <button type="button" class="btn btn-sm btn-action-dark text-danger" onclick="openDeleteModal('{{ item.obj.id }}', '{{ item.obj.nombre }}')"><i class="fas fa-trash-alt"></i></button>
+                                    </div>
+                                </td>
+                            </form>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Confirmar Eliminación -->
+<div class="modal fade modal-confirm-danger" id="deletePlanModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content">
+            <div class="modal-header py-2">
+                <h5 class="modal-title fw-bold">
+                    <i class="fas fa-exclamation-triangle me-2"></i> ATENCIÓN
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center py-4">
+                <div class="mb-3">
+                    <i class="fas fa-trash-alt text-danger display-6 opacity-75"></i>
+                </div>
+                <p class="text-white-50 small mb-1">¿Estás seguro de eliminar el plan?</p>
+                <h6 class="text-white fw-bold" id="deletePlanName">Nombre del Plan</h6>
+                <div class="mt-3 p-2 rounded">
+                    <small class="text-danger fw-bold">
+                        <i class="fas fa-info-circle me-1"></i> Esta acción no se puede deshacer.
+                    </small>
+                </div>
+            </div>
+            <div class="modal-footer border-0 pt-0 justify-content-center pb-4">
+                <form method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="delete_cuota" value="1">
+                    <input type="hidden" name="delete_id" id="delete-plan-id">
+                    <button type="button" class="btn btn-dark btn-sm px-3" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-danger btn-sm px-4 fw-bold">ELIMINAR</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Añadir Plan (Simplificado para consistencia) -->
+<div class="modal fade" id="addPlanModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-secondary bg-dark shadow-lg">
+            <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="add_cuota" value="1">
+                <div class="modal-header border-secondary">
+                    <h5 class="modal-title text-white fw-bold"><i class="fas fa-plus-circle text-danger me-2"></i> Nuevo Plan</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3"><label class="form-label text-secondary small fw-bold">NOMBRE DEL PLAN</label><input type="text" name="new_nombre" class="form-control form-control-dark" required></div>
+                    <div class="row"><div class="col-6"><label class="form-label text-secondary small fw-bold">CUOTAS (N°)</label><input type="number" name="new_numero" class="form-control form-control-dark" required></div><div class="col-6"><label class="form-label text-secondary small fw-bold">TASA BASE (%)</label><input type="number" step="0.01" name="new_tasa" class="form-control form-control-dark" required></div></div>
+                </div>
+                <div class="modal-footer border-secondary"><button type="button" class="btn btn-dark" data-bs-dismiss="modal">Cancelar</button><button type="submit" class="btn btn-danger px-4 fw-bold">CREAR</button></div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Inicializar tooltips de Bootstrap 5
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+        tooltipTriggerList.map(function (tooltipTriggerEl) { return new bootstrap.Tooltip(tooltipTriggerEl) });
+    });
+
+    // Función para manejar el modal de eliminación
+    function openDeleteModal(id, nombre) {
+        document.getElementById('deletePlanName').innerText = nombre;
+        document.getElementById('delete-plan-id').value = id;
+        var myModal = new bootstrap.Modal(document.getElementById('deletePlanModal'));
+        myModal.show();
+    }
+</script>
+{% endblock %}

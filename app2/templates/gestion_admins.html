@@ -1,0 +1,146 @@
+{% extends "base_control.html" %}
+{% load static %}
+{% block title %}PagoTech | Administradores{% endblock %}
+
+{% block extra_css %}
+<!-- Usamos el mismo CSS de usuarios para mantener el estilo -->
+<link rel="stylesheet" href="{% static 'css/usuarios-custom.css' %}">
+{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<div class="d-flex justify-content-between align-items-end mb-4">
+    <div>
+        <h2 class="mb-1 text-white">
+            <i class="fas fa-user-shield text-danger me-2"></i> Administradores
+        </h2>
+        <p class="text-muted small mb-0">Gestión de accesos de nivel administrativo.</p>
+    </div>
+    <button class="btn btn-primary d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#addAdminModal">
+        <i class="fas fa-plus me-2"></i>
+        <span>Nuevo Admin</span>
+    </button>
+</div>
+
+<!-- Tabla de Administradores con estilo idéntico -->
+<div class="custom-table-container shadow-lg animate-slide-up">
+    <div class="table-header border-bottom border-strong p-3 bg-opacity-10" style="background: rgba(255,255,255,0.02);">
+        <h6 class="mb-0 text-white fw-bold">Lista de Administradores</h6>
+    </div>
+    
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0 custom-dark-table">
+            <thead>
+                <tr>
+                    <th class="ps-4">ADMINISTRADOR</th>
+                    <th class="text-center">ESTADO</th>
+                    <th class="text-end pe-4">ACCIONES</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for a in admins %}
+                <tr class="user-row border-bottom border-opacity-10">
+                    <td class="ps-4">
+                        <div class="d-flex align-items-center">
+                            <div class="user-avatar me-3">
+                                {{ a.nombre|slice:":1"|upper }}
+                            </div>
+                            <div>
+                                <div class="user-name-text">{{ a.nombre }}</div>
+                                <small class="user-sub-text">ID: {{ a.id|stringformat:"03d" }}</small>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="text-center">
+                        {% if a.bloqueado %}
+                        <span class="badge-status status-blocked">
+                            <div class="status-dot" style="background: #e63946;"></div> BLOQUEADO
+                        </span>
+                        {% else %}
+                        <span class="badge-status status-approved">
+                            <div class="status-dot" style="background: #10b981;"></div> ACTIVO
+                        </span>
+                        {% endif %}
+                    </td>
+                    <td class="text-end pe-4">
+                        <button class="btn btn-sm btn-action-dark" 
+                                data-bs-toggle="modal" 
+                                data-bs-target="#editAdminModal"
+                                data-id="{{ a.id }}"
+                                data-nombre="{{ a.nombre }}"
+                                data-bloqueado="{% if a.bloqueado %}1{% else %}0{% endif %}">
+                            <i class="fas fa-pen text-danger"></i>
+                        </button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+<!-- MODAL EDITAR ADMINISTRADOR -->
+<div class="modal fade" id="editAdminModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content shadow-lg border-0" style="background-color: #1a1d21;">
+            <form method="post">
+                {% csrf_token %}
+                <!-- ID oculto para la lógica del servidor -->
+                <input type="hidden" name="edit_id" id="edit_admin_id"> 
+                
+                <div class="modal-header border-bottom border-secondary border-opacity-25">
+                    <h5 class="modal-title text-white fw-bold">
+                        <i class="fas fa-user-edit text-danger me-2"></i> Editar Administrador
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+
+                <div class="modal-body p-4">
+                    <!-- Campo: Usuario -->
+                    <div class="mb-4">
+                        <label class="form-label text-secondary small fw-bold text-uppercase">Nombre de Usuario</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-dark border-secondary text-muted"><i class="fas fa-user"></i></span>
+                            <input type="text" class="form-control bg-dark text-white border-secondary" name="edit_nombre" id="edit_admin_nombre" required>
+                        </div>
+                    </div>
+
+                    <!-- Campo: Contraseña -->
+                    <div class="mb-4">
+                        <label class="form-label text-secondary small fw-bold text-uppercase">Nueva Contraseña</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-dark border-secondary text-muted"><i class="fas fa-lock"></i></span>
+                            <input type="password" class="form-control bg-dark text-white border-secondary" name="edit_password" id="edit_admin_password" placeholder="Dejar en blanco para no cambiar">
+                        </div>
+                        <small class="text-muted d-block mt-1" style="font-size: 0.75rem;">
+                            <i class="fas fa-info-circle me-1"></i> Solo complete este campo si desea resetear la clave.
+                        </small>
+                    </div>
+
+                    <!-- Sección de Bloqueo (El recuadro con el switch) -->
+                    <div class="p-3 rounded-3" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);">
+                        <div class="form-check form-switch d-flex align-items-center justify-content-between ps-0">
+                            <label class="form-check-label text-white fw-medium mb-0" for="edit_admin_bloqueado">
+                                Bloquear acceso al sistema
+                            </label>
+                            <input class="form-check-input ms-0" type="checkbox" name="edit_bloqueado" id="edit_admin_bloqueado" value="1" style="width: 2.5em; height: 1.25em; cursor: pointer;">
+                        </div>
+                        <p class="text-muted small mb-0 mt-2">
+                            Si se activa, este administrador no podrá ingresar al panel de control hasta ser desbloqueado.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="modal-footer border-top border-secondary border-opacity-25">
+                    <button type="button" class="btn btn-dark px-4" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary px-4">
+                        <i class="fas fa-save me-2"></i>Guardar Cambios
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script src="{% static 'js/usuarios.js' %}"></script>
+{% endblock %}

@@ -101,13 +101,26 @@
             <li class="nav-item">
                 <a class="nav-link {% if request.resolver_match.url_name == 'gestion_usuarios' %}active{% endif %}" href="{% url 'gestion_usuarios' %}">
                     <i class="fas fa-users-cog"></i>
-                    <span>Gestión de Usuarios</span>
+                    <span>Gestión de Clientes</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {% if request.resolver_match.url_name == 'gestion_admins' %}active{% endif %}" 
+                href="{% url 'gestion_admins' %}">
+                    <i class="fas fa-users-cog"></i>
+                    <span>Gestión de Administradores</span>
                 </a>
             </li>
             <li class="nav-item">
                 <a class="nav-link {% if request.resolver_match.url_name == 'aprobacion' %}active{% endif %}" href="{% url 'aprobacion' %}">
                     <i class="fas fa-user-check"></i>
                     <span>Aprobaciones</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {% if request.resolver_match.url_name == 'configuracion_financiera' %}active{% endif %}" href="{% url 'configuracion_financiera' %}">
+                    <i class="fas fa-percentage"></i>
+                    <span>Tasas y Cuotas</span>
                 </a>
             </li>
         </ul>

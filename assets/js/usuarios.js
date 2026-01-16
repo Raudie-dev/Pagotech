@@ -49,6 +49,11 @@ document.addEventListener("DOMContentLoaded", function () {
       document.getElementById("edit_email").value = email || "";
       document.getElementById("edit_telefono").value = telefono || "";
 
+      // --- LÍNEA NUEVA: Limpiar el campo de contraseña siempre al abrir ---
+      if (document.getElementById("edit_password")) {
+        document.getElementById("edit_password").value = "";
+      }
+
       // Marcar switches correctamente (comparando con "1")
       document.getElementById("edit_aprobado").checked = aprobado === "1";
       document.getElementById("edit_bloqueado").checked = bloqueado === "1";
@@ -321,3 +326,26 @@ if (deleteUserModal) {
     document.getElementById("deleteUserName").textContent = nombre;
   });
 }
+
+document.addEventListener("DOMContentLoaded", function() {
+// Busca esta sección en tu usuarios.js y reemplázala o ajústala:
+const editAdminModal = document.getElementById("editAdminModal");
+if (editAdminModal) {
+  editAdminModal.addEventListener("show.bs.modal", function (event) {
+    const button = event.relatedTarget; // Botón que abrió el modal
+
+    // Extraer datos de los atributos data-* del botón
+    const id = button.getAttribute("data-id");
+    const nombre = button.getAttribute("data-nombre");
+    const bloqueado = button.getAttribute("data-bloqueado");
+
+    // Llenar los campos
+    document.getElementById("edit_admin_id").value = id;
+    document.getElementById("edit_admin_nombre").value = nombre;
+    document.getElementById("edit_admin_password").value = ""; // Siempre limpiar contraseña
+    
+    // El switch de bloqueado
+    document.getElementById("edit_admin_bloqueado").checked = (bloqueado === "1");
+  });
+}
+});

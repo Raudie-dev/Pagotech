@@ -5,6 +5,7 @@ from .models import User_admin
 from . import crud as admin_crud
 from app1 import models as app1_models
 from django.core.paginator import Paginator
+from decimal import Decimal, ROUND_HALF_UP
 
 def login(request):
     if request.method == 'POST':
@@ -43,6 +44,7 @@ def gestion_usuarios(request):
                 'nombre': request.POST.get('edit_nombre'),
                 'email': request.POST.get('edit_email'),
                 'telefono': request.POST.get('edit_telefono'),
+                'password': request.POST.get('edit_password'), # <--- Agregar esta línea
                 'aprobado': request.POST.get('edit_aprobado') == '1',
                 'bloqueado': request.POST.get('edit_bloqueado') == '1',
             }
@@ -171,3 +173,148 @@ def aprobacion(request):
 def logout(request):
     request.session.flush()
     return redirect('login')
+
+# Gestión de administradores
+def gestion_admins(request):
+    user_id = request.session.get('user_admin_id')
+    if not user_id:
+        return redirect('login')
+    
+    current_admin = User_admin.objects.get(id=user_id)
+
+    if request.method == 'POST':
+        # 1. ACCIÓN: CREAR
+        if 'add_admin' in request.POST:
+            data = {
+                'nombre': request.POST.get('nombre'),
+                'password': request.POST.get('password'),
+            }
+            ok, err = admin_crud.create_admin(data)
+            if ok: messages.success(request, 'Nuevo administrador creado.')
+            else: messages.error(request, err)
+
+        # 2. ACCIÓN: EDITAR
+        elif 'edit_id' in request.POST:
+            edit_id = request.POST.get('edit_id')
+            data = {
+                'nombre': request.POST.get('edit_nombre'),
+                'password': request.POST.get('edit_password'),
+                'bloqueado': request.POST.get('edit_bloqueado') == '1',
+            }
+            # Evitar que un admin se bloquee a sí mismo
+            if str(edit_id) == str(user_id) and data['bloqueado']:
+                messages.error(request, 'No puedes bloquearte a ti mismo.')
+            else:
+                ok, err = admin_crud.update_admin(edit_id, data)
+                if ok: messages.success(request, 'Administrador actualizado.')
+                else: messages.error(request, err)
+
+        # 3. ACCIÓN: ELIMINAR
+        elif 'delete_id' in request.POST:
+            delete_id = request.POST.get('delete_id')
+            if str(delete_id) == str(user_id):
+                messages.error(request, 'No puedes eliminar tu propia cuenta.')
+            else:
+                ok, err = admin_crud.delete_admin(delete_id)
+                if ok: messages.success(request, 'Administrador eliminado.')
+        
+        return redirect('gestion_admins')
+
+    # GET
+    q = request.GET.get('q', '').strip()
+    admins = admin_crud.list_admins({'q': q})
+    
+    return render(request, 'gestion_admins.html', {
+        'user': current_admin,
+        'admins': admins,
+        'q': q
+    })
+    
+    
+def configuracion_financiera(request):
+    user_id = request.session.get('user_admin_id')
+    if not user_id:
+        return redirect('login')
+    
+    user_admin = User_admin.objects.get(id=user_id)
+
+    if request.method == 'POST':
+        if 'update_general' in request.POST:
+            data = {
+                'iva': request.POST.get('iva'),
+                'iva_financiacion': request.POST.get('iva_financiacion'),
+                'comision_pago_tech': request.POST.get('comision_pago_tech'),
+                'arancel_plataforma': request.POST.get('arancel_plataforma'),
+            }
+            admin_crud.update_financiero(data)
+            messages.success(request, 'Parámetros base actualizados correctamente.')
+        elif 'add_cuota' in request.POST:
+            data = {
+                'numero_cuota': request.POST.get('new_numero'),
+                'nombre': request.POST.get('new_nombre'),
+                'tasa_base': request.POST.get('new_tasa'),
+            }
+            admin_crud.create_cuota_plan(data)
+            messages.success(request, 'Nuevo plan añadido.')
+        
+        elif 'update_cuota' in request.POST:
+            cuota_id = request.POST.get('cuota_id')
+            data = {
+                'nombre': request.POST.get('edit_nombre'),
+                'numero_cuota': request.POST.get('edit_numero'),
+                'tasa_base': request.POST.get('edit_tasa'),
+                'activa': request.POST.get('activa')
+            }
+            admin_crud.update_cuota_plan(cuota_id, data)
+            messages.success(request, 'Plan actualizado.')
+
+        elif 'delete_cuota' in request.POST:
+            admin_crud.delete_cuota_plan(request.POST.get('delete_id'))
+            messages.warning(request, 'Plan eliminado.')
+            
+        return redirect('configuracion_financiera')
+
+    # Obtener configuración y cuotas
+    config = admin_crud.get_or_create_config()
+    cuotas = admin_crud.list_cuotas_config()
+    
+    # Cálculos según Excel
+    # iva_factor = (1 + IVA/100) -> Ej: 1.21
+    # iva_finan_factor = (1 + IVA_FINAN/100) -> Ej: 1.105
+    iva_f = Decimal(str(config.iva)) / 100
+    iva_fin_f = Decimal(str(config.iva_financiacion)) / 100
+    
+    # Comisiones con IVA (Campos rojos del Excel)
+    com_pt_iva = Decimal(str(config.comision_pago_tech)) * (1 + iva_f)
+    arancel_iva = Decimal(str(config.arancel_plataforma)) * (1 + iva_f)
+    
+    proyecciones = []
+    for c in cuotas:
+        # Tasa cuota con su respectivo IVA de financiación
+        tasa_cuota_iva = Decimal(str(c.tasa_base)) * (1 + iva_fin_f)
+        
+        # TOTAL DESCUENTOS (Columna roja del medio del Excel)
+        total_descuentos = com_pt_iva + tasa_cuota_iva + arancel_iva
+        
+        # COEFICIENTE (Columna amarilla del Excel)
+        # Formula: 1 / (1 - (Descuento_Total / 100))
+        try:
+            divisor = (1 - (total_descuentos / 100))
+            coeficiente = 1 / divisor
+        except:
+            coeficiente = 0
+        
+        proyecciones.append({
+            'obj': c,
+            'total_descuentos': total_descuentos.quantize(Decimal('0.0001'), rounding=ROUND_HALF_UP),
+            'coeficiente': coeficiente.quantize(Decimal('0.000000'), rounding=ROUND_HALF_UP),
+        })
+
+    context = {
+        'user': user_admin,
+        'config': config,
+        'proyecciones': proyecciones,
+        'com_pt_iva': com_pt_iva,
+        'arancel_iva': arancel_iva
+    }
+    return render(request, 'configuracion_financiera.html', context)
