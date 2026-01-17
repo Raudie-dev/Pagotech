@@ -1,288 +1,289 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="es">
-  <head>
+<head>
     <meta charset="utf-8" />
-    <title>Comprobante PagoTech #{{ link.id }}</title>
+    <title>Resumen PagoTech #{{ link.id }}</title>
     <style>
-      @page {
-        size: a4;
-        margin: 1cm; /* Margen optimizado */
-      }
-	  
-      body {
-        font-family: "Helvetica", Arial, sans-serif;
-        color: #111113;
-        line-height: 1.3;
-        margin: 0;
-        padding: 0;
-        font-size: 12px;
-      }
+        :root {
+            --primary: #e63946;
+            --dark: #000000;
+            --grey: #4b5563;
+            --light-grey: #f4f4f5;
+        }
 
-      .wrapper {
-        max-width: 100%;
-        margin: 0 auto;
-      }
-	  
-      /* Header Compacto */
-      .header-table {
-        width: 100%;
-        border-bottom: 2px solid #e63946;
-        padding-bottom: 10px;
-        margin-bottom: 15px;
-      }
+        @page {
+            size: A4;
+            margin: 0.8cm;
+        }
 
-      .brand-name {
-        font-size: 24px;
-        font-weight: bold;
-        color: #e63946;
-        letter-spacing: -1px;
-      }
+        body {
+            font-family: 'Helvetica', Arial, sans-serif;
+            background-color: #fff;
+            color: var(--dark);
+            margin: 0;
+            padding: 0;
+            font-size: 8.5pt;
+            line-height: 1.25;
+        }
 
-      .ticket-id {
-        text-align: right;
-        color: #71717a;
-        font-size: 11px;
-      }
+        /* LOGO BOX */
+        .logo-box { 
+            width: 105px; 
+            height: 105px;
+            display: table-cell;
+            vertical-align: middle; 
+            text-align: center;
+            background-color: #fff;
+        }
+        .logo-box img {
+            max-width: 100%;
+            max-height: 100%;
+            display: block;
+            margin: 0 auto;
+        }
 
-      /* Badge de Estado */
-      .status-container {
-        text-align: right;
-        margin-bottom: 20px;
-      }
+        /* HEADER */
+        .header-table { width: 100%; border-bottom: 2.5px solid var(--dark); padding-bottom: 12px; margin-bottom: 10px; }
+        .fiscal-data { vertical-align: top; padding-left: 20px; }
+        .resumen-title { font-size: 15pt; font-weight: 800; color: var(--primary); margin-bottom: 4px; text-transform: uppercase; }
+        .fiscal-grid { width: 100%; border-collapse: collapse; font-size: 7.2pt; }
+        .fiscal-grid td { padding: 1.5px 0; }
+        .bold { font-weight: bold; }
 
-      .status-badge {
-        display: inline-block;
-        background-color: #f0fff9; /* Verde esmeralda muy tenue de fondo */
-        color: #06d6a0; /* Verde Esmeralda PagoTech */
-        padding: 6px 16px;
-        border-radius: 50px; /* Bordes totalmente circulares (pill) */
-        font-size: 10px;
-        font-weight: 800;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        border: 1px solid #06d6a0; /* Borde sólido para dar estructura */
-        position: relative;
-      }
+        /* SECCIÓN TITULO BARRA */
+        .primary-bar {
+            background-color: var(--dark);
+            color: #fff;
+            padding: 8px 15px;
+            text-align: right;
+            font-size: 14pt;
+            font-weight: bold;
+            font-style: italic;
+            border-right: 10px solid var(--primary);
+            margin: 15px 0;
+        }
 
-      /* El pequeño checkmark decorativo */
-      .status-badge::before {
-        content: "●";
-        margin-right: 6px;
-        font-size: 12px;
-        vertical-align: middle;
-      }
+        /* CONTENEDOR RAZÓN SOCIAL Y TOTALES */
+        .summary-wrapper { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+        .client-info { width: 45%; vertical-align: top; padding: 10px; border-bottom: 1px solid var(--light-grey); }
+        .totals-sidebar { width: 55%; padding-left: 35px; }
+        
+        /* CAJAS DE TOTALES */
+        .box-totals { width: 100%; border-bottom: 2px solid var(--dark); margin-bottom: 8px; }
+        .box-totals th { text-align: left; font-size: 7.5pt; color: var(--grey); text-transform: uppercase; }
+        .box-totals td { text-align: left; font-size: 12pt; font-weight: bold; padding: 3px 0; }
+        .box-totals.saldo-accent { border-bottom: 4px solid var(--primary); }
+        .text-red { color: var(--primary); }
 
-      /* Secciones */
-      .section-title {
-        font-size: 11px;
-        font-weight: bold;
-        color: #e63946;
-        border-bottom: 1px solid #f4f4f5;
-        padding-bottom: 4px;
-        margin-bottom: 10px;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-      }
+        /* TABLA PRINCIPAL */
+        .liq-table { width: 100%; border-collapse: collapse; border: 1.5px solid var(--dark); }
+        .liq-table thead th {
+            background-color: var(--dark);
+            color: #fff;
+            padding: 10px 8px;
+            font-size: 8pt;
+            text-transform: uppercase;
+        }
+        .liq-table tbody td {
+            border: 1px solid #e5e7eb;
+            padding: 12px 8px;
+            vertical-align: top;
+            font-size: 8pt;
+        }
 
-      /* Info en 2 columnas para ahorrar espacio vertical */
-      .info-grid {
-        width: 100%;
-        margin-bottom: 15px;
-        border-collapse: collapse;
-      }
+        /* DETALLES DE DESCUENTO */
+        .desc-section { margin-bottom: 12px; }
+        .desc-title { font-weight: bold; font-size: 8.5pt; display: block; margin-bottom: 2px; }
+        .val-num { float: right; font-weight: bold; color: var(--dark); }
+        .sub-text { font-size: 7.5pt; color: var(--grey); font-style: italic; display: block; margin-top: 3px; }
 
-      .info-grid td {
-        padding: 4px 0;
-        width: 25%;
-      }
+        /* FOOTER DE TABLA */
+        .tax-footer { width: 100%; border: 1.5px solid var(--dark); border-top: none; }
+        .tax-footer td { padding: 10px; font-size: 7.5pt; background: #fafafa; }
 
-      .label {
-        color: #71717a;
-        font-weight: bold;
-        font-size: 10px;
-        text-transform: uppercase;
-      }
-      .value {
-        color: #111113;
-        width: 25%;
-      }
-
-      /* Tabla de Resumen */
-      .summary-table {
-        width: 100%;
-        border-collapse: collapse;
-        margin-bottom: 15px;
-      }
-
-      .summary-table th {
-        background-color: #1a1a1d;
-        color: #ffffff;
-        font-size: 10px;
-        padding: 8px;
-        text-align: left;
-        text-transform: uppercase;
-      }
-
-      .summary-table td {
-        padding: 10px 8px;
-        border-bottom: 1px solid #f4f4f5;
-      }
-
-      .total-row {
-        background-color: #f8fafc;
-      }
-
-      .total-text {
-        font-weight: bold;
-        color: #111113;
-      }
-
-      .total-amount {
-        font-size: 16px;
-        font-weight: bold;
-        color: #e63946;
-      }
-
-      /* Footer con QR lateral */
-      .footer-table {
-        width: 100%;
-        margin-top: 20px;
-        border-top: 1px solid #f4f4f5;
-        padding-top: 15px;
-      }
-
-      .footer-info {
-        font-size: 10px;
-        color: #a1a1aa;
-        line-height: 1.4;
-      }
-
-      .qr-section {
-        text-align: right;
-        width: 100px;
-      }
-
-      .link-text {
-        font-family: monospace;
-        color: #c1121f;
-        font-size: 9px;
-        word-break: break-all;
-      }
-
-      .right {
-        text-align: right;
-      }
+        /* FOOTER BRAND */
+        .final-row { width: 100%; margin-top: 25px; }
+        .footer-brand { text-align: center; margin-top: 30px; font-size: 7.5pt; color: var(--grey); border-top: 1px solid #eee; padding-top: 10px; }
     </style>
-  </head>
-  <body>
-    <div class="wrapper">
-      <!-- Encabezado -->
-      <table class="header-table">
-        <tr>
-          <td class="brand-name">PAGOTECH</td>
-          <td class="ticket-id">
-            COMPROBANTE DE OPERACIÓN<br />
-            <strong>ID: #{{ link.id }}</strong>
-          </td>
-        </tr>
-      </table>
+</head>
+<body>
 
-      <!-- Estado -->
-      <div class="status-container">
-        <span class="status-badge">Pago Procesado con Éxito</span>
-      </div>
+    <!-- ENCABEZADO FISCAL -->
+    <table class="header-table">
+        <tr>
+            <td width="115">
+                <div class="logo-box">
+                    <img src="{% static 'images/hero_payment.png' %}" alt="PagoTech Logo">
+                </div>
+            </td>
+            <td class="fiscal-data">
+                <div class="resumen-title">Resumen Diario No Fiscal</div>
+                <table class="fiscal-grid">
+                    <tr>
+                        <td width="95" class="bold">FECHA EMISIÓN:</td>
+                        <td width="150">{{ link.created_at|date:"d/m/Y H:i" }}</td>
+                        <td width="95" class="bold">E-MAIL:</td>
+                        <td>info@pagotech.com.ar</td>
+                    </tr>
+                    <tr>
+                        <td class="bold">Nº RESUMEN:</td>
+                        <td>A-0000{{ link.id|stringformat:"08d" }}</td>
+                        <td class="bold">CUIT PAGO TECH:</td>
+                        <td>30-71636883-8</td>
+                    </tr>
+                    <tr>
+                        <td class="bold">OPERADOR:</td>
+                        <td>PAGO TECH LATAM (SITEL)</td>
+                        <td class="bold">CARACTER:</td>
+                        <td>IVA RESPONSABLE INSCRIPTO</td>
+                    </tr>
+                    <tr>
+                        <td class="bold">LOCALIDAD:</td>
+                        <td>BUENOS AIRES, ARGENTINA</td>
+                        <td class="bold">Nº ING. BRUTOS:</td>
+                        <td>00030716368838</td>
+                    </tr>
+                    <tr>
+                        <td class="bold">TELÉFONO:</td>
+                        <td>+54 2923483751</td>
+                        <td class="bold">ESTABLECIMIENTO:</td>
+                        <td class="bold">0030767446</td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
 
-      <!-- Detalles -->
-      <div class="section-title">Información de la Transacción</div>
-      <table class="info-grid">
-        <tr>
-          <td class="label">Cliente:</td>
-          <td class="value">{{ cliente.nombre }}</td>
-          <td class="label">Fecha y Hora:</td>
-          <td class="value">
-            {% if link.created_at %}{{ link.created_at|date:"d/m/Y H:i" }}{%else %}-{% endif %}
-          </td>
-        </tr>
-        <tr>
-          <td class="label">Concepto:</td>
-          <td class="value">
-            {{ link.descripcion|default:"Pago de servicio" }}
-          </td>
-          <td class="label">Método:</td>
-          <td class="value">{{ link.tipo_tarjeta|title }}</td>
-        </tr>
-        <tr>
-          <td class="label">Operación:</td>
-          <td class="value">Venta Online</td>
-          <td class="label">Cuotas:</td>
-          <td class="value">{{ link.cuotas }} cuota(s)</td>
-        </tr>
-      </table>
+    <div class="primary-bar">Liquidación Mensual de Comercios</div>
 
-      <!-- Tabla Financiera -->
-      <div class="section-title">Desglose de Pago</div>
-      <table class="summary-table">
+    <!-- RAZÓN SOCIAL Y TOTALES -->
+    <table class="summary-wrapper">
+        <tr>
+            <td class="client-info">
+                <p class="bold" style="color: var(--grey); margin-bottom: 2px; font-size: 7.5pt;">RECEPTOR DE FONDOS</p>
+                <p class="bold" style="font-size: 13pt; margin-top: 0; margin-bottom: 5px;">{{ link.cliente.nombre|upper }}</p>
+                <p style="margin: 0; color: #333;">Email: {{ link.cliente.email }}</p>
+                <p style="margin: 0; color: #333;">ID Comercio: #{{ link.cliente.id|stringformat:"05d" }}</p>
+            </td>
+            <td class="totals-sidebar">
+                <table class="box-totals">
+                    <tr><th>TOTAL PRESENTADO ARS $</th></tr>
+                    <tr><td>$ {{ link.monto }}</td></tr>
+                </table>
+                <table class="box-totals">
+                    <tr><th>TOTAL DESCUENTO ARS $</th></tr>
+                    <tr><td style="color: var(--grey); font-size: 11pt;">$ {{ link.commission_amount }}</td></tr>
+                </table>
+                <table class="box-totals saldo-accent">
+                    <tr><th class="text-red">SALDO ARS $</th></tr>
+                    <tr><td class="text-red" style="font-size: 15pt;">$ {{ link.receiver_amount }}</td></tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+
+    <!-- GRILLA PRINCIPAL DE LIQUIDACIÓN -->
+    <table class="liq-table">
         <thead>
-          <tr>
-            <th>Descripción</th>
-            <th class="right">Subtotal</th>
-          </tr>
+            <tr>
+                <th width="32%">DETALLE DE LAS TRANSACCIONES</th>
+                <th width="15%">MONTO PRESENTADO</th>
+                <th width="35%">DETALLE DE DESCUENTOS</th>
+                <th width="18%">NETO PERCIBIDO</th>
+            </tr>
         </thead>
         <tbody>
-          <tr>
-            <td>Monto original de la transacción</td>
-            <td class="right">ARS {{ link.monto }}</td>
-          </tr>
-          <tr>
-            <td style="color: #71717a">
-              Comisión por gestión de plataforma ({{ link.commission_percent}}%)
-            </td>
-            <td class="right" style="color: #c1121f">
-              - ARS {{ link.commission_amount }}
-            </td>
-          </tr>
-          <tr class="total-row">
-            <td class="total-text">MONTO NETO ACREDITADO</td>
-            <td class="right total-amount">ARS {{ link.receiver_amount }}</td>
-          </tr>
+            <tr>
+                <td>
+                    <span class="bold">FECHA DE PAGO {{ link.created_at|date:"d/m" }}</span>
+                    <p style="margin: 3px 0;">Pesos</p>
+                    <p style="margin: 3px 0;">Fecha de presentación {{ link.created_at|date:"d/m" }}</p>
+                    <p style="margin: 3px 0;">Liq. N° 00{{ link.id }} - Lote N° 000{{ link.id|stringformat:"d" }}</p>
+                    <p class="bold" style="margin-top:5px;">1 Venta en {{ link.cuotas }} pag. Plan Cuotas</p>
+                    
+                    <div style="margin-top: 70px; border-top: 1.5px solid #000;"></div>
+                    <p class="bold">Total del día</p>
+                </td>
+                <td style="text-align: right;">
+                    <br><br><br><br><br>
+                    <p>$ {{ link.monto }}</p>
+                    <div style="margin-top: 56px; border-top: 1.5px solid #000;"></div>
+                    <p class="bold">$ {{ link.monto }}</p>
+                </td>
+                <td>
+                    <!-- 1. ARANCEL -->
+                    <div class="desc-section">
+                        <span class="bold">ø Arancel</span><br>
+                        - Arancel Tj.{{ link.tipo_tarjeta|title }} {% if link.cuotas > 1 %}en Cuotas{% endif %}<br>
+                        1,80 % <span class="val-num">$ {{ desglose.arancel }}</span>
+                    </div>
+
+                    <!-- 2. SERVICIOS FINANCIEROS -->
+                    <div class="desc-section">
+                        <span class="bold">ø Serv.Costos Financieros</span><br>
+                        - Plan Cuotas<br>
+                        Ventas en {{ link.cuotas }} cuotas <span class="val-num">$ {{ desglose.financiacion }}</span><br>
+                        Serv. Venta {{ link.cuotas }} cuotas <span class="val-num">$ {{ desglose.pago_tech }}</span>
+                        <span class="sub-text">(Costo Cuota: $ {{ desglose.cuota_valor }})</span>
+                    </div>
+
+                    <!-- 3. DEDUCCIONES IMPOSITIVAS -->
+                    <div class="desc-section">
+                        <span class="bold">ø Deduc.Impositivas</span><br>
+                        - Impuestos<br>
+                        IVA 21,00% <span class="val-num">$ {{ desglose.iva_21 }}</span><br>
+                        IVA 10,50% Ley 25.063 <span class="val-num">$ {{ desglose.iva_105 }}</span>
+                    </div>
+
+                    <div style="margin-top: 15px; border-top: 1.5px solid #000;"></div>
+                    <div class="bold" style="text-align: right; padding-top: 4px;">
+                        $ {{ link.commission_amount }}
+                    </div>
+                </td>
+                <td style="text-align: right;">
+                    <br><br><br><br><br><br><br><br><br><br><br><br><br>
+                    <p>$ {{ link.receiver_amount }}</p>
+                    <div style="margin-top: 8px; border-top: 1.5px solid var(--primary);"></div>
+                    <p class="bold" style="font-size: 11pt; color: var(--primary);">$ {{ link.receiver_amount }}</p>
+                </td>
+            </tr>
         </tbody>
-      </table>
+    </table>
 
-      <!-- Footer -->
-      <table class="footer-table">
+    <!-- SECCIÓN INFERIOR -->
+    <table class="tax-footer">
         <tr>
-          <td class="footer-info">
-            <strong>PagoTech Latam</strong><br />
-            Este documento es un comprobante válido de la acreditación de fondos
-            en su cuenta.<br />
-            La transacción ha sido verificada bajo protocolos de seguridad
-            PCI-DSS.<br /><br />
-            URL de verificación:<br />
-            <span class="link-text">{{ link.link }}</span>
-          </td>
-          <td class="qr-section">
-            <!-- API de QR para validación visual formal -->
-            <img
-              src="https://api.qrserver.com/v1/create-qr-code/?size=65x65&data={{ link.link|urlencode }}"
-              width="65"
-              height="65"
-              alt="QR Code"
-            /><br />
-            <span style="font-size: 8px; color: #a1a1aa">VALIDAR AQUÍ</span>
-          </td>
+            <td width="35%" style="border-right: 1px solid #ddd;">
+                <p class="bold">BASE IMPONIBLE IVA</p>
+                Tasa 21,00% <br>
+                Tasa 10,50%
+            </td>
+            <td width="65%">
+                <p class="bold" style="margin-bottom: 2px;">SE ACREDITO EN:</p>
+                CUENTA COMERCIAL DE VALORES PAGO TECH / SITEL SISTEMAS
+                <p style="font-size: 7.2pt; margin-top: 4px; color: var(--grey);">DOCUMENTO NO VALIDO PARA EL COMPUTO DEL IMPORTE DE LAS PERCEPCIONES - RG 796.</p>
+            </td>
         </tr>
-      </table>
+    </table>
 
-      <div
-        style="
-          text-align: center;
-          margin-top: 20px;
-          font-size: 9px;
-          color: #d1d1d6;
-        "
-      >
-        &copy; {% now "Y" %} PagoTech - Procesado de forma segura
-      </div>
+    <!-- FOOTER CON QR -->
+    <table class="final-row">
+        <tr>
+            <td width="75%" style="color: var(--grey); font-size: 7.2pt; vertical-align: bottom;">
+                PAGO TECH LATAM - Soportado por SITEL SISTEMAS INFORMÁTICOS.<br>
+                Comprobante asociado al pedido ID #{{ link.order_id|truncatechars:15 }}
+            </td>
+            <td class="qr-cell">
+                <img src="https://api.qrserver.com/v1/create-qr-code/?size=60x60&data={{ link.link|urlencode }}&color=e63946" width="60" alt="QR">
+                <p style="font-size: 6pt; margin-top: 3px; font-weight: bold; color: var(--grey);">CONSULTA DIGITAL</p>
+            </td>
+        </tr>
+    </table>
+
+    <div class="footer-brand">
+        &copy; {% now "Y" %} PAGO TECH | El presente resumen constituye una liquidación administrativa electrónica.
     </div>
-  </body>
+
+</body>
 </html>

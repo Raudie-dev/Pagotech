@@ -143,61 +143,75 @@ def get_dashboard_stats(cliente_pk: Any) -> Dict[str, Any]:
 
 def create_link(cliente_pk, monto_contado, cuotas=1, tipo_tarjeta='credito', descripcion=None):
     """
-    Crea un link de pago trasladando el costo financiero al cliente final
-    basado en la configuración de la App2 (Excel de Tasas).
+    Crea un link de pago trasladando el costo financiero al cliente final.
+    Utiliza parámetros dinámicos de App2 (Débito vs Crédito).
     """
     cliente = get_cliente(cliente_pk)
     if not cliente:
         return None, ['Cliente no encontrado.']
 
-    # 1. Obtener Configuración Financiera de la App2
+    # 1. Obtener Configuración Financiera Real desde la base de datos (App2)
     config = ParametroFinanciero.objects.first()
     if not config:
-        # Fallback de seguridad si no hay config creada
-        config = ParametroFinanciero.objects.create(iva=21, iva_financiacion=10.5, comision_pago_tech=4, arancel_plataforma=1.8)
-
-    # 2. Obtener el Plan de Cuotas si corresponde
-    plan = None
-    if cuotas > 1:
-        plan = CuotaConfig.objects.filter(numero_cuota=cuotas, activa=True).first()
-        if not plan:
-            return None, [f'El plan de {cuotas} cuotas no está disponible o no existe.']
+        # Fallback de emergencia si el admin no configuró nada
+        config = ParametroFinanciero.objects.create(
+            iva=21, iva_financiacion=10.5, 
+            comision_pago_tech=4, arancel_plataforma=1.8,
+            comision_pago_tech_debito=3.49, arancel_plataforma_debito=0.8
+        )
 
     try:
-        # 3. Lógica del Excel: Cálculo de Tasas con IVA
         monto_original = Decimal(str(monto_contado))
-        iva_factor = (Decimal(str(config.iva)) / 100) + 1
+        iva_gen_factor = (Decimal(str(config.iva)) / 100) + 1          # Ejemplo: 1.21
+        iva_finan_factor = (Decimal(str(config.iva_financiacion)) / 100) + 1 # Ejemplo: 1.105
+
+        # 2. Selección de Tasas dinámicas según el medio de pago
+        if tipo_tarjeta == 'debito':
+            # --- Lógica para DÉBITO ---
+            pt_base = config.comision_pago_tech_debito
+            arancel_base = config.arancel_plataforma_debito
+            tasa_finan_iva = Decimal('0')  # Débito no financia
+            cuotas = 1                     # Forzamos cuotas a 1 por seguridad
+        else:
+            # --- Lógica para CRÉDITO ---
+            pt_base = config.comision_pago_tech
+            arancel_base = config.arancel_plataforma
+            
+            # Tasa de Financiación (Si el plan está activo y son más de 1 pago)
+            tasa_finan_iva = Decimal('0')
+            if cuotas > 1:
+                plan = CuotaConfig.objects.filter(numero_cuota=cuotas, activa=True).first()
+                if not plan:
+                    return None, [f'El plan de {cuotas} cuotas no está habilitado actualmente.']
+                # Aplicamos IVA 10.5% a la tasa base del banco (Payway)
+                tasa_finan_iva = Decimal(str(plan.tasa_base)) * iva_finan_factor
+
+        # 3. Sumatoria de descuentos con IVA (Columna Roja del Excel)
+        desc_pt_iva = Decimal(str(pt_base)) * iva_gen_factor       # Comisión PT + IVA
+        desc_aran_iva = Decimal(str(arancel_base)) * iva_gen_factor # Arancel Payway + IVA
         
-        # Comisión PT con IVA
-        comision_pt_iva = Decimal(str(config.comision_pago_tech)) * iva_factor
-        # Arancel Plataforma con IVA
-        arancel_iva = Decimal(str(config.arancel_plataforma)) * iva_factor
-        
-        # Tasa de Financiación con IVA (Solo si es crédito y hay más de 1 cuota)
-        tasa_iva = Decimal('0')
-        if tipo_tarjeta == 'credito' and plan:
-            iva_finan_factor = (Decimal(str(config.iva_financiacion)) / 100) + 1
-            tasa_iva = Decimal(str(plan.tasa_base)) * iva_finan_factor
-        
-        # Total Descuentos % (Columna Roja del Excel)
-        total_desc_pct = comision_pt_iva + arancel_iva + tasa_iva
-        
-        # 4. Cálculo del Coeficiente (Columna Amarilla del Excel)
-        # Coeficiente = 1 / (1 - (Total Descuentos / 100))
+        # TOTAL DESCUENTOS %
+        total_desc_pct = desc_pt_iva + desc_aran_iva + tasa_finan_iva
+
+        # 4. Cálculo del Coeficiente (Columna Amarilla)
+        # Fórmula: 1 / (1 - (Total_Descuento_Porcentual / 100))
         divisor = 1 - (total_desc_pct / 100)
+        if divisor <= 0:
+            return None, ["Error crítico: La configuración de tasas supera el 100%. Verifique admin."]
+        
         coeficiente = 1 / divisor
         
-        # 5. Monto Final a Cobrar (Traslado de costo)
+        # 5. MONTO FINAL (Precio de Venta al Público)
         monto_final_venta = (monto_original * coeficiente).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
         
-        # Cálculo de montos para el registro
+        # Auditoría interna: Calculamos el monto exacto de la retención
         commission_amount = (monto_final_venta * (total_desc_pct / 100)).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
         receiver_amount = (monto_final_venta - commission_amount).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
 
     except Exception as e:
-        return None, [f'Error en el cálculo financiero: {str(e)}']
+        return None, [f'Error en cálculo financiero: {str(e)}']
 
-    # 6. Preparación de Payload para PayZen
+    # 6. Preparación del Pago en Cents para PayZen
     amount_in_cents = int(monto_final_venta * 100)
     order_id = f"PAY-{uuid.uuid4().hex[:10].upper()}" 
 
@@ -206,51 +220,48 @@ def create_link(cliente_pk, monto_contado, cuotas=1, tipo_tarjeta='credito', des
         "currency": "ARS",
         "orderId": order_id,
         "channelOptions": {"channelType": "URL"},
-        "merchantComment": f"Cliente: {cliente.nombre} - {descripcion or ''}"
+        "merchantComment": f"Vendedor: {cliente.nombre} | Plan: {cuotas} pagos | {descripcion or ''}"
     }
 
-    # Configuración de cuotas en PayZen si el plan lo requiere
-    if cuotas > 1:
+    # Configuración de Cuotas para PayZen (Solo Crédito > 1)
+    if tipo_tarjeta == 'credito' and cuotas > 1:
         schedules = []
-        monto_cuota = amount_in_cents // cuotas
-        resto = amount_in_cents % cuotas
+        monto_cuota_cents = amount_in_cents // cuotas
+        resto_cents = amount_in_cents % cuotas
         for i in range(cuotas):
-            valor = monto_cuota + (resto if i == 0 else 0)
+            valor = monto_cuota_cents + (resto_cents if i == 0 else 0)
             fecha = (datetime.now() + timedelta(days=30 * i)).strftime("%Y-%m-%dT23:59:59+00:00")
             schedules.append({"date": fecha, "amount": valor})
         payload["transactionOptions"] = {"installmentOptions": {"schedules": schedules}}
 
-    # 7. Llamada a la API de PayZen
+    # 7. Ejecutar llamada a API PayZen
     try:
-        from .crud import get_payzen_auth_header # Asegúrate de importar esto o tenerlo definido
-        from django.conf import settings
-        
         response = requests.post(settings.PAYZEN_URL, json=payload, headers=get_payzen_auth_header())
         res_data = response.json()
 
         if res_data.get("status") == "SUCCESS":
             payment_url = res_data["answer"]["paymentURL"]
             
-            # Guardamos el link con la lógica de traslación de costos
+            # Guardamos el link con la discriminación correcta de montos
             link_obj = LinkPago.objects.create(
                 cliente=cliente,
                 order_id=order_id,
-                monto=monto_final_venta, # Monto inflado (Precio Venta)
+                monto=monto_final_venta,    # El precio inflado para que al descontar le llegue el neto
                 cuotas=cuotas,
                 tipo_tarjeta=tipo_tarjeta,
                 descripcion=descripcion or '',
-                commission_percent=total_desc_pct, # % total que se descuenta según Excel
-                commission_amount=commission_amount, # Monto que se queda la plataforma
-                receiver_amount=receiver_amount, # Monto neto (Igual al monto_contado ingresado)
+                commission_percent=total_desc_pct, # % exacto trasladado
+                commission_amount=commission_amount, # Pesos que PagoTech+Payway descuentan
+                receiver_amount=receiver_amount,     # Debería coincidir con el monto_contado ingresado
                 link=payment_url
             )
             return link_obj, []
         else:
-            error_detail = res_data.get("answer", {}).get("errorMessage", "Error desconocido")
-            return None, [f"Error de Pasarela: {error_detail}"]
+            error_msg = res_data.get("answer", {}).get("errorMessage", "Error desconocido")
+            return None, [f"Error de Pasarela: {error_msg}"]
             
     except Exception as e:
-        return None, [f"Error de conexión con la pasarela: {str(e)}"]
+        return None, [f"Falla de comunicación con PayZen: {str(e)}"]
 
 def list_links_for_cliente(cliente_pk: Any):
     return LinkPago.objects.filter(cliente_id=cliente_pk).order_by('-created_at')

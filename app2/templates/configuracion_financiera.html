@@ -21,35 +21,18 @@
         background-color: #1a1d21 !important; border: 1px solid rgba(255,255,255,0.2);
         box-shadow: 0 4px 15px rgba(0,0,0,0.5); max-width: 250px; text-align: left; padding: 10px; font-size: 0.75rem;
     }
-    /* Estilo para el Modal de Advertencia/Peligro */
-.modal-confirm-danger .modal-content {
-    background-color: #1a1d21;
-    border: 1px solid #e63946 !important;
-    box-shadow: 0 0 20px rgba(230, 57, 70, 0.15);
-}
+    .modal-confirm-danger .modal-content {
+        background-color: #1a1d21; border: 1px solid #e63946 !important; box-shadow: 0 0 20px rgba(230, 57, 70, 0.15);
+    }
+    .modal-confirm-danger .modal-header {
+        background: linear-gradient(90deg, rgba(230, 57, 70, 0.2) 0%, rgba(26, 29, 33, 0) 100%);
+        border-bottom: 1px solid rgba(230, 57, 70, 0.3);
+    }
+    .modal-confirm-danger .modal-title { color: #ff4d4d; text-transform: uppercase; letter-spacing: 1px; font-size: 0.9rem; }
+    .modal-confirm-danger .btn-danger { background-color: #e63946; border: none; box-shadow: 0 4px 12px rgba(230, 57, 70, 0.3); }
 
-.modal-confirm-danger .modal-header {
-    background: linear-gradient(90deg, rgba(230, 57, 70, 0.2) 0%, rgba(26, 29, 33, 0) 100%);
-    border-bottom: 1px solid rgba(230, 57, 70, 0.3);
-}
-
-.modal-confirm-danger .modal-title {
-    color: #ff4d4d; /* Un rojo un poco más brillante */
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    font-size: 0.9rem;
-}
-
-.modal-confirm-danger .btn-danger {
-    background-color: #e63946;
-    border: none;
-    box-shadow: 0 4px 12px rgba(230, 57, 70, 0.3);
-}
-
-.modal-confirm-danger .btn-danger:hover {
-    background-color: #ff4d4d;
-    transform: translateY(-1px);
-}
+    /* Estilo para etiquetas mini en tarjetas */
+    .mini-card-label { font-size: 0.65rem; color: var(--text-muted); font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; display: block; }
 </style>
 {% endblock %}
 
@@ -63,7 +46,7 @@
     </div>
 </div>
 
-<!-- Tarjetas de Resumen con Tooltips -->
+<!-- Tarjetas de Resumen con Tooltips corregidos -->
 <div class="row g-4 mb-5">
     <div class="col-md-3">
         <div class="card h-100 hover-lift border-start border-info border-4">
@@ -72,13 +55,15 @@
                 <div class="flex-grow-1">
                     <div class="card-subtitle text-muted mb-1 small fw-bold">
                         IVA GENERAL 
-                        <i class="fas fa-question-circle help-icon" data-bs-toggle="tooltip" title="Alicuota base aplicada a comisiones y aranceles."></i>
+                        <i class="fas fa-question-circle help-icon" data-bs-toggle="tooltip" title="Alicuota base aplicada a comisiones y aranceles (Normalmente 21%)."></i>
                     </div>
                     <div class="h2 fw-bold mb-0 text-white">{{ config.iva }}%</div>
                 </div>
             </div>
         </div>
     </div>
+
+    <!-- TARJETA COMISIÓN PT (+IVA) CORREGIDA -->
     <div class="col-md-3">
         <div class="card h-100 hover-lift border-start border-success border-4">
             <div class="card-body d-flex align-items-center">
@@ -86,13 +71,23 @@
                 <div class="flex-grow-1">
                     <div class="card-subtitle text-muted mb-1 small fw-bold">
                         COMISIÓN PT (+IVA)
-                        <i class="fas fa-question-circle help-icon" data-bs-toggle="tooltip" title="Costo efectivo que PagoTech descuenta por cada transacción."></i>
+                        <i class="fas fa-question-circle help-icon" data-bs-toggle="tooltip" title="Costo efectivo neto que se descuenta según el medio de pago."></i>
                     </div>
-                    <div class="h2 fw-bold mb-0 text-white">{{ com_pt_iva|stringformat:".2f" }}%</div>
+                    <div class="row g-0">
+                        <div class="col-6">
+                            <span class="mini-card-label">Crédito</span>
+                            <div class="h4 fw-bold mb-0 text-white">{{ com_pt_cred_iva|stringformat:".2f" }}%</div>
+                        </div>
+                        <div class="col-6 border-start border-secondary ps-3">
+                            <span class="mini-card-label">Débito</span>
+                            <div class="h4 fw-bold mb-0 text-white">{{ com_pt_deb_iva|stringformat:".2f" }}%</div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
+
     <div class="col-md-3">
         <div class="card h-100 hover-lift border-start border-warning border-4">
             <div class="card-body d-flex align-items-center">
@@ -100,13 +95,15 @@
                 <div class="flex-grow-1">
                     <div class="card-subtitle text-muted mb-1 small fw-bold">
                         PLANES ACTIVOS
-                        <i class="fas fa-question-circle help-icon" data-bs-toggle="tooltip" title="Cantidad de planes financieros habilitados actualmente."></i>
+                        <i class="fas fa-question-circle help-icon" data-bs-toggle="tooltip" title="Cantidad de planes financieros para CRÉDITO habilitados."></i>
                     </div>
                     <div class="h2 fw-bold mb-0 text-white">{{ proyecciones|length }}</div>
                 </div>
             </div>
         </div>
     </div>
+
+    <!-- TARJETA ARANCEL (+IVA) CORREGIDA -->
     <div class="col-md-3">
         <div class="card h-100 hover-lift border-start border-danger border-4">
             <div class="card-body d-flex align-items-center">
@@ -114,9 +111,18 @@
                 <div class="flex-grow-1">
                     <div class="card-subtitle text-muted mb-1 small fw-bold">
                         ARANCEL (+IVA)
-                        <i class="fas fa-question-circle help-icon" data-bs-toggle="tooltip" title="Costo final de la plataforma de pagos (Payway) con impuestos incluidos."></i>
+                        <i class="fas fa-question-circle help-icon" data-bs-toggle="tooltip" title="Arancel de pasarela (Payway) aplicado según tipo de tarjeta."></i>
                     </div>
-                    <div class="h2 fw-bold mb-0 text-white">{{ arancel_iva|stringformat:".2f" }}%</div>
+                    <div class="row g-0">
+                        <div class="col-6">
+                            <span class="mini-card-label">Crédito</span>
+                            <div class="h4 fw-bold mb-0 text-white">{{ arancel_cred_iva|stringformat:".2f" }}%</div>
+                        </div>
+                        <div class="col-6 border-start border-secondary ps-3">
+                            <span class="mini-card-label">Débito</span>
+                            <div class="h4 fw-bold mb-0 text-white">{{ arancel_deb_iva|stringformat:".2f" }}%</div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -124,30 +130,56 @@
 </div>
 
 <div class="row g-4">
-    <!-- Columna Izquierda: Parámetros Base -->
+    <!-- Columna Izquierda: Parámetros Base Dinámicos -->
     <div class="col-lg-3">
         <div class="custom-table-container p-4 shadow-lg animate-slide-up">
             <h5 class="text-white mb-4 small fw-bold text-uppercase border-bottom border-secondary pb-2"><i class="fas fa-sliders-h me-2 text-danger"></i>Parámetros Base</h5>
             <form method="post">
                 {% csrf_token %}
                 <input type="hidden" name="update_general" value="1">
+                
                 <div class="mb-3">
-                    <label class="form-label text-secondary small fw-bold">IVA CONSUMIDOR FINAL <i class="fas fa-question-circle help-icon" data-bs-toggle="tooltip" title="Normalmente 21%. Se usa para PT y Aranceles."></i></label>
+                    <label class="form-label text-secondary small fw-bold">IVA GENERAL <i class="fas fa-question-circle help-icon" data-bs-toggle="tooltip" title="IVA base (21%) aplicado a Aranceles y PagoTech."></i></label>
                     <div class="input-group"><input type="number" step="0.01" name="iva" class="form-control form-control-dark" value="{{ config.iva }}"><span class="input-group-text input-group-text-custom">%</span></div>
                 </div>
-                <div class="mb-3">
-                    <label class="form-label text-secondary small fw-bold">IVA TASA FINANCIACIÓN <i class="fas fa-question-circle help-icon" data-bs-toggle="tooltip" title="Normalmente 10.5%. Aplicado sobre los intereses bancarios."></i></label>
+                <div class="mb-3 border-bottom border-secondary pb-3">
+                    <label class="form-label text-secondary small fw-bold">IVA FINANCIACIÓN <i class="fas fa-question-circle help-icon" data-bs-toggle="tooltip" title="IVA aplicado sobre intereses bancarios (10.50%)."></i></label>
                     <div class="input-group"><input type="number" step="0.01" name="iva_financiacion" class="form-control form-control-dark" value="{{ config.iva_financiacion }}"><span class="input-group-text input-group-text-custom">%</span></div>
                 </div>
-                <div class="mb-3 border-top border-secondary pt-3 mt-4">
-                    <label class="form-label text-secondary small fw-bold text-danger">COMISIÓN PAGO TECH <i class="fas fa-question-circle help-icon" data-bs-toggle="tooltip" title="Comisión de ganancia neta de la plataforma."></i></label>
-                    <div class="input-group"><input type="number" step="0.01" name="comision_pago_tech" class="form-control form-control-dark" value="{{ config.comision_pago_tech }}"><span class="input-group-text input-group-text-custom">%</span></div>
+
+                <!-- SECCIÓN CRÉDITO CON TOOLTIP -->
+                <div class="pt-3 mt-3">
+                    <h6 class="text-danger small fw-bold mb-3 uppercase">
+                        CONFIGURACIÓN CRÉDITO 
+                        <i class="fas fa-question-circle help-icon" data-bs-toggle="tooltip" title="Valores aplicados a transacciones con tarjeta de crédito (Financiadas)."></i>
+                    </h6>
+                    <div class="mb-3">
+                        <label class="form-label text-muted x-small mb-1 fw-bold text-uppercase">COMISIÓN PAGO TECH</label>
+                        <div class="input-group"><input type="number" step="0.01" name="comision_pago_tech" class="form-control form-control-dark" value="{{ config.comision_pago_tech }}"><span class="input-group-text input-group-text-custom">%</span></div>
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label text-muted x-small mb-1 fw-bold text-uppercase">ARANCEL PAYWAY</label>
+                        <div class="input-group"><input type="number" step="0.01" name="arancel_plataforma" class="form-control form-control-dark" value="{{ config.arancel_plataforma }}"><span class="input-group-text input-group-text-custom">%</span></div>
+                    </div>
                 </div>
-                <div class="mb-4">
-                    <label class="form-label text-secondary small fw-bold text-danger">ARANCEL PLATAFORMA <i class="fas fa-question-circle help-icon" data-bs-toggle="tooltip" title="Costo neto de la pasarela de pagos."></i></label>
-                    <div class="input-group"><input type="number" step="0.01" name="arancel_plataforma" class="form-control form-control-dark" value="{{ config.arancel_plataforma }}"><span class="input-group-text input-group-text-custom">%</span></div>
+
+                <!-- SECCIÓN DÉBITO CON TOOLTIP -->
+                <div class="border-top border-secondary pt-3 mt-2">
+                    <h6 class="text-success small fw-bold mb-3 uppercase">
+                        CONFIGURACIÓN DÉBITO 
+                        <i class="fas fa-question-circle help-icon" data-bs-toggle="tooltip" title="Valores aplicados a transacciones con tarjeta de débito (Inmediatas)."></i>
+                    </h6>
+                    <div class="mb-3">
+                        <label class="form-label text-muted x-small mb-1 fw-bold text-uppercase">COMISIÓN PAGO TECH</label>
+                        <div class="input-group"><input type="number" step="0.01" name="comision_pago_tech_debito" class="form-control form-control-dark" value="{{ config.comision_pago_tech_debito }}"><span class="input-group-text input-group-text-custom">%</span></div>
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label text-muted x-small mb-1 fw-bold text-uppercase">ARANCEL PAYWAY</label>
+                        <div class="input-group"><input type="number" step="0.01" name="arancel_plataforma_debito" class="form-control form-control-dark" value="{{ config.arancel_plataforma_debito }}"><span class="input-group-text input-group-text-custom">%</span></div>
+                    </div>
                 </div>
-                <button type="submit" class="btn btn-primary w-100 py-2 fw-bold"><i class="fas fa-save me-2"></i> ACTUALIZAR BASE</button>
+
+                <button type="submit" class="btn btn-primary w-100 py-2 fw-bold shadow"><i class="fas fa-save me-2"></i> ACTUALIZAR TODO</button>
             </form>
         </div>
     </div>
@@ -157,8 +189,8 @@
         <div class="custom-table-container shadow-lg animate-slide-up">
             <div class="table-header border-bottom border-strong d-flex justify-content-between align-items-center p-3">
                 <div>
-                    <h6 class="mb-0 text-white fw-bold">Matriz de Coeficientes y Tasas</h6>
-                    <small class="user-sub-text">Simulación basada en $1.000.000 de contado</small>
+                    <h6 class="mb-0 text-white fw-bold">Matriz de Coeficientes y Tasas (CRÉDITO)</h6>
+                    <small class="user-sub-text">Cálculo de planes proyectado sobre los aranceles de CRÉDITO configurados.</small>
                 </div>
                 <button class="btn btn-sm btn-outline-danger px-3" data-bs-toggle="modal" data-bs-target="#addPlanModal"><i class="fas fa-plus me-1"></i> Nuevo Plan</button>
             </div>
@@ -169,27 +201,26 @@
                         <tr>
                             <th class="ps-4" style="width: 20%;">
                                 NOMBRE 
-                                <i class="fas fa-info-circle help-icon" data-bs-toggle="tooltip" title="Nombre identificador del plan que se mostrará en el sistema."></i>
+                                <i class="fas fa-info-circle help-icon" data-bs-toggle="tooltip" title="Nombre del plan que verá el comercio titular."></i>
                             </th>
                             <th class="text-center" style="width: 120px;">
                                 CUOTAS 
-                                <i class="fas fa-info-circle help-icon" data-bs-toggle="tooltip" title="Cantidad de pagos para este plan."></i>
+                                <i class="fas fa-info-circle help-icon" data-bs-toggle="tooltip" title="Cantidad de cuotas elegidas para pagar."></i>
                             </th>
                             <th style="width: 150px;">
                                 TASA BASE 
-                                <i class="fas fa-info-circle help-icon" data-bs-toggle="tooltip" title="Costo financiero directo del banco (Columna verde)."></i>
+                                <i class="fas fa-info-circle help-icon" data-bs-toggle="tooltip" title="Costo bancario del financiamiento sin impuestos (Valor base Payway)."></i>
                             </th>
                             <th class="text-center">
                                 DESC. TOTAL 
-                                <i class="fas fa-info-circle help-icon" data-bs-toggle="tooltip" title="Suma total de descuentos con IVA."></i>
+                                <i class="fas fa-info-circle help-icon" data-bs-toggle="tooltip" title="Total que se resta (Crédito+IVA+PT+IVA)."></i>
                             </th>
                             <th class="text-center">
                                 COEFICIENTE 
-                                <i class="fas fa-info-circle help-icon" data-bs-toggle="tooltip" title="Factor: Precio Contado x Coeficiente = Precio Venta."></i>
+                                <i class="fas fa-info-circle help-icon" data-bs-toggle="tooltip" title="Precio Contado x Coeficiente = Precio Venta Cliente."></i>
                             </th>
                             <th class="text-center">
                                 ESTADO 
-                                <i class="fas fa-info-circle help-icon" data-bs-toggle="tooltip" title="Habilita o deshabilita este plan en el frontend."></i>
                             </th>
                             <th class="text-end pe-4">
                                 ACCIONES
@@ -259,22 +290,37 @@
     </div>
 </div>
 
-<!-- Modal: Añadir Plan (Simplificado para consistencia) -->
-<div class="modal fade" id="addPlanModal" tabindex="-1" aria-hidden="true">
+<!-- Modal: Añadir Plan (Respetando consistencia) -->
+<div class="modal fade" id="addPlanModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-secondary bg-dark shadow-lg">
+        <div class="modal-content bg-dark border-secondary">
             <form method="post">
                 {% csrf_token %}
                 <input type="hidden" name="add_cuota" value="1">
                 <div class="modal-header border-secondary">
-                    <h5 class="modal-title text-white fw-bold"><i class="fas fa-plus-circle text-danger me-2"></i> Nuevo Plan</h5>
+                    <h5 class="modal-title text-white">Nuevo Plan</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
-                <div class="modal-body">
-                    <div class="mb-3"><label class="form-label text-secondary small fw-bold">NOMBRE DEL PLAN</label><input type="text" name="new_nombre" class="form-control form-control-dark" required></div>
-                    <div class="row"><div class="col-6"><label class="form-label text-secondary small fw-bold">CUOTAS (N°)</label><input type="number" name="new_numero" class="form-control form-control-dark" required></div><div class="col-6"><label class="form-label text-secondary small fw-bold">TASA BASE (%)</label><input type="number" step="0.01" name="new_tasa" class="form-control form-control-dark" required></div></div>
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label class="form-label text-muted small fw-bold">NOMBRE IDENTIFICADOR</label>
+                        <input type="text" name="new_nombre" class="form-control form-control-dark" required>
+                    </div>
+                    <div class="row">
+                        <div class="col-6">
+                            <label class="form-label text-muted small fw-bold">CANTIDAD CUOTAS</label>
+                            <input type="number" name="new_numero" class="form-control form-control-dark" required>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label text-muted small fw-bold">TASA BANCARIA BASE</label>
+                            <input type="number" step="0.01" name="new_tasa" class="form-control form-control-dark" required>
+                        </div>
+                    </div>
                 </div>
-                <div class="modal-footer border-secondary"><button type="button" class="btn btn-dark" data-bs-dismiss="modal">Cancelar</button><button type="submit" class="btn btn-danger px-4 fw-bold">CREAR</button></div>
+                <div class="modal-footer border-secondary">
+                    <button type="button" class="btn btn-dark" data-bs-dismiss="modal">Cerrar</button>
+                    <button type="submit" class="btn btn-danger px-4">CREAR PLAN</button>
+                </div>
             </form>
         </div>
     </div>
@@ -285,17 +331,19 @@
 {% block extra_js %}
 <script>
     document.addEventListener('DOMContentLoaded', function () {
-        // Inicializar tooltips de Bootstrap 5
+        // Inicializar tooltips de Bootstrap 5 con el UI exacto
         var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
-        tooltipTriggerList.map(function (tooltipTriggerEl) { return new bootstrap.Tooltip(tooltipTriggerEl) });
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl, {
+                delay: { "show": 200, "hide": 100 }
+            });
+        });
     });
 
-    // Función para manejar el modal de eliminación
     function openDeleteModal(id, nombre) {
         document.getElementById('deletePlanName').innerText = nombre;
         document.getElementById('delete-plan-id').value = id;
-        var myModal = new bootstrap.Modal(document.getElementById('deletePlanModal'));
-        myModal.show();
+        new bootstrap.Modal(document.getElementById('deletePlanModal')).show();
     }
 </script>
 {% endblock %}

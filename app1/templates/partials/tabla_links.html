@@ -1,0 +1,154 @@
+<div class="table-section animate-slide-up">
+    <div class="section-header">
+        <div class="d-flex align-items-center">
+            <div class="header-icon">
+                <i class="fas fa-history"></i>
+            </div>
+            <div>
+                <h5 class="mb-0 text-white fw-bold">Historial de Cobros</h5>
+                <small class="text-muted">Últimos enlaces generados</small>
+            </div>
+        </div>
+        <div class="badge-count">
+            <span>{{ links|length }}</span> link{{ links|length|pluralize }}
+        </div>
+    </div>
+    
+    <div class="table-responsive">
+        <table class="table-modern">
+            <thead>
+                <tr>
+                    <th class="ps-4">Link de Pago</th>
+                    <th>Descripción</th>
+                    <th>Monto</th>
+                    <th>Neto a Recibir</th>
+                    <th>Estado</th>
+                    <th>Cuotas</th>
+                    <th class="text-end pe-4">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for l in links %}
+                <tr class="table-row-hover">
+                    <td class="ps-4">
+                        <div class="d-flex align-items-center">
+                            <div class="link-icon"><i class="fas fa-link"></i></div>
+                            <div class="link-info">
+                                <code class="link-code">{{ l.link|truncatechars:30 }}</code>
+                                <small class="link-meta">{{ l.created_at|timesince }}</small>
+                            </div>
+                        </div>
+                    </td>
+                    <td>{{ l.descripcion }}</td>
+                    <td>${{ l.monto }}</td>
+                    <td><span class="net-amount">${{ l.receiver_amount }}</span></td>
+                    
+                    <!-- ESTADO CON BOTÓN DE REFRESH -->
+                    <td>
+                        <div class="d-flex align-items-center gap-2" id="status-container-{{ l.id }}">
+                            {% if l.pagado %}
+                                <span class="status-badge" style="background: rgba(16, 185, 129, 0.1); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.2); padding: 5px 12px; border-radius: 20px; font-size: 11px;">
+                                    <i class="fas fa-check-circle me-1"></i> Pagado
+                                </span>
+                                <a href="{% url 'ticket_pdf' l.id %}" target="_blank" class="btn-action btn-download" title="Ver Recibo">
+                                    <i class="fas fa-file-invoice"></i>
+                                </a>
+                            {% else %}
+                                <!-- Usamos una clase 'js-check-status' para que el JS sepa que debe verificar este link -->
+                                <span class="status-badge badge-pendiente js-check-status" 
+                                    data-id="{{ l.id }}" 
+                                    style="background: rgba(245, 158, 11, 0.1); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.2); padding: 5px 12px; border-radius: 20px; font-size: 11px;">
+                                    <i class="fas fa-sync-alt fa-spin me-1"></i> Verificando...
+                                </span>
+                            {% endif %}
+                        </div>
+                    </td>
+                    <td>
+                        <span id="cuotas-text-{{ l.id }}">
+                            {% if l.pagado %}
+                                {{ l.cuotas_elegidas }} cuota{{ l.cuotas_elegidas|pluralize }}
+                            {% else %}
+                                --
+                            {% endif %}
+                        </span>
+                    </td>
+                    <td class="text-end pe-4">
+                        <div class="action-buttons">
+                            <button class="btn-action btn-copy" data-link="{{ l.link }}"><i class="fas fa-copy"></i></button>
+                            <a href="{{ l.link }}" target="_blank" class="btn-action btn-external"><i class="fas fa-external-link-alt"></i></a>
+                        </div>
+                    </td>
+
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- PAGINACIÓN -->
+<!-- Controles de Paginación para Links -->
+<div class="pagination-container d-flex flex-column flex-md-row justify-content-between align-items-center p-4 border-top border-secondary border-opacity-10">
+    
+    <!-- Información de resultados -->
+    <div class="pagination-info mb-3 mb-md-0">
+        Mostrando <span class="text-white fw-bold">{{ links.start_index }}</span> - 
+        <span class="text-white fw-bold">{{ links.end_index }}</span> de 
+        <span class="text-danger fw-bold">{{ links.paginator.count }}</span> registros
+    </div>
+    
+    <nav aria-label="Navegación de páginas">
+        <ul class="pagination pagination-sm mb-0">
+            
+            <!-- Botón Primero y Anterior -->
+            {% if links.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?page=1{% if q %}&q={{ q }}{% endif %}" title="Primero">
+                    <i class="fas fa-angle-double-left"></i>
+                </a>
+            </li>
+            <li class="page-item">
+                <a class="page-link" href="?page={{ links.previous_page_number }}{% if q %}&q={{ q }}{% endif %}">
+                    <i class="fas fa-chevron-left me-1"></i> Anterior
+                </a>
+            </li>
+            {% else %}
+            <li class="page-item disabled">
+                <span class="page-link"><i class="fas fa-chevron-left"></i></span>
+            </li>
+            {% endif %}
+
+            <!-- Números de Páginas Dinámicos -->
+            {% for num in links.paginator.page_range %}
+                {% if links.number == num %}
+                    <li class="page-item active">
+                        <span class="page-link">{{ num }}</span>
+                    </li>
+                {% elif num > links.number|add:'-3' and num < links.number|add:'3' %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ num }}{% if q %}&q={{ q }}{% endif %}">{{ num }}</a>
+                    </li>
+                {% endif %}
+            {% endfor %}
+
+            <!-- Botón Siguiente y Último -->
+            {% if links.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ links.next_page_number }}{% if q %}&q={{ q }}{% endif %}">
+                    Siguiente <i class="fas fa-chevron-right ms-1"></i>
+                </a>
+            </li>
+            <li class="page-item">
+                <a class="page-link" href="?page={{ links.paginator.num_pages }}{% if q %}&q={{ q }}{% endif %}" title="Último">
+                    <i class="fas fa-angle-double-right"></i>
+                </a>
+            </li>
+            {% else %}
+            <li class="page-item disabled">
+                <span class="page-link"><i class="fas fa-chevron-right"></i></span>
+            </li>
+            {% endif %}
+
+        </ul>
+    </nav>
+</div>
+</div>

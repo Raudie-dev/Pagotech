@@ -154,8 +154,15 @@ def update_financiero(data):
     config = get_or_create_config()
     config.iva = data.get('iva', config.iva)
     config.iva_financiacion = data.get('iva_financiacion', config.iva_financiacion)
+    
+    # Valores Crédito
     config.comision_pago_tech = data.get('comision_pago_tech', config.comision_pago_tech)
     config.arancel_plataforma = data.get('arancel_plataforma', config.arancel_plataforma)
+    
+    # Valores Débito
+    config.comision_pago_tech_debito = data.get('comision_pago_tech_debito', config.comision_pago_tech_debito)
+    config.arancel_plataforma_debito = data.get('arancel_plataforma_debito', config.arancel_plataforma_debito)
+    
     config.save()
     return True, None
 

@@ -240,14 +240,20 @@ def configuracion_financiera(request):
 
     if request.method == 'POST':
         if 'update_general' in request.POST:
+            # Capturamos todos los parámetros incluyendo los de Débito
             data = {
                 'iva': request.POST.get('iva'),
                 'iva_financiacion': request.POST.get('iva_financiacion'),
+                # Crédito
                 'comision_pago_tech': request.POST.get('comision_pago_tech'),
                 'arancel_plataforma': request.POST.get('arancel_plataforma'),
+                # Débito
+                'comision_pago_tech_debito': request.POST.get('comision_pago_tech_debito'),
+                'arancel_plataforma_debito': request.POST.get('arancel_plataforma_debito'),
             }
             admin_crud.update_financiero(data)
             messages.success(request, 'Parámetros base actualizados correctamente.')
+            
         elif 'add_cuota' in request.POST:
             data = {
                 'numero_cuota': request.POST.get('new_numero'),
@@ -255,7 +261,7 @@ def configuracion_financiera(request):
                 'tasa_base': request.POST.get('new_tasa'),
             }
             admin_crud.create_cuota_plan(data)
-            messages.success(request, 'Nuevo plan añadido.')
+            messages.success(request, 'Nuevo plan de cuotas añadido.')
         
         elif 'update_cuota' in request.POST:
             cuota_id = request.POST.get('cuota_id')
@@ -270,37 +276,35 @@ def configuracion_financiera(request):
 
         elif 'delete_cuota' in request.POST:
             admin_crud.delete_cuota_plan(request.POST.get('delete_id'))
-            messages.warning(request, 'Plan eliminado.')
+            messages.warning(request, 'Plan financiero eliminado.')
             
         return redirect('configuracion_financiera')
 
-    # Obtener configuración y cuotas
+    # --- LÓGICA DE CARGA ---
     config = admin_crud.get_or_create_config()
     cuotas = admin_crud.list_cuotas_config()
     
-    # Cálculos según Excel
-    # iva_factor = (1 + IVA/100) -> Ej: 1.21
-    # iva_finan_factor = (1 + IVA_FINAN/100) -> Ej: 1.105
+    # Factores de IVA
     iva_f = Decimal(str(config.iva)) / 100
     iva_fin_f = Decimal(str(config.iva_financiacion)) / 100
     
-    # Comisiones con IVA (Campos rojos del Excel)
-    com_pt_iva = Decimal(str(config.comision_pago_tech)) * (1 + iva_f)
-    arancel_iva = Decimal(str(config.arancel_plataforma)) * (1 + iva_f)
+    # Comisiones de CRÉDITO con IVA (Columna Roja)
+    com_pt_cred_iva = Decimal(str(config.comision_pago_tech)) * (1 + iva_f)
+    arancel_cred_iva = Decimal(str(config.arancel_plataforma)) * (1 + iva_f)
+
+    # Comisiones de DÉBITO con IVA (Columna Roja)
+    com_pt_deb_iva = Decimal(str(config.comision_pago_tech_debito)) * (1 + iva_f)
+    arancel_deb_iva = Decimal(str(config.arancel_plataforma_debito)) * (1 + iva_f)
     
+    # Proyecciones (Para Crédito, que es donde hay cuotas y coeficiente)
     proyecciones = []
     for c in cuotas:
-        # Tasa cuota con su respectivo IVA de financiación
         tasa_cuota_iva = Decimal(str(c.tasa_base)) * (1 + iva_fin_f)
+        total_descuentos = com_pt_cred_iva + tasa_cuota_iva + arancel_cred_iva
         
-        # TOTAL DESCUENTOS (Columna roja del medio del Excel)
-        total_descuentos = com_pt_iva + tasa_cuota_iva + arancel_iva
-        
-        # COEFICIENTE (Columna amarilla del Excel)
-        # Formula: 1 / (1 - (Descuento_Total / 100))
         try:
             divisor = (1 - (total_descuentos / 100))
-            coeficiente = 1 / divisor
+            coeficiente = 1 / divisor if divisor > 0 else 0
         except:
             coeficiente = 0
         
@@ -314,7 +318,10 @@ def configuracion_financiera(request):
         'user': user_admin,
         'config': config,
         'proyecciones': proyecciones,
-        'com_pt_iva': com_pt_iva,
-        'arancel_iva': arancel_iva
+        # Variables para las tarjetas de resumen
+        'com_pt_cred_iva': com_pt_cred_iva,
+        'arancel_cred_iva': arancel_cred_iva,
+        'com_pt_deb_iva': com_pt_deb_iva,
+        'arancel_deb_iva': arancel_deb_iva,
     }
     return render(request, 'configuracion_financiera.html', context)
