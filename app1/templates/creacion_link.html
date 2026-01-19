@@ -68,15 +68,15 @@
                     </label>
                     <div class="select-wrapper">
                         <select name="tipo_tarjeta" class="form-select-enhanced" id="select-tipo">
-                            <option value="debito">Tarjeta de Débito ({{ config.comision_pago_tech_debito }}%)</option>
-                            <option value="credito" selected>Tarjeta de Crédito ({{ config.comision_pago_tech }}%)</option>
+                            <option value="debito">Tarjeta de Débito</option>
+                            <option value="credito" selected>Tarjeta de Crédito</option>
                         </select>
                         <i class="fas fa-chevron-down select-arrow"></i>
                     </div>
                     <small class="form-hint">Las tasas se aplicarán dinámicamente</small>
                 </div>
 
-                <!-- PREVIEW DE CÁLCULO (IMPORTANTE: Mismo ID que busca el JS) -->
+                <!-- PREVIEW DE CÁLCULO -->
                 <div class="col-12">
                     <div class="calculation-preview" id="calc-preview" style="display: none;">
                         <div class="row g-3 align-items-center">
@@ -149,20 +149,39 @@
 </div>
 
 {% if link_creado %}
-<div class="modal fade show" id="modalLinkGenerado" tabindex="-1" style="display: block; background: rgba(0,0,0,0.8);">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content modal-dark text-center p-4">
-            <div class="modal-body">
-                <i class="fas fa-check-circle text-success fs-1 mb-3"></i>
-                <h4 class="text-white">¡Link Generado!</h4>
-                <div class="mt-4 p-3 bg-white bg-opacity-5 rounded">
-                    <small class="d-block text-muted mb-2">Compartir link:</small>
-                    <div class="d-flex gap-2">
-                        <input type="text" value="{{ link_creado.url }}" class="form-control-enhanced bg-dark border-secondary text-white" readonly id="final-link">
-                        <button class="btn btn-primary" onclick="copyFinalLink()"><i class="fas fa-copy"></i></button>
-                    </div>
+<div class="modal fade show" id="modalLinkGenerado" tabindex="-1" style="display: block; background: rgba(0,0,0,0.85); backdrop-filter: blur(10px);">
+    <div class="modal-dialog modal-dialog-centered animate-slide-up">
+        <!-- Usamos modal-dark según tu CSS -->
+        <div class="modal-content modal-dark p-2"> 
+            <div class="modal-body text-center p-4">
+                
+                <!-- Icono con animación pulse y gradiente verde de tu CSS -->
+                <div class="success-circle mb-4">
+                    <i class="fas fa-check"></i>
                 </div>
-                <button class="btn btn-secondary mt-4 w-100" data-bs-dismiss="modal" onclick="window.location.reload()">Cerrar Historial</button>
+
+                <h3 class="text-white fw-bold mb-2">¡Link Generado!</h3>
+                <p class="text-muted small mb-4">El cliente podrá realizar el pago por un total de <span class="text-success-bright fw-bold">${{ link_creado.monto_total }}</span></p>
+
+                <!-- Estructura exacta de tu clase .link-generated-box -->
+                <div class="text-start mb-1">
+                    <label class="form-label-enhanced">Enlace de cobro:</label>
+                </div>
+                <div class="link-generated-box mb-4">
+                    <input type="text" value="{{ link_creado.url }}" class="link-generated-input" readonly id="final-link">
+                    <button class="btn-copy-success" onclick="copyFinalLink()" id="btn-copy-modal">
+                        <i class="fas fa-copy"></i>
+                    </button>
+                </div>
+
+                <!-- Botón con efecto .btn-generate-link y .btn-shine de tu CSS -->
+                <button class="btn-generate-link" onclick="window.location.reload()">
+                    <span class="btn-content">
+                        <i class="fas fa-arrow-left me-2"></i> FINALIZAR Y VOLVER
+                    </span>
+                    <div class="btn-shine"></div>
+                </button>
+                
             </div>
         </div>
     </div>
@@ -173,7 +192,7 @@
 {% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', () => {
-    // VISIBILIDAD DE TARJETA
+    // VISIBILIDAD DE TARJETA Y LOGICA DE PREVIEW (Mantenemos la existente)
     const card = document.getElementById('card-main');
     if(card) { card.style.opacity = '1'; card.style.transform = 'translateY(0)'; }
 
@@ -184,7 +203,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const selectCuotas = document.getElementById('select-cuotas');
     const calcPreview = document.getElementById('calc-preview');
 
-    // CÁLCULO ASÍNCRONO
     async function updatePreview() {
         const monto = parseFloat(inputMonto.value) || 0;
         if (monto > 0) {
@@ -198,16 +216,11 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
                 const response = await fetch(window.location.pathname, { method: 'POST', body: formData });
                 const data = await response.json();
-                
                 if(data.success) {
-                    // Actualización de textos
                     document.getElementById('preview-bruto').textContent = `$${data.monto_venta.toLocaleString('es-AR', {minimumFractionDigits: 2})}`;
                     document.getElementById('preview-comision').textContent = `-$${data.comision.toLocaleString('es-AR', {minimumFractionDigits: 2})}`;
                     document.getElementById('preview-neto').textContent = `$${data.neto.toLocaleString('es-AR', {minimumFractionDigits: 2})}`;
-                    
-                    // Visibilidad del Preview
                     calcPreview.style.display = 'block';
-                    calcPreview.style.opacity = '1';
                 }
             } catch (error) { console.error("Error al obtener preview:", error); }
         } else {
@@ -215,10 +228,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Eventos
     inputMonto.addEventListener('input', updatePreview);
     selectCuotas.addEventListener('change', updatePreview);
-    
     selectTipo.addEventListener('change', function() {
         if (this.value === 'debito') {
             selectCuotas.value = "1";
@@ -231,51 +242,126 @@ document.addEventListener('DOMContentLoaded', () => {
         updatePreview();
     });
 
-    // Confirmar
+    // 2. MODAL CONFIRMACIÓN
     document.getElementById('btn-confirmar-modal').addEventListener('click', () => {
-        if (!inputMonto.value || inputMonto.value <= 0) return alert("Ingrese un monto");
+        if (!inputMonto.value || inputMonto.value <= 0) {
+            if(typeof showToast === "function") showToast("Ingrese un monto válido", "danger");
+            return;
+        }
         
         document.getElementById('resumen-datos-modal').innerHTML = `
-            <div class="summary-row d-flex justify-content-between mb-2"><span>Total Final a Cobrar:</span><b>${document.getElementById('preview-bruto').textContent}</b></div>
-            <div class="summary-row d-flex justify-content-between mb-2"><span>Medio:</span><b>${selectTipo.value.toUpperCase()}</b></div>
-            <div class="summary-row d-flex justify-content-between mb-2"><span>Financiación:</span><b>${selectCuotas.options[selectCuotas.selectedIndex].text}</b></div>
+            <div class="summary-row d-flex justify-content-between mb-2"><span>Total a Cobrar:</span><b>${document.getElementById('preview-bruto').textContent}</b></div>
+            <div class="summary-row d-flex justify-content-between mb-2"><span>Medio:</span><b class="text-uppercase">${selectTipo.value}</b></div>
+            <div class="summary-row d-flex justify-content-between mb-2"><span>Cuotas:</span><b>${selectCuotas.options[selectCuotas.selectedIndex].text}</b></div>
             <hr class="border-secondary">
-            <div class="summary-row d-flex justify-content-between text-success"><span>Cobrarás Neto:</span><b>${document.getElementById('preview-neto').textContent}</b></div>
+            <div class="summary-row d-flex justify-content-between text-success fw-bold"><span>Recibirás Neto:</span><b>${document.getElementById('preview-neto').textContent}</b></div>
         `;
         modalConfirmacion.show();
     });
 
-    // Envío final
     document.getElementById('btn-crear-link-final').addEventListener('click', function() {
         this.disabled = true;
-        this.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Generando...';
-        selectCuotas.disabled = false; // Importante para que viaje el valor en POST
-        const hidden = document.createElement('input'); hidden.type = 'hidden'; hidden.name = 'confirm'; hidden.value = '1';
+        this.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Generando...';
+        selectCuotas.disabled = false; 
+        const hidden = document.createElement('input'); 
+        hidden.type = 'hidden'; hidden.name = 'confirm'; hidden.value = '1';
         form.appendChild(hidden);
         form.submit();
     });
 
-    // Check status AJAX
-    document.querySelectorAll('.js-check-status').forEach(badge => {
-        const id = badge.getAttribute('data-id');
-        fetch(`/verificar-pago-ajax/${id}/`).then(res => res.json()).then(data => {
-            if(data.pagado) window.location.reload();
-            else badge.innerHTML = '<i class="fas fa-clock"></i> Pendiente';
+    // --- 3. VERIFICACIÓN DE PAGOS MEJORADA (Polling cada 20 seg) ---
+    function checkPayments() {
+        const pendings = document.querySelectorAll('.js-check-status');
+        
+        pendings.forEach(badge => {
+            // No procesar si ya tiene un estado terminal en el atributo
+            if (badge.dataset.finalizado === "true") return;
+
+            const id = badge.getAttribute('data-id');
+            const statusContainer = document.getElementById(`status-container-${id}`);
+            const cuotasSpan = document.getElementById(`cuotas-text-${id}`);
+            
+            // 1. Mostrar estado "Verificando..." discreto
+            const originalHTML = badge.innerHTML;
+            badge.innerHTML = '<i class="fas fa-sync-alt fa-spin me-1"></i> Verificando...';
+
+            fetch(`/verificar-pago-ajax/${id}/`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.pagado) {
+                        // 2. ACTUALIZAR COLUMNA ESTADO (Badge + Recibo)
+                        statusContainer.innerHTML = `
+                            <span class="status-badge" style="background: rgba(16, 185, 129, 0.1); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.2); padding: 5px 12px; border-radius: 20px; font-size: 11px;">
+                                <i class="fas fa-check-circle me-1"></i> Pagado
+                            </span>
+                            <a href="/ticket-pdf/${id}/" target="_blank" class="btn-action btn-download animate-pop-in" title="Ver Recibo">
+                                <i class="fas fa-file-invoice"></i>
+                            </a>
+                        `;
+                        
+                        // 3. ACTUALIZAR COLUMNA CUOTAS
+                        if (cuotasSpan) {
+                            const cuotaTexto = data.cuotas > 1 ? `${data.cuotas} cuotas` : `1 cuota`;
+                            cuotasSpan.innerText = cuotaTexto;
+                            cuotasSpan.classList.add('text-white', 'fw-bold');
+                        }
+
+                        // Notificación
+                        if(typeof showToast === "function") showToast(`Cobro #${id} pagado con éxito.`, "success");
+                    } 
+                    else if (data.anulado) {
+                        // 4. ACTUALIZAR A ANULADO
+                        statusContainer.innerHTML = `
+                            <span class="status-badge" style="background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.2); padding: 5px 12px; border-radius: 20px; font-size: 11px;">
+                                <i class="fas fa-times-circle me-1"></i> Anulado
+                            </span>
+                        `;
+                    }
+                    else {
+                        // Revertir a "Pendiente" original si sigue pendiente
+                        badge.innerHTML = '<i class="fas fa-clock me-1"></i> Pendiente';
+                    }
+                })
+                .catch(e => {
+                    badge.innerHTML = originalHTML;
+                    console.error("Error al verificar:", id);
+                });
         });
-    });
+    }
+
+    // Polling cada 15 segundos para no saturar pero dar respuesta rápida
+    if (document.querySelector('.js-check-status')) {
+        setInterval(checkPayments, 15000);
+    }
 });
 
-// Función Copy
-document.querySelectorAll('.btn-copy').forEach(btn => {
-    btn.onclick = function() {
-        navigator.clipboard.writeText(this.getAttribute('data-link'));
-        this.innerHTML = '<i class="fas fa-check"></i>';
-        setTimeout(() => this.innerHTML = '<i class="fas fa-copy"></i>', 2000);
-    };
-});
+// Función Copy final del modal de éxito
 function copyFinalLink() {
-    navigator.clipboard.writeText(document.getElementById('final-link').value);
-    alert('¡Link copiado!');
+    const inp = document.getElementById('final-link');
+    const btn = document.getElementById('btn-copy-modal');
+    navigator.clipboard.writeText(inp.value).then(() => {
+        if(typeof showToast === "function") showToast("Copiado!", "success");
+        btn.innerHTML = '<i class="fas fa-check"></i>';
+        setTimeout(() => btn.innerHTML = '<i class="fas fa-copy"></i>', 2000);
+    });
 }
 </script>
+
+<style>
+/* CSS Ajustado para no ser llamativo en el polling */
+.bg-warning.text-dark.js-check-status {
+    opacity: 0.9;
+    transition: background 0.3s ease;
+}
+
+/* El ticket que aparece por AJAX con efecto suave */
+.btn-ticket {
+    animation: fadeInScale 0.5s ease-out forwards;
+}
+
+@keyframes fadeInScale {
+    from { opacity: 0; transform: scale(0.8); }
+    to { opacity: 1; transform: scale(1); }
+}
+</style>
 {% endblock %}

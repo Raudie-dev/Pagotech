@@ -3,14 +3,14 @@
 <html lang="es">
 <head>
     <meta charset="utf-8" />
-    <title>Resumen PagoTech #{{ liq_nro }}</title>
-<style>
+    <title>Comprobante PayZen #{{ liq_nro }}</title>
+    <style>
         :root {
             --primary: #e63946;
             --dark: #000000;
             --grey: #4b5563;
             --light-grey: #f4f4f5;
-            --soft-grey: #e5e7eb; /* Gris suave para separadores internos */
+            --soft-grey: #e5e7eb; 
         }
 
         @page {
@@ -70,7 +70,6 @@
         .client-info { width: 45%; vertical-align: top; padding: 10px; border-bottom: 1px solid var(--light-grey); }
         .totals-sidebar { width: 55%; padding-left: 35px; }
         
-        /* CAJAS DE TOTALES SUPERIORES */
         .box-totals { width: 100%; border-bottom: 2px solid var(--dark); margin-bottom: 8px; }
         .box-totals th { text-align: left; font-size: 7.5pt; color: var(--grey); text-transform: uppercase; }
         .box-totals td { text-align: left; font-size: 12pt; font-weight: bold; padding: 3px 0; }
@@ -90,52 +89,40 @@
             padding: 10px 8px;
             font-size: 7.5pt;
             text-transform: uppercase;
-            border-right: 1px solid #444; /* Separador sutil en cabecera */
+            border-right: 1px solid #444;
         }
 
         .liq-table tbody td {
             padding: 12px 8px;
             vertical-align: top;
             font-size: 8pt;
-            border-right: 1px solid var(--soft-grey); /* División vertical gris suave */
+            border-right: 1px solid var(--soft-grey);
         }
 
-        /* Quitar borde derecho a la última columna para limpieza visual */
         .liq-table th:last-child, 
         .liq-table td:last-child {
             border-right: none;
         }
 
-        /* FILA DE TOTALES (LINEA UNIFORME) */
+        /* FILA DE TOTALES UNIFORME */
         .total-row {
             background-color: var(--light-grey);
         }
         
         .total-row td {
-            border-top: 1.5px solid var(--dark) !important; /* Línea horizontal uniforme superior */
+            border-top: 1.5px solid var(--dark) !important;
             padding: 10px 8px;
             font-weight: bold;
             vertical-align: middle;
         }
 
-        /* Resalte específico para el Saldo Neto Final */
-        .total-row td.neto-accent {
-            border-top: 2px solid var(--primary) !important;
-            color: var(--primary);
-            font-size: 11pt;
-            background-color: #ffffff;
-        }
-
-        /* DETALLES DE DESCUENTO DENTRO DE LA CELDA */
         .desc-section { margin-bottom: 10px; }
         .val-num { float: right; font-weight: bold; color: var(--dark); }
         .sub-text { font-size: 7pt; color: var(--grey); font-style: italic; display: block; margin-top: 2px; }
 
-        /* FOOTER DE IMPUESTOS */
+        /* FOOTER */
         .tax-footer { width: 100%; border: 1.5px solid var(--dark); border-top: none; }
         .tax-footer td { padding: 10px; font-size: 7.5pt; background: #fafafa; }
-
-        /* SECCIÓN FINAL */
         .final-row { width: 100%; margin-top: 25px; }
         .qr-cell { text-align: right; }
         .footer-brand { 
@@ -150,100 +137,99 @@
 </head>
 <body>
 
-    <!-- ENCABEZADO -->
+    <!-- ENCABEZADO FISCAL CON ORIENTACIÓN PAYZEN -->
     <table class="header-table">
         <tr>
             <td width="115">
                 <div class="logo-box">
-                    <img src="{% static 'images/hero_payment.png' %}" alt="PagoTech Logo">
+                    <img src="{% static 'images/hero_payment.png' %}" alt="Logo Comprobante">
                 </div>
             </td>
             <td class="fiscal-data">
-                <div class="resumen-title">Resumen Diario No Fiscal</div>
+                <div class="resumen-title">Comprobante de Liquidación PayZen</div>
                 <table class="fiscal-grid">
                     <tr>
-                        <td width="95" class="bold">FECHA EMISIÓN:</td>
-                        <td width="150">{{ link.created_at|date:"d/m/Y H:i" }}</td>
-                        <td width="95" class="bold">E-MAIL:</td>
-                        <td>info@pagotech.com.ar</td>
+                        <td width="110" class="bold">FECHA DE PROCESO:</td>
+                        <td width="135">{{ link.created_at|date:"d/m/Y H:i" }}</td>
+                        <td width="110" class="bold">PLATAFORMA:</td>
+                        <td>LYRA / PAYZEN REST API</td>
                     </tr>
                     <tr>
-                        <td class="bold">Nº REFERENCIA:</td>
-                        <td>A-{{ liq_nro|stringformat:"s" }}</td>
-                        <td class="bold">OPERADOR:</td>
-                        <td>PAGO TECH</td>
+                        <td class="bold">MID (MERCHANT ID):</td>
+                        <td>#{{ link.cliente.id|stringformat:"05d" }}</td>
+                        <td class="bold">AUTORIZACIÓN:</td>
+                        <td>{{ liq_nro }}</td>
                     </tr>
                     <tr>
-                        <td class="bold">CARACTER:</td>
-                        <td>IVA RESPONSABLE INSCRIPTO</td>
-                        <td class="bold">LOCALIDAD:</td>
-                        <td>BUENOS AIRES, ARGENTINA</td>
+                        <td class="bold">SITIO (URL):</td>
+                        <td>PAYMENT.PAGOTECH.LA</td>
+                        <td class="bold">ESTABLECIMIENTO:</td>
+                        <td>0030767446</td>
                     </tr>
                     <tr>
-                        <td class="bold">CUIT:</td>
-                        <td>30-71636883-8</td>
-                        <td class="bold">Nº ESTABLECIM.:</td>
-                        <td class="bold">0030767446</td>
+                        <td class="bold">PROCESADOR:</td>
+                        <td>SITEL / PAGO TECH</td>
+                        <td class="bold">STATUS:</td>
+                        <td class="bold">CAPTURED / AUTHORISED</td>
                     </tr>
                 </table>
             </td>
         </tr>
     </table>
 
-    <div class="primary-bar">Liquidación a Comercios</div>
+    <div class="primary-bar">Reporte Consolidado de Pago Electrónico</div>
 
     <!-- RECEPTOR Y TOTALES -->
     <table class="summary-wrapper">
         <tr>
             <td class="client-info">
-                <p class="bold" style="color: var(--grey); margin-bottom: 2px; font-size: 7.5pt;">RECEPTOR DE FONDOS</p>
+                <p class="bold" style="color: var(--grey); margin-bottom: 2px; font-size: 7.5pt;">RECEPTOR ASOCIADO</p>
                 <p class="bold" style="font-size: 13pt; margin-top: 0; margin-bottom: 5px;">{{ link.cliente.nombre|upper }}</p>
-                <p style="margin: 0; color: #333;">Email: {{ link.cliente.email }}</p>
-                <p style="margin: 0; color: #333;">ID Comercio: #{{ link.cliente.id|stringformat:"05d" }}</p>
-                <p style="margin-top: 5px;" class="bold">MEDIO UTILIZADO: 
-                    {% if link.tipo_tarjeta == 'credito' %}TARJETA CRÉDITO{% else %}TARJETA DÉBITO{% endif %}
+                <p style="margin: 0; color: #333;">Merchant Email: {{ link.cliente.email }}</p>
+                <p style="margin-top: 5px;" class="bold">GATEWAY INFO: 
+                    {% if link.tipo_tarjeta == 'credito' %}CREDIT CARD - Lyra{% else %}DEBIT CARD - Lyra{% endif %}
                 </p>
             </td>
             <td class="totals-sidebar">
                 <table class="box-totals">
-                    <tr><th>MONTO TOTAL DE VENTA</th></tr>
+                    <tr><th>TRANSACCIÓN BRUTA (Gross)</th></tr>
                     <tr><td>$ {{ link.monto }}</td></tr>
                 </table>
                 <table class="box-totals">
-                    <tr><th>DESCUENTOS Y GESTIÓN</th></tr>
+                    <tr><th>DEDUCCIONES Y FEES (Total Fees)</th></tr>
                     <tr><td style="color: var(--grey); font-size: 11pt;">$ {{ link.commission_amount }}</td></tr>
                 </table>
                 <table class="box-totals saldo-accent">
-                    <tr><th class="text-red">SALDO NETO A PERCIBIR</th></tr>
+                    <tr><th class="text-red">NETO PARA EL COMERCIO (Net Amount)</th></tr>
                     <tr><td class="text-red" style="font-size: 15pt;">$ {{ link.receiver_amount }}</td></tr>
                 </table>
             </td>
         </tr>
     </table>
 
-    <!-- TABLA DE LIQUIDACIÓN -->
+    <!-- TABLA DE LIQUIDACIÓN UNIFORME -->
     <table class="liq-table">
         <thead>
             <tr>
-                <th width="32%">Detalle de las Operaciones</th>
-                <th width="15%">Bruto Presentado</th>
-                <th width="35%">Costos Financieros y Gestión</th>
-                <th width="18%">Total Neto</th>
+                <th width="32%">Operaciones del Gateway</th>
+                <th width="15%">Monto Transaccion</th>
+                <th width="35%">Cargos Administrativos</th>
+                <th width="18%">Saldo Resultante</th>
             </tr>
         </thead>
         <tbody>
-            <!-- FILA DE CONTENIDO -->
             <tr>
                 <td style="min-height: 240px;">
-                    <span class="bold">FECHA PROCESO: {{ link.created_at|date:"d/m" }}</span>
-                    <p style="margin: 4px 0 0 0;">Liq. N° {{ liq_nro }} - Lote N° {{ lote_nro }}</p>
-                    <p style="margin: 2px 0;">Ref: {{ link.auth_code|default:"OK-REST" }}</p>
+                    <span class="bold">ID OPERACIÓN: {{ link.order_id }}</span>
+                    <p style="margin: 4px 0 0 0;">Liquidación PayZen N° {{ liq_nro }}</p>
+                    <p style="margin: 2px 0;">Batch/Lote Lyra N° {{ lote_nro }}</p>
+                    <p style="margin: 2px 0;">Referencia Trans.: {{ link.auth_code|default:"OK-REST" }}</p>
                     
                     <p class="bold" style="margin-top:12px; color: var(--grey);">
                         {% if link.cuotas_elegidas > 1 %}
-                            Venta en {{ link.cuotas_elegidas }} pagos (Plan Cuotas)
+                            MODO: PLAN {{ link.cuotas_elegidas }} CUOTAS (Emisor)
                         {% else %}
-                            Venta en 1 Pago Directo
+                            MODO: PAGO ÚNICO (One-Off)
                         {% endif %}
                     </p>
                 </td>
@@ -252,43 +238,36 @@
                 </td>
                 <td>
                     <div class="desc-section">
-                        <span class="bold">ø Arancel Red de Pagos</span><br>
-                        {% if link.tipo_tarjeta == 'credito' %}
-                            - Fee Transacción Tj. Crédito ({{ config.arancel_plataforma }}%) 
-                        {% else %}
-                            - Fee Transacción Tj. Débito ({{ config.arancel_plataforma_debito }}%)
-                        {% endif %}
-                        <span class="val-num">$ {{ desglose.arancel }}</span>
+                        <span class="bold">ø Comisiones Gateway</span><br>
+                        - Fee Arancel Red de Pagos <span class="val-num">$ {{ desglose.arancel }}</span>
                     </div>
 
                     <div class="desc-section">
-                        <span class="bold">ø Servicio y Gestión</span><br>
-                        - Gestión Venta Electrónica <span class="val-num">$ {{ desglose.servicio }}</span><br>
+                        <span class="bold">ø Servicio de Liquidación</span><br>
+                        - Servicio de Gestión Técnica <span class="val-num">$ {{ desglose.servicio }}</span><br>
                         {% if link.cuotas_elegidas > 1 %}
-                            - Costo Financiero {{ link.cuotas_elegidas }} Cuotas <span class="val-num">$ {{ desglose.costo_finan }}</span>
-                            <span class="sub-text">(Cuota cobrada: $ {{ desglose.cuota_valor }})</span>
+                            - Fee Costo Financiero (Plan {{ link.cuotas_elegidas }} p.) <span class="val-num">$ {{ desglose.costo_finan }}</span>
+                            <span class="sub-text">(Unitario Cuota: $ {{ desglose.cuota_valor }})</span>
                         {% endif %}
                     </div>
 
                     <div class="desc-section" style="margin-bottom:0;">
-                        <span class="bold">ø Aplicación Impositiva</span><br>
-                        IVA 21,00% sobre Servicio <span class="val-num">$ {{ desglose.iva_21 }}</span><br>
+                        <span class="bold">ø Cargas Impositivas</span><br>
+                        I.V.A. Alícuota General (21%) <span class="val-num">$ {{ desglose.iva_21 }}</span><br>
                         {% if link.cuotas_elegidas > 1 %}
-                            IVA 10,50% Costo Financiero <span class="val-num">$ {{ desglose.iva_105 }}</span>
+                            I.V.A. Financiación (10.5%) <span class="val-num">$ {{ desglose.iva_105 }}</span>
                         {% endif %}
                     </div>
                 </td>
-                <td style="background-color: #fff;">
-                    <!-- Columna de Neto (Vacía hasta la fila de total) -->
-                </td>
+                <td style="background-color: #fff;"></td>
             </tr>
 
-            <!-- FILA DE TOTALES UNIFORME -->
+            <!-- FILA DE TOTALES CON LINEA NEGRA UNIFORME -->
             <tr class="total-row">
-                <td>Total de Operaciones</td>
-                <td style="text-align: right;">$ {{ link.monto }}</td>
-                <td style="text-align: right; font-size: 7.5pt;">
-                    TOTAL RETENIDO: <span style="font-size: 9pt;">$ {{ link.commission_amount }}</span>
+                <td style="border-top: 1.5px solid #000 !important;">TOTAL DE LA TRANSACCIÓN</td>
+                <td style="text-align: right; border-top: 1.5px solid #000 !important;">$ {{ link.monto }}</td>
+                <td style="text-align: right; font-size: 7.5pt; border-top: 1.5px solid #000 !important;">
+                    RETENCIÓN TOTAL (Fees): <span style="font-size: 9pt;">$ {{ link.commission_amount }}</span>
                 </td>
                 <td style="text-align: right; color: var(--primary); font-size: 11pt; border-top: 1.5px solid var(--primary) !important; background: #fff;">
                     $ {{ link.receiver_amount }}
@@ -297,31 +276,32 @@
         </tbody>
     </table>
 
-    <!-- FOOTER TÉCNICO -->
+    <!-- FOOTER TÉCNICO PAYZEN -->
     <table class="tax-footer">
         <tr>
             <td width="40%" style="border-right: 1px solid #ddd;">
-                <p class="bold">NOTAS ADICIONALES:</p>
-                Este documento es un comprobante de gestión administrativa y financiera de la operación.
+                <p class="bold">MENSAJE TÉCNICO:</p>
+                Comprobante electrónico de auditoría generado automáticamente por la pasarela de pagos REST API Lyra.
             </td>
             <td width="60%">
-                <p class="bold" style="margin-bottom: 2px;">DESTINO DE FONDOS:</p>
-                ACREDITADO EN CUENTA DE VALORES ASOCIADA A ESTE COMERCIO
-                <p style="font-size: 7.2pt; margin-top: 4px; color: var(--grey);">REGISTRO DIGITAL BAJO NORMAS INTERNAS DE PROCESAMIENTO REST API LYRA/PAYZEN.</p>
+                <p class="bold" style="margin-bottom: 2px;">NOTIFICACIÓN COMERCIAL:</p>
+                Los fondos serán conciliados y acreditados en su cuenta según los plazos establecidos por el procesador local PayZen by Lyra Argentina.
+                <p style="font-size: 7pt; margin-top: 4px; color: var(--grey); font-style: italic;">
+                    UUID PayZen: {{ link.nro_transaccion|default:"Captura Automática Sistema" }}
+                </p>
             </td>
         </tr>
     </table>
 
-    <!-- FIRMA QR -->
     <table class="final-row">
         <tr>
-            <td width="75%" style="color: var(--grey); font-size: 7.2pt; vertical-align: bottom;">
-                PAGO TECH | GESTIÓN Y FINANZAS LATAM.<br>
+            <td width="75%" style="color: var(--grey); font-size: 7pt; vertical-align: bottom;">
+                RESUMEN DE LIQUIDACIÓN GENERADO POR PLATAFORMA PAGO TECH<br>
                 Validación de ID PayZen: {{ link.nro_transaccion|default:"SYSTEM-CAPTURED" }}
             </td>
             <td class="qr-cell">
-                <img src="https://api.qrserver.com/v1/create-qr-code/?size=60x60&data=REFERENCIA-{{ liq_nro }}&color=e63946" width="60" alt="QR">
-                <p style="font-size: 6pt; margin-top: 3px; font-weight: bold; color: var(--grey);">CONSULTA ONLINE</p>
+                <img src="https://api.qrserver.com/v1/create-qr-code/?size=60x60&data=UUID-{{ link.nro_transaccion }}&color=e63946" width="55" alt="QR">
+                <p style="font-size: 5.5pt; margin-top: 3px; font-weight: bold; color: var(--grey);">TRACKING LYRA</p>
             </td>
         </tr>
     </table>

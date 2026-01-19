@@ -145,10 +145,16 @@ def create_link(cliente_pk, monto_contado, cuotas=1, tipo_tarjeta='credito', des
     """
     Crea un link de pago trasladando el costo financiero al cliente final.
     Utiliza parámetros dinámicos de App2 (Débito vs Crédito).
+    Garantiza que el Débito sea siempre en 1 pago para evitar errores de pasarela.
     """
     cliente = get_cliente(cliente_pk)
     if not cliente:
         return None, ['Cliente no encontrado.']
+
+    # --- PASO 0: VALIDACIÓN DE SEGURIDAD PARA DÉBITO ---
+    # Si es tarjeta de débito, forzamos el valor a 1 cuota sin importar lo que venga del frontend
+    if tipo_tarjeta == 'debito':
+        cuotas = 1
 
     # 1. Obtener Configuración Financiera Real desde la base de datos (App2)
     config = ParametroFinanciero.objects.first()
@@ -170,8 +176,7 @@ def create_link(cliente_pk, monto_contado, cuotas=1, tipo_tarjeta='credito', des
             # --- Lógica para DÉBITO ---
             pt_base = config.comision_pago_tech_debito
             arancel_base = config.arancel_plataforma_debito
-            tasa_finan_iva = Decimal('0')  # Débito no financia
-            cuotas = 1                     # Forzamos cuotas a 1 por seguridad
+            tasa_finan_iva = Decimal('0')  # Débito no tiene costo financiero
         else:
             # --- Lógica para CRÉDITO ---
             pt_base = config.comision_pago_tech
@@ -183,35 +188,35 @@ def create_link(cliente_pk, monto_contado, cuotas=1, tipo_tarjeta='credito', des
                 plan = CuotaConfig.objects.filter(numero_cuota=cuotas, activa=True).first()
                 if not plan:
                     return None, [f'El plan de {cuotas} cuotas no está habilitado actualmente.']
-                # Aplicamos IVA 10.5% a la tasa base del banco (Payway)
+                # Aplicamos IVA 10.5% a la tasa base de financiación
                 tasa_finan_iva = Decimal(str(plan.tasa_base)) * iva_finan_factor
 
-        # 3. Sumatoria de descuentos con IVA (Columna Roja del Excel)
-        desc_pt_iva = Decimal(str(pt_base)) * iva_gen_factor       # Comisión PT + IVA
-        desc_aran_iva = Decimal(str(arancel_base)) * iva_gen_factor # Arancel Payway + IVA
+        # 3. Sumatoria de descuentos con IVA (Basado en el cálculo del Excel)
+        desc_pt_iva = Decimal(str(pt_base)) * iva_gen_factor       # Comisión Pago Tech + IVA
+        desc_aran_iva = Decimal(str(arancel_base)) * iva_gen_factor # Arancel Red + IVA
         
-        # TOTAL DESCUENTOS %
+        # TOTAL DESCUENTOS PORCENTUALES TRASLADADOS
         total_desc_pct = desc_pt_iva + desc_aran_iva + tasa_finan_iva
 
-        # 4. Cálculo del Coeficiente (Columna Amarilla)
-        # Fórmula: 1 / (1 - (Total_Descuento_Porcentual / 100))
+        # 4. Cálculo del Coeficiente de Inflado
         divisor = 1 - (total_desc_pct / 100)
         if divisor <= 0:
-            return None, ["Error crítico: La configuración de tasas supera el 100%. Verifique admin."]
+            return None, ["Error crítico: La sumatoria de tasas supera el 100%. Verifique el Admin."]
         
         coeficiente = 1 / divisor
         
-        # 5. MONTO FINAL (Precio de Venta al Público)
+        # 5. MONTO FINAL (Monto Bruto a procesar por PayZen)
         monto_final_venta = (monto_original * coeficiente).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
         
-        # Auditoría interna: Calculamos el monto exacto de la retención
+        # Desglose para auditoría interna
         commission_amount = (monto_final_venta * (total_desc_pct / 100)).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
         receiver_amount = (monto_final_venta - commission_amount).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
 
     except Exception as e:
-        return None, [f'Error en cálculo financiero: {str(e)}']
+        return None, [f'Error en el cálculo financiero: {str(e)}']
 
-    # 6. Preparación del Pago en Cents para PayZen
+    # 6. Preparación del JSON para PayZen
+    # Convertimos a centavos (Integer)
     amount_in_cents = int(monto_final_venta * 100)
     order_id = f"PAY-{uuid.uuid4().hex[:10].upper()}" 
 
@@ -220,48 +225,54 @@ def create_link(cliente_pk, monto_contado, cuotas=1, tipo_tarjeta='credito', des
         "currency": "ARS",
         "orderId": order_id,
         "channelOptions": {"channelType": "URL"},
-        "merchantComment": f"Vendedor: {cliente.nombre} | Plan: {cuotas} pagos | {descripcion or ''}"
+        "merchantComment": f"Vendedor: {cliente.nombre} | Red: {tipo_tarjeta.upper()} | Plan: {cuotas} pag."
     }
 
-    # Configuración de Cuotas para PayZen (Solo Crédito > 1)
+    # --- LÓGICA DE CUOTAS PARA LA REST API DE PAYZEN ---
+    # Solo enviamos el objeto cardOptions si es CRÉDITO y tiene más de 1 cuota.
+    # Esto evita el error "REST API option not enabled".
     if tipo_tarjeta == 'credito' and cuotas > 1:
-        schedules = []
-        monto_cuota_cents = amount_in_cents // cuotas
-        resto_cents = amount_in_cents % cuotas
-        for i in range(cuotas):
-            valor = monto_cuota_cents + (resto_cents if i == 0 else 0)
-            fecha = (datetime.now() + timedelta(days=30 * i)).strftime("%Y-%m-%dT23:59:59+00:00")
-            schedules.append({"date": fecha, "amount": valor})
-        payload["transactionOptions"] = {"installmentOptions": {"schedules": schedules}}
+        payload["transactionOptions"] = {
+            "cardOptions": {
+                "installmentNumber": int(cuotas)
+            }
+        }
 
-    # 7. Ejecutar llamada a API PayZen
+    # 7. Ejecutar llamada a la API de PayZen
     try:
-        response = requests.post(settings.PAYZEN_URL, json=payload, headers=get_payzen_auth_header())
+        # get_payzen_auth_header() es tu función que gestiona el Basic Auth de Lyra
+        headers = get_payzen_auth_header()
+        response = requests.post(settings.PAYZEN_URL, json=payload, headers=headers, timeout=20)
         res_data = response.json()
 
         if res_data.get("status") == "SUCCESS":
+            # Extraemos la URL generada por PayZen
             payment_url = res_data["answer"]["paymentURL"]
             
-            # Guardamos el link con la discriminación correcta de montos
+            # Guardamos el objeto en la base de datos
             link_obj = LinkPago.objects.create(
                 cliente=cliente,
                 order_id=order_id,
-                monto=monto_final_venta,    # El precio inflado para que al descontar le llegue el neto
-                cuotas=cuotas,
+                monto=monto_final_venta,          # El monto total que el cliente verá en PayZen
+                cuotas=cuotas,                    # Cantidad de cuotas elegida (Débito siempre será 1)
                 tipo_tarjeta=tipo_tarjeta,
                 descripcion=descripcion or '',
-                commission_percent=total_desc_pct, # % exacto trasladado
-                commission_amount=commission_amount, # Pesos que PagoTech+Payway descuentan
-                receiver_amount=receiver_amount,     # Debería coincidir con el monto_contado ingresado
+                commission_percent=total_desc_pct, 
+                commission_amount=commission_amount, # Pesos que el sistema retendrá
+                receiver_amount=receiver_amount,     # El dinero limpio para el vendedor
                 link=payment_url
             )
             return link_obj, []
         else:
-            error_msg = res_data.get("answer", {}).get("errorMessage", "Error desconocido")
-            return None, [f"Error de Pasarela: {error_msg}"]
+            # Capturamos el error detallado de la pasarela Lyra/PayZen
+            answer = res_data.get("answer", {})
+            error_msg = answer.get("errorMessage", "Respuesta fallida del gateway.")
+            return None, [f"Pasarela PayZen indica: {error_msg}"]
             
+    except requests.exceptions.Timeout:
+        return None, ["La pasarela de pago tardó demasiado en responder. Reintente."]
     except Exception as e:
-        return None, [f"Falla de comunicación con PayZen: {str(e)}"]
+        return None, [f"Falla crítica en la comunicación con PayZen: {str(e)}"]
 
 def list_links_for_cliente(cliente_pk: Any):
     return LinkPago.objects.filter(cliente_id=cliente_pk).order_by('-created_at')
@@ -293,8 +304,9 @@ def generate_pdf_for_link(link_id: Any, cliente_pk: Any) -> Tuple[Optional[str],
 def verificar_estado_pago(link_id):
     try:
         link = LinkPago.objects.get(pk=link_id)
-        if not link.order_id: return False
-        if link.pagado: return True
+        # Si ya lo marcamos como pagado antes, no consultamos la API de nuevo
+        if link.pagado: 
+            return {'pagado': True, 'anulado': False, 'cuotas': link.cuotas_elegidas}
 
         payload = {"orderId": link.order_id}
         response = requests.post(PAYZEN_CHECK_URL, json=payload, headers=get_payzen_auth_header())
@@ -304,25 +316,35 @@ def verificar_estado_pago(link_id):
             answer = res_data.get("answer", {})
             transactions = answer.get("transactions", [])
             
-            for tx in transactions:
-                if tx.get("status") in ["AUTHORISED", "CAPTURED", "PAID"]:
-                    # --- CAMBIO AQUÍ: Buscar en múltiples lugares del JSON ---
-                    # 1. Intentar en la raíz de la transacción
-                    cuotas_api = tx.get("installmentNumber")
-                    
-                    # 2. Intentar en paymentMethodDetails (Común en REST API)
-                    if not cuotas_api:
-                        card_details = tx.get("paymentMethodDetails", {}).get("card", {})
-                        cuotas_api = card_details.get("installmentNumber")
-                    
-                    # 3. Intentar en los detalles del medio de pago
-                    if not cuotas_api:
-                        cuotas_api = tx.get("transactionDetails", {}).get("cardDetails", {}).get("installmentNumber")
+            # Si no hay transacciones en la lista, el pago NO se realizó aún
+            if not transactions:
+                return {'pagado': False, 'anulado': False, 'cuotas': link.cuotas_elegidas}
 
+            for tx in transactions:
+                status = tx.get("status")
+                
+                # SÓLO estos estados significan dinero cobrado
+                if status in ["AUTHORISED", "CAPTURED", "PAID"]:
+                    t_details = tx.get("transactionDetails", {})
+                    card_details = t_details.get("cardDetails", {})
+                    
+                    link.auth_code = tx.get("authorizationResult")
+                    link.lote_number = t_details.get("batch")
+                    link.nro_transaccion = tx.get("uuid")
+                    
+                    cuotas_api = card_details.get("installmentNumber")
                     link.cuotas_elegidas = int(cuotas_api) if cuotas_api else 1
+                    
                     link.pagado = True
                     link.save()
-                    return True
+                    return {'pagado': True, 'anulado': False, 'cuotas': link.cuotas_elegidas}
+                
+                # SÓLO estos estados significan que ya no se puede cobrar
+                if status in ["REFUSED", "CANCELLED", "ERROR"]:
+                    return {'pagado': False, 'anulado': True, 'cuotas': link.cuotas_elegidas}
+
     except Exception as e:
-        print(f"Error en validación PayZen: {e}")
-    return False
+        print(f"Error técnico en CRUD: {e}")
+        
+    # Por defecto siempre es Falso si nada de lo de arriba se cumple
+    return {'pagado': False, 'anulado': False, 'cuotas': link.cuotas_elegidas}

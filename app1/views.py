@@ -189,15 +189,22 @@ def verificar_estado_pago_ajax(request, link_id):
     if not user_id:
         return JsonResponse({'error': 'No autorizado'}, status=401)
 
-    # Ejecutamos la verificación
-    pago_exitoso = crud.verificar_estado_pago(link_id)
+    # 1. Obtenemos el diccionario del CRUD
+    resultado_crud = crud.verificar_estado_pago(link_id)
     
-    # Buscamos el objeto para obtener las cuotas actualizadas
-    link = LinkPago.objects.get(pk=link_id)
+    # 2. Buscamos el objeto de la base de datos (por las cuotas)
+    try:
+        link = LinkPago.objects.get(pk=link_id, cliente_id=user_id)
+    except LinkPago.DoesNotExist:
+        return JsonResponse({'error': 'No existe'}, status=404)
     
+    # EXPLICACIÓN DEL FIX:
+    # Debemos enviar resultado_crud['pagado'] (que es un Booleano)
+    # y no resultado_crud (que es un Objeto/Diccionario).
     return JsonResponse({
-        'pagado': pago_exitoso,
-        'cuotas': link.cuotas_elegidas,  # Enviamos las cuotas al JS
+        'pagado': resultado_crud['pagado'],   # <--- AHORA SÍ ES TRUE O FALSE
+        'anulado': resultado_crud['anulado'],
+        'cuotas': resultado_crud['cuotas'],
         'id': link_id
     })
 
@@ -211,59 +218,100 @@ def ticket_pdf(request, link_id):
         return redirect('login_cliente')
 
     try:
+        # 1. Obtener datos del link y configuración global
         link = LinkPago.objects.get(id=link_id, cliente_id=user_id)
-        config = ParametroFinanciero.objects.first() # Traemos la config para el desglose
-
-        # --- CÁLCULO DE DESGLOSE NUMÉRICO ---
-        monto_venta = Decimal(str(link.monto))
-        iva_f = (config.iva / 100) + 1 # Factor 1.21
-
-        # 1. Arancel Payway con IVA (1.8% * 1.21)
-        arancel_monto = (monto_venta * (config.arancel_plataforma * iva_f / 100)).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+        config = ParametroFinanciero.objects.first()
         
-        # 2. Comision PagoTech con IVA (Ej: 4% * 1.21)
-        pago_tech_monto = (monto_venta * (config.comision_pago_tech * iva_f / 100)).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+        if not config:
+            return HttpResponse("Configuración financiera no encontrada.", status=500)
 
-        # 3. El resto de la comisión guardada corresponde a la Financiación (Si existe)
-        # Esto asegura que la sumatoria siempre sea exacta al commission_amount guardado
-        financiacion_monto = Decimal(str(link.commission_amount)) - arancel_monto - pago_tech_monto
+        # 2. Definición de constantes para el cálculo
+        monto_pagado_cliente = Decimal(str(link.monto))  # Lo que pagó el cliente (Bruto)
+        total_descuentos_pago_tech = Decimal(str(link.commission_amount)) # Lo que se le descontó al vendedor
+        neto_para_vendedor = Decimal(str(link.receiver_amount)) # Lo que el vendedor recibe limpio
         
-        # 4. IVA 21%: Sobre el arancel de Payway y el servicio de PagoTech
-        iva_21 = ((arancel_monto + pago_tech_monto) / Decimal('1.21') * Decimal('0.21')).quantize(Decimal('0.01'), ROUND_HALF_UP)
+        # Factores de IVA
+        iva_general_factor = (Decimal(str(config.iva)) / 100) + 1  # 1.21
+        iva_finan_factor = (Decimal(str(config.iva_financiacion)) / 100) + 1  # 1.105
 
-        # 5. IVA 10.5%: Sobre la tasa de financiación de cuotas
-        iva_105 = (financiacion_monto / Decimal('1.105') * Decimal('0.105')).quantize(Decimal('0.01'), ROUND_HALF_UP)
+        # --- DESGLOSE DE LA COLUMNA DE DESCUENTOS ---
 
-        # 6. Valor de la cuota individual que paga el cliente
-        cuota_valor = (monto_venta / link.cuotas).quantize(Decimal('0.01'), ROUND_HALF_UP)
+        # 3. Cálculo de Arancel (Payway/Prisma/Lyra)
+        # Seleccionamos arancel crédito o débito según corresponda
+        if link.tipo_tarjeta == 'debito':
+            arancel_base = Decimal(str(config.arancel_plataforma_debito))
+        else:
+            arancel_base = Decimal(str(config.arancel_plataforma))
         
-        if financiacion_monto < 0: financiacion_monto = Decimal('0.00')
+        # Arancel final con IVA incluido
+        arancel_monto = (monto_pagado_cliente * (arancel_base * iva_general_factor / 100)).quantize(Decimal('0.01'), ROUND_HALF_UP)
 
-        # 7. Preparar contexto
+        # 4. Cálculo de "Servicio de Gestión Venta" (Ex comisión Pago Tech)
+        if link.tipo_tarjeta == 'debito':
+            gestion_base = Decimal(str(config.comision_pago_tech_debito))
+        else:
+            gestion_base = Decimal(str(config.comision_pago_tech))
+            
+        servicio_gestion_monto = (monto_pagado_cliente * (gestion_base * iva_general_factor / 100)).quantize(Decimal('0.01'), ROUND_HALF_UP)
+
+        # 5. Cálculo de "Costo Financiero Plan Cuotas" (Remainder / Restante)
+        # Para que la suma sea perfecta, el costo financiero es la diferencia entre el total descontado
+        # y los dos items fijos calculados arriba (arancel y gestión).
+        costo_financiero_monto = total_descuentos_pago_tech - arancel_monto - servicio_gestion_monto
+        
+        # Validación de seguridad para 1 cuota (donde el costo financiero es técnicamente cero o mínimo por redondeo)
+        if link.cuotas_elegidas <= 1:
+            costo_financiero_monto = Decimal('0.00')
+
+        # 6. Desglose de Impuestos (IVA 21% e IVA 10.5%)
+        # El IVA 21 es sobre el Arancel y el Servicio de Gestión
+        iva_21 = ((arancel_monto + servicio_gestion_monto) / iva_general_factor * (Decimal(str(config.iva)) / 100)).quantize(Decimal('0.01'), ROUND_HALF_UP)
+        
+        # El IVA 10.5 es sobre el Costo Financiero (solo si hubo cuotas)
+        iva_105 = Decimal('0.00')
+        if costo_financiero_monto > 0:
+            iva_105 = (costo_financiero_monto / iva_finan_factor * (Decimal(str(config.iva_financiacion)) / 100)).quantize(Decimal('0.01'), ROUND_HALF_UP)
+
+        # 7. Cálculo de valor de cuota individual
+        cuota_valor = (monto_pagado_cliente / link.cuotas_elegidas).quantize(Decimal('0.01'), ROUND_HALF_UP)
+
+        # 8. Preparar Contexto para el template
         context = {
             'link': link,
             'cliente': link.cliente,
+            'config': config,
             'desglose': {
-                'arancel': arancel_monto,
-                'pago_tech': pago_tech_monto,
-                'financiacion': financiacion_monto,
-                'cuota_valor': cuota_valor, # $ cada cuota
+                'arancel': arancel_monto,                # "Arancel Plásticos"
+                'servicio': servicio_gestion_monto,      # "Servicio de Gestión Venta"
+                'costo_finan': costo_financiero_monto,   # "Costo Financiero Plan Cuotas"
                 'iva_21': iva_21,
                 'iva_105': iva_105,
+                'cuota_valor': cuota_valor
             },
-            'config': config
+            # Datos técnicos de PayZen para encabezado
+            'liq_nro': link.auth_code if link.auth_code else f"00{link.id}",
+            'lote_nro': link.lote_number if link.lote_number else "001",
         }
 
+        # 9. Generación del PDF
         html_string = render_to_string('ticket_pdf.html', context)
         html = HTML(string=html_string, base_url=request.build_absolute_uri())
+        
+        # Configuramos weasyprint para renderizar en memoria
         pdf_file = html.write_pdf()
 
+        # 10. Respuesta HTTP
         response = HttpResponse(pdf_file, content_type='application/pdf')
-        response['Content-Disposition'] = f'inline; filename="Ticket_#00{link.id}.pdf"'
+        filename = f"Liquidacion_{link.auth_code if link.auth_code else link.id}.pdf"
+        response['Content-Disposition'] = f'inline; filename="{filename}"'
+        
         return response
 
     except LinkPago.DoesNotExist:
-        return HttpResponse("No encontrado", status=404)
+        return HttpResponse("El comprobante solicitado no existe.", status=404)
+    except Exception as e:
+        # En producción sería ideal loguear el error: print(f"Error PDF: {e}")
+        return HttpResponse(f"Error interno al generar el PDF: {str(e)}", status=500)
     
 def download_ticket(request, link_id):
     user_id = request.session.get('user_id')
