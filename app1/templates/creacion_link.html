@@ -36,10 +36,18 @@
                     </label>
                     <div class="input-wrapper">
                         <div class="input-icon"><i class="fas fa-dollar-sign"></i></div>
-                        <input type="number" step="0.01" name="monto" class="form-control-enhanced" placeholder="0.00" required id="input-monto">
+                        <input type="text" 
+                            inputmode="decimal"
+                            name="monto" 
+                            class="form-control-enhanced" 
+                            placeholder="0,00" 
+                            required 
+                            id="input-monto"
+                            pattern="[0-9]+([,][0-9]{1,2})?"
+                            title="Ingresa un número con coma como separador decimal (ej: 123,45)">
                         <div class="input-suffix">ARS</div>
                     </div>
-                    <small class="form-hint">Ingresa el dinero limpio que quieres cobrar</small>
+                    <small class="form-hint">Ingresar la cantidad que deseas recibir</small>
                 </div>
 
                 <!-- CUOTAS DINÁMICAS -->
@@ -88,13 +96,13 @@
                             </div>
                             <div class="col-md-4">
                                 <div class="calc-item">
-                                    <span class="calc-label">Costos trasladados</span>
+                                    <span class="calc-label">Costos Asociados</span>
                                     <span class="calc-value text-danger" id="preview-comision">-$0.00</span>
                                 </div>
                             </div>
                             <div class="col-md-4">
                                 <div class="calc-item highlight">
-                                    <span class="calc-label">Tú recibes (Limpio)</span>
+                                    <span class="calc-label">Tú recibes (Neto)</span>
                                     <span class="calc-value text-success fw-bold" id="preview-neto">$0.00</span>
                                 </div>
                             </div>
@@ -192,7 +200,6 @@
 {% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', () => {
-    // VISIBILIDAD DE TARJETA Y LOGICA DE PREVIEW (Mantenemos la existente)
     const card = document.getElementById('card-main');
     if(card) { card.style.opacity = '1'; card.style.transform = 'translateY(0)'; }
 
@@ -203,8 +210,218 @@ document.addEventListener('DOMContentLoaded', () => {
     const selectCuotas = document.getElementById('select-cuotas');
     const calcPreview = document.getElementById('calc-preview');
 
+    // ========== FUNCIONES DE COPIA ESPECÍFICAS ==========
+    
+    // 1. Función principal para copiar
+    function copyToClipboard(text, button) {
+        // Para móviles, necesitamos usar una estrategia diferente
+        if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+            copyForMobile(text, button);
+        } else {
+            copyForDesktop(text, button);
+        }
+    }
+    
+    // 2. Copiar para desktop (API moderna)
+    function copyForDesktop(text, button) {
+        if (navigator.clipboard && window.isSecureContext) {
+            navigator.clipboard.writeText(text).then(() => {
+                showCopySuccess(button);
+            }).catch(err => {
+                fallbackCopyText(text, button);
+            });
+        } else {
+            fallbackCopyText(text, button);
+        }
+    }
+    
+    // 3. Copiar para móvil (necesita un input temporal)
+    function copyForMobile(text, button) {
+        // Crear un input temporal
+        const tempInput = document.createElement('input');
+        tempInput.value = text;
+        tempInput.style.position = 'absolute';
+        tempInput.style.left = '-1000px';
+        tempInput.style.top = '0';
+        document.body.appendChild(tempInput);
+        
+        // Seleccionar el texto
+        tempInput.select();
+        tempInput.setSelectionRange(0, 99999); // Para móvil
+        
+        try {
+            // Intentar copiar
+            const successful = document.execCommand('copy');
+            if (successful) {
+                showCopySuccess(button);
+            } else {
+                // Fallback: mostrar el texto para que el usuario lo copie manualmente
+                alert("Para copiar: Mantén presionado y selecciona 'Copiar'\n\n" + text);
+            }
+        } catch (err) {
+            console.error('Error al copiar en móvil:', err);
+            alert("Para copiar: Mantén presionado y selecciona 'Copiar'\n\n" + text);
+        }
+        
+        // Remover el input temporal
+        document.body.removeChild(tempInput);
+    }
+    
+    // 4. Fallback para navegadores antiguos
+    function fallbackCopyText(text, button) {
+        const textArea = document.createElement('textarea');
+        textArea.value = text;
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-999999px';
+        textArea.style.top = '-999999px';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        
+        try {
+            const successful = document.execCommand('copy');
+            if (successful) {
+                showCopySuccess(button);
+            } else {
+                if(typeof showToast === "function") showToast("No se pudo copiar", "warning");
+            }
+        } catch (err) {
+            console.error('Fallback: Error al copiar:', err);
+            if(typeof showToast === "function") showToast("Error al copiar", "danger");
+        }
+        
+        document.body.removeChild(textArea);
+    }
+    
+    // 5. Mostrar feedback visual
+    function showCopySuccess(button) {
+        if (!button) return;
+        
+        const originalHTML = button.innerHTML;
+        const originalTitle = button.title || 'Copiar enlace';
+        const originalBg = button.style.backgroundColor;
+        
+        // Cambiar a estado de éxito
+        button.innerHTML = '<i class="fas fa-check"></i>';
+        button.title = '¡Copiado!';
+        button.style.backgroundColor = '#10b981'; // Verde
+        button.style.transform = 'scale(1.1)';
+        
+        // Mostrar notificación
+        if(typeof showToast === "function") {
+            showToast("Enlace copiado al portapapeles", "success");
+        }
+        
+        // Restaurar después de 2 segundos
+        setTimeout(() => {
+            button.innerHTML = originalHTML;
+            button.title = originalTitle;
+            button.style.backgroundColor = originalBg;
+            button.style.transform = '';
+        }, 2000);
+    }
+    
+    // 6. Función para botones con data-link
+    function handleCopyButtonClick(event) {
+        event.preventDefault();
+        event.stopPropagation();
+        
+        const button = event.currentTarget;
+        const urlToCopy = button.getAttribute('data-link');
+        
+        if (urlToCopy) {
+            copyToClipboard(urlToCopy, button);
+        } else {
+            console.error('No se encontró data-link en el botón');
+            if(typeof showToast === "function") showToast("Error: Enlace no disponible", "danger");
+        }
+    }
+    
+    // 7. Configurar todos los botones de copiar
+    function setupCopyButtons() {
+        // Buscar todos los botones con data-link
+        const copyButtons = document.querySelectorAll('[data-link]');
+        
+        copyButtons.forEach(button => {
+            // Remover listeners previos
+            button.removeEventListener('click', handleCopyButtonClick);
+            // Agregar nuevo listener
+            button.addEventListener('click', handleCopyButtonClick);
+            
+            // Agregar tooltip si no tiene
+            if (!button.hasAttribute('title')) {
+                button.setAttribute('title', 'Copiar enlace');
+            }
+            
+            // Agregar estilo para móvil (mejor touch)
+            button.style.cursor = 'pointer';
+            button.style.webkitTapHighlightColor = 'rgba(0,0,0,0.1)';
+        });
+    }
+    
+    // 8. Función específica para el modal de éxito
+    window.copyFinalLink = function() {
+        const inp = document.getElementById('final-link');
+        const btn = document.getElementById('btn-copy-modal');
+        if (inp && btn) {
+            copyToClipboard(inp.value, btn);
+        }
+    };
+    
+    // ========== FUNCIONES DEL FORMULARIO ==========
+    
+    function formatearMontoConComa(input) {
+        let valor = input.value;
+        if (valor === '') return;
+        
+        valor = valor.trim().replace(/\./g, ',');
+        valor = valor.replace(/[^0-9,]/g, '');
+        
+        const comas = valor.match(/,/g);
+        if (comas && comas.length > 1) {
+            const idxPrimerComa = valor.indexOf(',');
+            valor = valor.substring(0, idxPrimerComa + 1) + 
+                   valor.substring(idxPrimerComa + 1).replace(/,/g, '');
+        }
+        
+        if (valor.includes(',')) {
+            const partes = valor.split(',');
+            if (partes[1].length > 2) {
+                valor = partes[0] + ',' + partes[1].substring(0, 2);
+            }
+        }
+        
+        if (valor.startsWith(',')) valor = '0' + valor;
+        if (valor.length > 1 && valor.startsWith('0') && !valor.startsWith('0,')) {
+            valor = valor.replace(/^0+/, '') || '0';
+        }
+        
+        if (input.value !== valor) input.value = valor;
+    }
+
+    function obtenerValorNumerico() {
+        const valor = inputMonto.value;
+        if (!valor || valor.trim() === '') return 0;
+        const valorConPunto = valor.replace(',', '.');
+        const valorNumerico = parseFloat(valorConPunto);
+        return isNaN(valorNumerico) ? 0 : valorNumerico;
+    }
+
+    function manejarTeclaPunto(e) {
+        if (e.key === '.' || e.keyCode === 190 || e.keyCode === 110) {
+            e.preventDefault();
+            let valor = inputMonto.value;
+            const cursorPos = this.selectionStart || valor.length;
+            const nuevoValor = valor.substring(0, cursorPos) + ',' + valor.substring(cursorPos);
+            inputMonto.value = nuevoValor;
+            formatearMontoConComa(inputMonto);
+            updatePreview();
+        }
+    }
+
     async function updatePreview() {
-        const monto = parseFloat(inputMonto.value) || 0;
+        const monto = obtenerValorNumerico();
+        
         if (monto > 0) {
             const formData = new FormData();
             formData.append('monto', monto);
@@ -216,20 +433,86 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
                 const response = await fetch(window.location.pathname, { method: 'POST', body: formData });
                 const data = await response.json();
+                
                 if(data.success) {
-                    document.getElementById('preview-bruto').textContent = `$${data.monto_venta.toLocaleString('es-AR', {minimumFractionDigits: 2})}`;
-                    document.getElementById('preview-comision').textContent = `-$${data.comision.toLocaleString('es-AR', {minimumFractionDigits: 2})}`;
-                    document.getElementById('preview-neto').textContent = `$${data.neto.toLocaleString('es-AR', {minimumFractionDigits: 2})}`;
-                    calcPreview.style.display = 'block';
+                    const formatNumberES = (num) => num.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                    
+                    document.getElementById('preview-bruto').textContent = `$${formatNumberES(parseFloat(data.monto_venta))}`;
+                    document.getElementById('preview-comision').textContent = `-$${formatNumberES(parseFloat(data.comision))}`;
+                    document.getElementById('preview-neto').textContent = `$${formatNumberES(parseFloat(data.neto))}`;
+                    
+                    const previewContainer = document.getElementById('calc-preview');
+                    if (previewContainer) {
+                        previewContainer.removeAttribute('style');
+                        previewContainer.style.display = 'block';
+                        previewContainer.style.opacity = '1';
+                        previewContainer.style.visibility = 'visible';
+                    }
+                } else {
+                    const previewContainer = document.getElementById('calc-preview');
+                    if (previewContainer) previewContainer.style.display = 'none';
                 }
-            } catch (error) { console.error("Error al obtener preview:", error); }
+            } catch (error) { 
+                const previewContainer = document.getElementById('calc-preview');
+                if (previewContainer) previewContainer.style.display = 'none';
+            }
         } else {
-            calcPreview.style.display = 'none';
+            const previewContainer = document.getElementById('calc-preview');
+            if (previewContainer) previewContainer.style.display = 'none';
         }
     }
 
-    inputMonto.addEventListener('input', updatePreview);
+    // ========== EVENT LISTENERS ==========
+    
+    // Configurar botones de copiar inmediatamente
+    setupCopyButtons();
+    
+    // También configurar después de que se cargue la tabla (si es dinámica)
+    setTimeout(setupCopyButtons, 500);
+    
+    // Observar cambios en el DOM para botones que se agreguen dinámicamente
+    const observer = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+            if (mutation.addedNodes.length) {
+                setupCopyButtons();
+            }
+        });
+    });
+    
+    observer.observe(document.body, { childList: true, subtree: true });
+
+    inputMonto.addEventListener('input', function() {
+        formatearMontoConComa(this);
+        updatePreview();
+    });
+    
+    inputMonto.addEventListener('keydown', manejarTeclaPunto);
+    
+    inputMonto.addEventListener('blur', function() {
+        const valor = this.value.trim();
+        if (valor && valor !== '') {
+            const valorConPunto = valor.replace(',', '.');
+            const numero = parseFloat(valorConPunto);
+            if (!isNaN(numero)) {
+                this.value = numero.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                updatePreview();
+            }
+        }
+    });
+
+    inputMonto.addEventListener('paste', function(e) {
+        e.preventDefault();
+        const textoPegado = (e.clipboardData || window.clipboardData).getData('text');
+        const textoCorregido = textoPegado.replace(/\./g, ',');
+        const start = this.selectionStart;
+        const end = this.selectionEnd;
+        this.value = this.value.substring(0, start) + textoCorregido + this.value.substring(end);
+        formatearMontoConComa(this);
+        updatePreview();
+    });
+
     selectCuotas.addEventListener('change', updatePreview);
+    
     selectTipo.addEventListener('change', function() {
         if (this.value === 'debito') {
             selectCuotas.value = "1";
@@ -242,9 +525,10 @@ document.addEventListener('DOMContentLoaded', () => {
         updatePreview();
     });
 
-    // 2. MODAL CONFIRMACIÓN
     document.getElementById('btn-confirmar-modal').addEventListener('click', () => {
-        if (!inputMonto.value || inputMonto.value <= 0) {
+        const monto = obtenerValorNumerico();
+        
+        if (!inputMonto.value || monto <= 0) {
             if(typeof showToast === "function") showToast("Ingrese un monto válido", "danger");
             return;
         }
@@ -262,26 +546,35 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('btn-crear-link-final').addEventListener('click', function() {
         this.disabled = true;
         this.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Generando...';
-        selectCuotas.disabled = false; 
-        const hidden = document.createElement('input'); 
-        hidden.type = 'hidden'; hidden.name = 'confirm'; hidden.value = '1';
-        form.appendChild(hidden);
+        
+        const montoNumerico = obtenerValorNumerico();
+        const hiddenMonto = document.createElement('input'); 
+        hiddenMonto.type = 'hidden'; 
+        hiddenMonto.name = 'monto';
+        hiddenMonto.value = montoNumerico;
+        
+        const hiddenConfirm = document.createElement('input'); 
+        hiddenConfirm.type = 'hidden'; 
+        hiddenConfirm.name = 'confirm'; 
+        hiddenConfirm.value = '1';
+        
+        form.appendChild(hiddenMonto);
+        form.appendChild(hiddenConfirm);
         form.submit();
     });
 
-    // --- 3. VERIFICACIÓN DE PAGOS MEJORADA (Polling cada 20 seg) ---
+    // ========== VERIFICACIÓN DE PAGOS ==========
+    
     function checkPayments() {
         const pendings = document.querySelectorAll('.js-check-status');
         
         pendings.forEach(badge => {
-            // No procesar si ya tiene un estado terminal en el atributo
             if (badge.dataset.finalizado === "true") return;
 
             const id = badge.getAttribute('data-id');
             const statusContainer = document.getElementById(`status-container-${id}`);
             const cuotasSpan = document.getElementById(`cuotas-text-${id}`);
             
-            // 1. Mostrar estado "Verificando..." discreto
             const originalHTML = badge.innerHTML;
             badge.innerHTML = '<i class="fas fa-sync-alt fa-spin me-1"></i> Verificando...';
 
@@ -289,7 +582,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 .then(res => res.json())
                 .then(data => {
                     if (data.pagado) {
-                        // 2. ACTUALIZAR COLUMNA ESTADO (Badge + Recibo)
                         statusContainer.innerHTML = `
                             <span class="status-badge" style="background: rgba(16, 185, 129, 0.1); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.2); padding: 5px 12px; border-radius: 20px; font-size: 11px;">
                                 <i class="fas fa-check-circle me-1"></i> Pagado
@@ -299,26 +591,24 @@ document.addEventListener('DOMContentLoaded', () => {
                             </a>
                         `;
                         
-                        // 3. ACTUALIZAR COLUMNA CUOTAS
                         if (cuotasSpan) {
                             const cuotaTexto = data.cuotas > 1 ? `${data.cuotas} cuotas` : `1 cuota`;
                             cuotasSpan.innerText = cuotaTexto;
                             cuotasSpan.classList.add('text-white', 'fw-bold');
                         }
 
-                        // Notificación
+                        badge.dataset.finalizado = "true";
                         if(typeof showToast === "function") showToast(`Cobro #${id} pagado con éxito.`, "success");
                     } 
                     else if (data.anulado) {
-                        // 4. ACTUALIZAR A ANULADO
                         statusContainer.innerHTML = `
                             <span class="status-badge" style="background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.2); padding: 5px 12px; border-radius: 20px; font-size: 11px;">
                                 <i class="fas fa-times-circle me-1"></i> Anulado
                             </span>
                         `;
+                        badge.dataset.finalizado = "true";
                     }
                     else {
-                        // Revertir a "Pendiente" original si sigue pendiente
                         badge.innerHTML = '<i class="fas fa-clock me-1"></i> Pendiente';
                     }
                 })
@@ -329,32 +619,50 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Polling cada 15 segundos para no saturar pero dar respuesta rápida
+    // Iniciar verificación de pagos
     if (document.querySelector('.js-check-status')) {
-        setInterval(checkPayments, 15000);
+        setInterval(checkPayments, 60000);  // 60,000 ms = 1 minuto
+        setTimeout(checkPayments, 1000);    // Primera verificación después de 1 segundo
+    }
+    
+    // Inicializar placeholder
+    if (inputMonto) {
+        inputMonto.placeholder = "0,00";
     }
 });
-
-// Función Copy final del modal de éxito
-function copyFinalLink() {
-    const inp = document.getElementById('final-link');
-    const btn = document.getElementById('btn-copy-modal');
-    navigator.clipboard.writeText(inp.value).then(() => {
-        if(typeof showToast === "function") showToast("Copiado!", "success");
-        btn.innerHTML = '<i class="fas fa-check"></i>';
-        setTimeout(() => btn.innerHTML = '<i class="fas fa-copy"></i>', 2000);
-    });
-}
 </script>
 
 <style>
-/* CSS Ajustado para no ser llamativo en el polling */
+/* Estilos para botones de copiar en móvil */
+.btn-copy {
+    cursor: pointer;
+    transition: all 0.2s ease;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.btn-copy:active {
+    transform: scale(0.95);
+}
+
+/* Mejorar tamaño para toque en móvil */
+@media (max-width: 768px) {
+    .btn-copy {
+        padding: 10px !important;
+        min-width: 44px;
+        min-height: 44px;
+    }
+    
+    .btn-copy i {
+        font-size: 16px;
+    }
+}
+
+/* Estilos para el preview */
 .bg-warning.text-dark.js-check-status {
     opacity: 0.9;
     transition: background 0.3s ease;
 }
 
-/* El ticket que aparece por AJAX con efecto suave */
 .btn-ticket {
     animation: fadeInScale 0.5s ease-out forwards;
 }
@@ -362,6 +670,19 @@ function copyFinalLink() {
 @keyframes fadeInScale {
     from { opacity: 0; transform: scale(0.8); }
     to { opacity: 1; transform: scale(1); }
+}
+
+/* Feedback visual para copiado */
+.btn-copy.copied {
+    background-color: #10b981 !important;
+    color: white !important;
+    animation: pulse 0.5s ease;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
 }
 </style>
 {% endblock %}
