@@ -1,0 +1,230 @@
+{% extends 'base_usuario.html' %}
+
+{% block title %}Mi Perfil | PagoTech{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center animate-fade-in py-4">
+    <div class="col-md-10 col-lg-7">
+        <div class="card bg-dark border-strong shadow-lg rounded-4 overflow-hidden">
+            <!-- Header con Gradiente Sutil -->
+            <div class="card-header border-bottom border-secondary py-4 px-4 bg-gradient-dark">
+                <div class="d-flex align-items-center">
+                    <div class="profile-icon me-3">
+                        <i class="fas fa-user-circle fa-3x text-danger"></i>
+                    </div>
+                    <div>
+                        <h4 class="mb-0 text-white fw-bold">Configuración de Perfil</h4>
+                        <p class="text-muted small mb-0">Actualiza tu información y mantén tu cuenta segura.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-body p-4 p-md-5">
+                <form method="POST" id="perfilForm">
+                    {% csrf_token %}
+                    
+                    <!-- SECCIÓN: DATOS PERSONALES -->
+                    <div class="section-title mb-4">
+                        <h6 class="text-danger text-uppercase fw-bold ls-1"><i class="fas fa-id-card me-2"></i>Datos Personales</h6>
+                    </div>
+                    
+                    <div class="row g-4 mb-5">
+                        <div class="col-md-12">
+                            <label class="form-label text-muted small fw-bold">Nombre Completo</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-dark-lighter border-secondary text-muted"><i class="fas fa-user"></i></span>
+                                <input type="text" name="nombre" class="form-control bg-dark-lighter border-secondary text-white" 
+                                       value="{{ user.nombre }}" placeholder="Ej: Juan Pérez" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-muted small fw-bold">Correo Electrónico</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-dark-lighter border-secondary text-muted"><i class="fas fa-envelope"></i></span>
+                                <input type="email" name="email" class="form-control bg-dark-lighter border-secondary text-white" 
+                                       value="{{ user.email }}" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-muted small fw-bold">Teléfono de Contacto</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-dark-lighter border-secondary text-muted"><i class="fas fa-phone"></i></span>
+                                <input type="text" name="telefono" class="form-control bg-dark-lighter border-secondary text-white" 
+                                       value="{{ user.telefono|default_if_none:'' }}" placeholder="+54 9 ...">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SECCIÓN: SEGURIDAD -->
+                    <div class="section-title mb-4">
+                        <h6 class="text-danger text-uppercase fw-bold ls-1"><i class="fas fa-shield-alt me-2"></i>Seguridad y Acceso</h6>
+                    </div>
+
+                    <div class="bg-dark-lighter p-4 rounded-4 border border-secondary mb-4">
+                        <p class="text-muted small mb-4">
+                            <i class="fas fa-info-circle me-2"></i>Completa estos campos solo si deseas cambiar tu contraseña actual.
+                        </p>
+                        
+                        <div class="row g-4">
+                            <!-- Nueva Contraseña -->
+                            <div class="col-md-6">
+                                <label class="form-label text-muted small fw-bold">Nueva Contraseña</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-dark border-secondary text-muted"><i class="fas fa-lock"></i></span>
+                                    <input type="password" name="password" id="newPassword" 
+                                           class="form-control bg-dark border-secondary text-white" 
+                                           placeholder="Nueva clave">
+                                    <button class="btn btn-outline-secondary border-secondary toggle-password" type="button">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </div>
+                                <!-- Requisitos visuales -->
+                                <div class="password-requirements mt-3">
+                                    <div id="req-length" class="text-muted small mb-1"><i class="fas fa-circle me-2 tiny-icon"></i>8+ caracteres</div>
+                                    <div id="req-upper" class="text-muted small mb-1"><i class="fas fa-circle me-2 tiny-icon"></i>Una Mayúscula</div>
+                                    <div id="req-symbol" class="text-muted small mb-1"><i class="fas fa-circle me-2 tiny-icon"></i>Un Símbolo (!@#$%^&*)</div>
+                                </div>
+                            </div>
+
+                            <!-- Confirmar -->
+                            <div class="col-md-6">
+                                <label class="form-label text-muted small fw-bold">Confirmar Nueva Contraseña</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-dark border-secondary text-muted"><i class="fas fa-check-double"></i></span>
+                                    <input type="password" name="confirm_password" id="confirmPassword" 
+                                           class="form-control bg-dark border-secondary text-white" 
+                                           placeholder="Repite la clave">
+                                    <button class="btn btn-outline-secondary border-secondary toggle-password" type="button">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </div>
+                                <div id="match-status" class="small mt-2"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-5">
+                        <button type="reset" class="btn btn-outline-secondary px-4 py-2 rounded-3 fw-bold">Descartar</button>
+                        <button type="submit" id="btnGuardar" class="btn btn-danger px-5 py-2 rounded-3 fw-bold shadow">
+                            <i class="fas fa-save me-2"></i>Guardar Cambios
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* PagoTech Dark Theme Enhancements */
+    .bg-dark-lighter { background-color: #121214; }
+    .bg-gradient-dark { background: linear-gradient(180deg, #1a1a1c 0%, #0a0a0b 100%); }
+    .border-strong { border: 1px solid #2d2d30; }
+    .ls-1 { letter-spacing: 1px; }
+    .tiny-icon { font-size: 8px; vertical-align: middle; }
+    
+    .input-group-text { border-right: none; }
+    .form-control { border-left: none; transition: all 0.3s ease; }
+    .form-control:focus {
+        background-color: #121214;
+        border-color: #dc3545;
+        color: white;
+        box-shadow: none;
+    }
+    .form-control:focus + .input-group-text, 
+    .input-group:focus-within .input-group-text {
+        border-color: #dc3545;
+    }
+
+    /* Validaciones */
+    .text-success-custom { color: #10b981 !important; }
+    .requirement-met { color: #10b981 !important; font-weight: bold; }
+    .requirement-met i { content: "\f00c"; font-family: "Font Awesome 5 Free"; font-weight: 900; }
+
+    .animate-fade-in { animation: fadeIn 0.6s ease-out; }
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(15px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const newPass = document.getElementById('newPassword');
+    const confirmPass = document.getElementById('confirmPassword');
+    const btnGuardar = document.getElementById('btnGuardar');
+
+    // --- 1. MOSTRAR / OCULTAR CONTRASEÑA ---
+    document.querySelectorAll('.toggle-password').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const input = this.parentElement.querySelector('input');
+            const icon = this.querySelector('i');
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.replace('fa-eye', 'fa-eye-slash');
+            } else {
+                input.type = 'password';
+                icon.classList.replace('fa-eye-slash', 'fa-eye');
+            }
+        });
+    });
+
+    // --- 2. VALIDACIÓN DE REQUISITOS EN TIEMPO REAL ---
+    newPass.addEventListener('input', function() {
+        const val = this.value;
+        if (val.length === 0) {
+            resetRequirements();
+            return;
+        }
+
+        const checks = {
+            length: val.length >= 8,
+            upper: /[A-Z]/.test(val),
+            symbol: /[!@#$%^&*(),.?":{}|<>]/.test(val)
+        };
+
+        updateReq('req-length', checks.length);
+        updateReq('req-upper', checks.upper);
+        updateReq('req-symbol', checks.symbol);
+        
+        validateMatch();
+    });
+
+    confirmPass.addEventListener('input', validateMatch);
+
+    function updateReq(id, met) {
+        const el = document.getElementById(id);
+        if (met) {
+            el.classList.add('requirement-met');
+            el.querySelector('i').className = 'fas fa-check me-2 tiny-icon';
+        } else {
+            el.classList.remove('requirement-met');
+            el.querySelector('i').className = 'fas fa-circle me-2 tiny-icon';
+        }
+    }
+
+    function resetRequirements() {
+        ['req-length', 'req-upper', 'req-symbol'].forEach(id => {
+            const el = document.getElementById(id);
+            el.classList.remove('requirement-met');
+            el.querySelector('i').className = 'fas fa-circle me-2 tiny-icon';
+        });
+    }
+
+    function validateMatch() {
+        const status = document.getElementById('match-status');
+        if (confirmPass.value.length === 0) {
+            status.innerHTML = '';
+            return;
+        }
+        if (newPass.value === confirmPass.value) {
+            status.innerHTML = '<i class="fas fa-check me-1"></i> Las contraseñas coinciden';
+            status.className = 'small mt-2 text-success-custom';
+        } else {
+            status.innerHTML = '<i class="fas fa-times me-1"></i> Las contraseñas no coinciden';
+            status.className = 'small mt-2 text-danger';
+        }
+    }
+});
+</script>
+{% endblock %}

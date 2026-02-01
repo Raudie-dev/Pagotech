@@ -82,15 +82,16 @@ def update_cliente(pk: Any, data: Dict[str, Any]) -> List[str]:
     
     nombre = data.get('nombre')
     if nombre:
-        # MEJORA: Mantener consistencia de MAYÚSCULAS al actualizar
-        nombre = nombre.strip().upper()
+        # Mantener consistencia de MAYÚSCULAS al actualizar
+        # nombre = nombre.strip().upper()
+        nombre = nombre.strip()
         if nombre != cliente.nombre and Cliente.objects.filter(nombre=nombre).exclude(pk=pk).exists():
             return ['El nombre ya está en uso por otro cliente.']
         cliente.nombre = nombre
 
     email = data.get('email')
     if email is not None:
-        # MEJORA: Mantener consistencia de minúsculas al actualizar
+        # Mantener consistencia de minúsculas al actualizar
         email = email.strip().lower() or None
         if email != cliente.email and email and Cliente.objects.filter(email=email).exclude(pk=pk).exists():
             return ['El correo ya está en uso por otro cliente.']
@@ -301,50 +302,75 @@ def generate_pdf_for_link(link_id: Any, cliente_pk: Any) -> Tuple[Optional[str],
     except Exception as e:
         return None, None, [f'Error: {e}']
     
+import traceback # Importante para ver el error detallado
+
 def verificar_estado_pago(link_id):
     try:
         link = LinkPago.objects.get(pk=link_id)
-        # Si ya lo marcamos como pagado antes, no consultamos la API de nuevo
-        if link.pagado: 
-            return {'pagado': True, 'anulado': False, 'cuotas': link.cuotas_elegidas}
+        
+        # 1. Si ya sabemos que está pagado en nuestra DB, no molestamos a la API
+        if link.pagado:
+            return {'status': 'CAPTURED', 'pagado': True, 'anulado': False, 'cuotas': link.cuotas_elegidas}
 
         payload = {"orderId": link.order_id}
         response = requests.post(PAYZEN_CHECK_URL, json=payload, headers=get_payzen_auth_header())
         res_data = response.json()
 
+        # --- MANEJO DEL ERROR PSP_010 (EL "HUEVO DE COLÓN") ---
+        if res_data.get("status") == "ERROR":
+            answer = res_data.get("answer", {})
+            if answer.get("errorCode") == "PSP_010":
+                # Esto significa: El link existe, pero el cliente aún no lo usó.
+                # Lo tratamos como PENDIENTE.
+                return {
+                    'status': 'Esperando Pago...', 
+                    'pagado': False, 
+                    'anulado': False, 
+                    'cuotas': link.cuotas,
+                    'mensaje': 'Esperando que el cliente abra el link'
+                }
+            
+            # Si es otro tipo de error de API
+            return {'status': 'Error de Api', 'pagado': False, 'anulado': False, 'cuotas': 1}
+
+        # --- CASO DE ÉXITO (Ya hay intentos de pago) ---
         if res_data.get("status") == "SUCCESS":
             answer = res_data.get("answer", {})
             transactions = answer.get("transactions", [])
             
-            # Si no hay transacciones en la lista, el pago NO se realizó aún
             if not transactions:
-                return {'pagado': False, 'anulado': False, 'cuotas': link.cuotas_elegidas}
+                return {'status': 'PENDING', 'pagado': False, 'anulado': False, 'cuotas': link.cuotas}
 
-            for tx in transactions:
-                status = tx.get("status")
-                
-                # SÓLO estos estados significan dinero cobrado
-                if status in ["AUTHORISED", "CAPTURED", "PAID"]:
-                    t_details = tx.get("transactionDetails", {})
-                    card_details = t_details.get("cardDetails", {})
-                    
-                    link.auth_code = tx.get("authorizationResult")
-                    link.lote_number = t_details.get("batch")
-                    link.nro_transaccion = tx.get("uuid")
-                    
-                    cuotas_api = card_details.get("installmentNumber")
-                    link.cuotas_elegidas = int(cuotas_api) if cuotas_api else 1
-                    
-                    link.pagado = True
-                    link.save()
-                    return {'pagado': True, 'anulado': False, 'cuotas': link.cuotas_elegidas}
-                
-                # SÓLO estos estados significan que ya no se puede cobrar
-                if status in ["REFUSED", "CANCELLED", "ERROR"]:
-                    return {'pagado': False, 'anulado': True, 'cuotas': link.cuotas_elegidas}
+            tx = transactions[0]
+            status_payzen = tx.get("status") 
+            detailed_status = tx.get("detailedStatus") 
+
+            # Guardamos el estado detallado para tener más info
+            link.status_detalle = detailed_status
+
+            # A) Pago Exitoso
+            if status_payzen == "PAID" or detailed_status in ["AUTHORISED", "CAPTURED"]:
+                t_details = tx.get("transactionDetails", {})
+                card_details = t_details.get("cardDetails", {})
+                link.auth_code = tx.get("authorizationResult")
+                link.nro_transaccion = tx.get("uuid")
+                cuotas_api = card_details.get("installmentNumber")
+                link.cuotas_elegidas = int(cuotas_api) if cuotas_api else 1
+                link.pagado = True
+                link.save()
+                return {'status': detailed_status, 'pagado': True, 'anulado': False, 'cuotas': link.cuotas_elegidas}
+            
+            # B) Pago Fallido/Rechazado (UNPAID + REFUSED)
+            # Si el status es UNPAID y el detalle es REFUSED, ya es un fallo definitivo
+            if status_payzen == "UNPAID" or detailed_status in ["REFUSED", "CANCELLED", "ERROR", "EXPIRED"]:
+                link.pagado = False
+                link.save()
+                return {'status': detailed_status, 'pagado': False, 'anulado': True, 'cuotas': link.cuotas_elegidas}
+            
+            # C) Otros estados (En proceso, etc.)
+            return {'status': detailed_status, 'pagado': False, 'anulado': False, 'cuotas': link.cuotas_elegidas}
 
     except Exception as e:
         print(f"Error técnico en CRUD: {e}")
         
-    # Por defecto siempre es Falso si nada de lo de arriba se cumple
-    return {'pagado': False, 'anulado': False, 'cuotas': link.cuotas_elegidas}
+    return {'status': 'Error Tecnico', 'pagado': False, 'anulado': False, 'cuotas': 1}

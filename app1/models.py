@@ -29,6 +29,7 @@ class LinkPago(models.Model):
     descripcion = models.TextField(null=True, blank=True)
     order_id = models.CharField(max_length=50, unique=True, null=True, blank=True)
     pagado = models.BooleanField(default=False)
+    status_detalle = models.CharField(max_length=50, default='INITIAL', help_text="Estado detallado desde PayZen")
     cuotas_elegidas = models.IntegerField(default=1)
     auth_code = models.CharField(max_length=50, blank=True, null=True) # Número de Autorización
     lote_number = models.CharField(max_length=10, blank=True, null=True) # Cierre de Lote
@@ -60,6 +61,6 @@ class LinkPago(models.Model):
         lines.append(f"Comisión (plataforma): {self.commission_amount:.2f}")
         lines.append(f"Total a recibir (cliente): {self.receiver_amount:.2f}")
         lines.append(f"Link de pago: {self.link}")
-        lines.append(f"Estado del pago: {'PAGADO' if self.pagado else 'PENDIENTE'}")
+        lines.append(f"Estado del pago: {self.status_detalle}")
         self.invoice_text = "\n".join(lines)
         return self.invoice_text

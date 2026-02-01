@@ -11,5 +11,5 @@ urlpatterns = [
     path('descargar-ticket/<int:link_id>/', views.download_ticket, name='download_ticket'),
     path('ticket_pdf/<int:link_id>/', views.ticket_pdf, name='ticket_pdf'),
     path('verificar-pago-ajax/<int:link_id>/', views.verificar_estado_pago_ajax, name='verificar_pago_ajax'),
-
+    path('perfil/', views.gestion_perfil, name='perfil'),
 ]

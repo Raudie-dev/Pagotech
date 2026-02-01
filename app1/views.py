@@ -189,21 +189,26 @@ def verificar_estado_pago_ajax(request, link_id):
     if not user_id:
         return JsonResponse({'error': 'No autorizado'}, status=401)
 
-    # 1. Obtenemos el diccionario del CRUD
     resultado_crud = crud.verificar_estado_pago(link_id)
     
-    # 2. Buscamos el objeto de la base de datos (por las cuotas)
-    try:
-        link = LinkPago.objects.get(pk=link_id, cliente_id=user_id)
-    except LinkPago.DoesNotExist:
-        return JsonResponse({'error': 'No existe'}, status=404)
+    # Mapeo de mensajes para el frontend (Opcional, puedes hacerlo en JS)
+    mensajes = {
+        'AUTHORISED': 'Pago Autorizado',
+        'CAPTURED': 'Pago Exitoso',
+        'REFUSED': 'Pago Rechazado por el Banco',
+        'CANCELLED': 'Pago Cancelado por el Usuario',
+        'EXPIRED': 'El link ha expirado',
+        'PENDING': 'Esperando pago...',
+        'ABANDONED': 'El cliente abandonó el pago'
+    }
     
-    # EXPLICACIÓN DEL FIX:
-    # Debemos enviar resultado_crud['pagado'] (que es un Booleano)
-    # y no resultado_crud (que es un Objeto/Diccionario).
+    estado_texto = mensajes.get(resultado_crud['status'], resultado_crud['status'])
+
     return JsonResponse({
-        'pagado': resultado_crud['pagado'],   # <--- AHORA SÍ ES TRUE O FALSE
+        'pagado': resultado_crud['pagado'],
         'anulado': resultado_crud['anulado'],
+        'status_raw': resultado_crud['status'], # El código técnico
+        'status_txt': estado_texto,             # Texto amigable
         'cuotas': resultado_crud['cuotas'],
         'id': link_id
     })
@@ -321,3 +326,37 @@ def download_ticket(request, link_id):
     response = HttpResponse(content, content_type='text/plain; charset=utf-8')
     response['Content-Disposition'] = f'attachment; filename="{filename}"'
     return response
+
+def gestion_perfil(request):
+    user_id = request.session.get('user_id')
+    if not user_id: 
+        return redirect('login_cliente')
+    
+    cliente = crud.get_cliente(user_id)
+    if not cliente: 
+        return redirect('login_cliente')
+
+    if request.method == 'POST':
+        # Recolectamos datos del POST
+        data = {
+            'nombre': request.POST.get('nombre'),
+            'email': request.POST.get('email'),
+            'telefono': request.POST.get('telefono'),
+            'password': request.POST.get('password') if request.POST.get('password') else None
+        }
+        
+        # Validación básica de contraseñas si intenta cambiarla
+        confirm_password = request.POST.get('confirm_password')
+        if data['password'] and data['password'] != confirm_password:
+            messages.error(request, "Las contraseñas no coinciden.")
+        else:
+            # Usamos tu función update_cliente del CRUD
+            errors = crud.update_cliente(user_id, data)
+            if not errors:
+                messages.success(request, "Perfil actualizado correctamente.")
+                return redirect('perfil')
+            else:
+                for error in errors:
+                    messages.error(request, error)
+
+    return render(request, 'perfil.html', {'user': cliente})
