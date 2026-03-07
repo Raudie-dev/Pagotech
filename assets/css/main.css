@@ -236,7 +236,7 @@ img {
 }
 
 .btn-white:hover {
-  background: #f0f0f0;
+  background: #000;
   transform: translateY(-1px);
 }
 
@@ -344,7 +344,7 @@ img {
   background: var(--surface-elevated);
   border: 1px solid var(--border-strong);
   border-radius: var(--radius-full);
-  font-size: 13px;
+  font-size: 20px;
   font-weight: 500;
   color: var(--text-primary);
   margin-bottom: 32px;
@@ -402,7 +402,7 @@ img {
   align-items: center;
   justify-content: center;
   gap: 16px;
-  margin-bottom: 60px;
+  margin-bottom: 65px;
 }
 
 /* Stats con bordes blancos */
@@ -425,7 +425,7 @@ img {
 
 .stat-value {
   display: block;
-  font-size: 28px;
+  font-size: 25px;
   font-weight: 700;
   color: var(--text-primary);
 }
@@ -463,13 +463,13 @@ img {
 }
 
 .card-1 {
-  top: 15rem;
+  top: 11rem;
   right: -37rem;
   width: 280px;
 }
 
 .card-2 {
-  bottom: 80px;
+  bottom: 116px;
   right: 250px;
   width: 200px;
 }
@@ -602,7 +602,6 @@ img {
   align-items: center;
   justify-content: center;
   gap: 60px;
-  flex-wrap: wrap;
 }
 
 .logo-item {
