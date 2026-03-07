@@ -32,7 +32,7 @@ class LinkPago(models.Model):
     status_detalle = models.CharField(max_length=50, default='INITIAL', help_text="Estado detallado desde PayZen")
     cuotas_elegidas = models.IntegerField(default=1)
     auth_code = models.CharField(max_length=50, blank=True, null=True) # Número de Autorización
-    lote_number = models.CharField(max_length=10, blank=True, null=True) # Cierre de Lote
+    lote_number = models.CharField(max_length=50, blank=True, null=True) # Cierre de Lote
     nro_transaccion = models.CharField(max_length=50, blank=True, null=True) # ID de Transacción PayZen
     
     # comisión y montos calculados

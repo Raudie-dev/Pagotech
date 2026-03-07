@@ -232,10 +232,11 @@ def create_link(cliente_pk, monto_contado, cuotas=1, tipo_tarjeta='credito', des
     # --- LÓGICA DE CUOTAS PARA LA REST API DE PAYZEN ---
     # Solo enviamos el objeto cardOptions si es CRÉDITO y tiene más de 1 cuota.
     # Esto evita el error "REST API option not enabled".
-    if tipo_tarjeta == 'credito' and cuotas > 1:
+    if tipo_tarjeta == 'credito':
         payload["transactionOptions"] = {
             "cardOptions": {
-                "installmentNumber": int(cuotas)
+                "installmentNumber": int(cuotas),
+                "installmentOptionsEditability": "FORBIDDEN"  # Bloquea el selector en la pantalla de pago
             }
         }
 
@@ -320,8 +321,6 @@ def verificar_estado_pago(link_id):
         if res_data.get("status") == "ERROR":
             answer = res_data.get("answer", {})
             if answer.get("errorCode") == "PSP_010":
-                # Esto significa: El link existe, pero el cliente aún no lo usó.
-                # Lo tratamos como PENDIENTE.
                 return {
                     'status': 'Esperando Pago...', 
                     'pagado': False, 
@@ -329,8 +328,6 @@ def verificar_estado_pago(link_id):
                     'cuotas': link.cuotas,
                     'mensaje': 'Esperando que el cliente abra el link'
                 }
-            
-            # Si es otro tipo de error de API
             return {'status': 'Error de Api', 'pagado': False, 'anulado': False, 'cuotas': 1}
 
         # --- CASO DE ÉXITO (Ya hay intentos de pago) ---
@@ -343,7 +340,7 @@ def verificar_estado_pago(link_id):
 
             tx = transactions[0]
             status_payzen = tx.get("status") 
-            detailed_status = tx.get("detailedStatus") 
+            detailed_status = tx.get("detailedStatus")
 
             # Guardamos el estado detallado para tener más info
             link.status_detalle = detailed_status
@@ -352,25 +349,60 @@ def verificar_estado_pago(link_id):
             if status_payzen == "PAID" or detailed_status in ["AUTHORISED", "CAPTURED"]:
                 t_details = tx.get("transactionDetails", {})
                 card_details = t_details.get("cardDetails", {})
-                link.auth_code = tx.get("authorizationResult")
+                auth_response = card_details.get("authorizationResponse", {})
+
+                # UUID único de la transacción Lyra
                 link.nro_transaccion = tx.get("uuid")
+
+                # authorizationNumber = código alfanumérico del banco (ej: '3fb5d4')
+                # authorizationResult = código de resultado bancario ('0' = aprobado) — NO usar
+                link.auth_code = (
+                    auth_response.get("authorizationNumber")       # ✅ Código real del banco
+                    or tx.get("uuid", "")[:8].upper()              # Fallback: primeros 8 del UUID
+                )
+
+                # sequenceNumber está directamente en transactionDetails (no en cardDetails)
+                link.lote_number = (
+                    t_details.get("sequenceNumber")                # ✅ Campo confirmado por Lyra
+                    or t_details.get("batchNumber")                # Alternativo por si cambia
+                    or "001"                                       # Fallback
+                )
+
+                # Cuotas confirmadas por la pasarela
                 cuotas_api = card_details.get("installmentNumber")
                 link.cuotas_elegidas = int(cuotas_api) if cuotas_api else 1
+
                 link.pagado = True
                 link.save()
-                return {'status': detailed_status, 'pagado': True, 'anulado': False, 'cuotas': link.cuotas_elegidas}
+
+                return {
+                    'status': detailed_status,
+                    'pagado': True,
+                    'anulado': False,
+                    'cuotas': link.cuotas_elegidas
+                }
             
-            # B) Pago Fallido/Rechazado (UNPAID + REFUSED)
-            # Si el status es UNPAID y el detalle es REFUSED, ya es un fallo definitivo
+            # B) Pago Fallido/Rechazado
             if status_payzen == "UNPAID" or detailed_status in ["REFUSED", "CANCELLED", "ERROR", "EXPIRED"]:
                 link.pagado = False
                 link.save()
-                return {'status': detailed_status, 'pagado': False, 'anulado': True, 'cuotas': link.cuotas_elegidas}
+                return {
+                    'status': detailed_status,
+                    'pagado': False,
+                    'anulado': True,
+                    'cuotas': link.cuotas_elegidas
+                }
             
-            # C) Otros estados (En proceso, etc.)
-            return {'status': detailed_status, 'pagado': False, 'anulado': False, 'cuotas': link.cuotas_elegidas}
+            # C) Otros estados (en proceso, etc.)
+            return {
+                'status': detailed_status,
+                'pagado': False,
+                'anulado': False,
+                'cuotas': link.cuotas_elegidas
+            }
 
     except Exception as e:
         print(f"Error técnico en CRUD: {e}")
+        print(traceback.format_exc())
         
     return {'status': 'Error Tecnico', 'pagado': False, 'anulado': False, 'cuotas': 1}
