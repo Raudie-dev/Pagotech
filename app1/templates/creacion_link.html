@@ -211,6 +211,25 @@ document.addEventListener('DOMContentLoaded', () => {
     const selectCuotas = document.getElementById('select-cuotas');
     const calcPreview = document.getElementById('calc-preview');
 
+    // Funcion para mostrar/ocultar cuotas según el tipo de tarjeta
+    function actualizarCuotasSegunTipo() {
+        const cuotaContado = selectCuotas.querySelector('option[value="1"]');
+
+        if (selectTipo.value === 'debito') {
+            if (cuotaContado) cuotaContado.style.display = "block";
+            selectCuotas.value = "1";
+            selectCuotas.disabled = true;
+            selectCuotas.parentElement.style.opacity = "0.5";
+        } else {
+            if (cuotaContado) cuotaContado.style.display = "none";
+            if (selectCuotas.value === "1") selectCuotas.selectedIndex = 1; // Evita que quede seleccionada
+            selectCuotas.disabled = false;
+            selectCuotas.parentElement.style.opacity = "1";
+        }
+
+        updatePreview();
+    }
+
     // ========== 1. LÓGICA DE COPIADO (PORTAPAPELES) ==========
     
     function copyToClipboard(text, button) {
@@ -381,18 +400,8 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     selectCuotas.addEventListener('change', updatePreview);
-    
-    selectTipo.addEventListener('change', function() {
-        if (this.value === 'debito') {
-            selectCuotas.value = "1";
-            selectCuotas.disabled = true;
-            selectCuotas.parentElement.style.opacity = "0.5";
-        } else {
-            selectCuotas.disabled = false;
-            selectCuotas.parentElement.style.opacity = "1";
-        }
-        updatePreview();
-    });
+        
+    selectTipo.addEventListener('change', actualizarCuotasSegunTipo);
 
     // ========== 4. MODALES Y ENVÍO ==========
 
@@ -450,6 +459,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setupCopyButtons();
     setInterval(checkPayments, 60000);
     setTimeout(checkPayments, 1000);
+    actualizarCuotasSegunTipo();
 });
 </script>
 

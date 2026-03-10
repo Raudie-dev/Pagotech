@@ -299,14 +299,27 @@ def configuracion_financiera(request):
     # Proyecciones (Para Crédito, que es donde hay cuotas y coeficiente)
     proyecciones = []
     for c in cuotas:
+        # 1. Calculamos la tasa de interés con su IVA (Generalmente 10.5%)
         tasa_cuota_iva = Decimal(str(c.tasa_base)) * (1 + iva_fin_f)
-        total_descuentos = com_pt_cred_iva + tasa_cuota_iva + arancel_cred_iva
+        
+        # 2. Las pasarelas aplican el interés como un RECARGO (Multiplicador)
+        multiplicador_financiero = 1 + (tasa_cuota_iva / 100)
+        
+        # 3. Las comisiones y aranceles (con IVA 21%) son DESCUENTOS sobre el precio final inflado
+        costos_transaccionales = com_pt_cred_iva + arancel_cred_iva 
+        divisor_transaccional = 1 - (costos_transaccionales / 100)
         
         try:
-            divisor = (1 - (total_descuentos / 100))
-            coeficiente = 1 / divisor if divisor > 0 else 0
-        except:
-            coeficiente = 0
+            # 4. FÓRMULA ESTÁNDAR DE PASARELAS (Ej: Prisma, Payway, Payzen)
+            if divisor_transaccional > 0:
+                coeficiente = multiplicador_financiero / divisor_transaccional
+            else:
+                coeficiente = Decimal('0')
+                
+            total_descuentos = costos_transaccionales + tasa_cuota_iva
+        except Exception as e:
+            coeficiente = Decimal('0')
+            total_descuentos = Decimal('0')
         
         proyecciones.append({
             'obj': c,

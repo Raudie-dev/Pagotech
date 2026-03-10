@@ -165,17 +165,28 @@ def creacion_link(request):
                         else:
                             logger.warning(f"Preview — plan de {cuotas_num} cuotas no encontrado o inactivo")
 
+                # 1. Calculamos los costos transaccionales con IVA (Descuento directo del total)
                 pt_iva_pct = pt_pct * iva_gen
                 ar_iva_pct = ar_pct * iva_gen
-                total_costos_pct = pt_iva_pct + ar_iva_pct + tasa_finan_iva
+                costos_transaccionales = pt_iva_pct + ar_iva_pct
+                
+                divisor_transaccional = 1 - (costos_transaccionales / 100)
 
-                divisor = 1 - (total_costos_pct / 100)
-                monto_venta = (monto_neto / divisor).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+                # 2. Calculamos el multiplicador financiero (Recargo)
+                multiplicador_financiero = 1 + (tasa_finan_iva / 100)
+
+                # 3. Calculamos el Coeficiente final y el monto de venta
+                if divisor_transaccional > Decimal('0'):
+                    coeficiente = multiplicador_financiero / divisor_transaccional
+                else:
+                    coeficiente = Decimal('0')
+
+                monto_venta = (monto_neto * coeficiente).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
                 comision_trasladada = monto_venta - monto_neto
 
                 logger.debug(
                     f"Preview calculado — usuario={user_id} "
-                    f"total_costos={total_costos_pct:.4f}% divisor={divisor:.6f} "
+                    f"total_costos={costos_transaccionales:.4f}% divisor={divisor_transaccional:.6f} "
                     f"neto={monto_neto} → bruto={monto_venta} comision={comision_trasladada}"
                 )
 

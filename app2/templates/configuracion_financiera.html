@@ -33,6 +33,142 @@
 
     /* Estilo para etiquetas mini en tarjetas */
     .mini-card-label { font-size: 0.65rem; color: var(--text-muted); font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; display: block; }
+    /* ===== BOTÓN AYUDA ===== */
+.btn-help-glow {
+    background: linear-gradient(135deg, rgba(230,57,70,0.15) 0%, rgba(230,57,70,0.05) 100%);
+    border: 1px solid rgba(230,57,70,0.5);
+    color: #ff6b6b;
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+.btn-help-glow::before {
+    content: '';
+    position: absolute;
+    top: 0; left: -100%;
+    width: 100%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(230,57,70,0.2), transparent);
+    transition: left 0.4s ease;
+}
+.btn-help-glow:hover::before { left: 100%; }
+.btn-help-glow:hover {
+    background: linear-gradient(135deg, rgba(230,57,70,0.3) 0%, rgba(230,57,70,0.1) 100%);
+    border-color: #e63946;
+    color: #fff;
+    box-shadow: 0 0 20px rgba(230,57,70,0.35), 0 4px 15px rgba(0,0,0,0.3);
+    transform: translateY(-1px);
+}
+.btn-help-glow .pulse-dot {
+    display: inline-block;
+    width: 7px; height: 7px;
+    background: #e63946;
+    border-radius: 50%;
+    margin-right: 7px;
+    animation: pulse-red 1.8s infinite;
+    vertical-align: middle;
+}
+@keyframes pulse-red {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(230,57,70,0.7); }
+    50%       { box-shadow: 0 0 0 5px rgba(230,57,70,0); }
+}
+
+/* ===== MODAL AYUDA ===== */
+#helpModal .modal-content {
+    background: #13151a;
+    border: 1px solid rgba(230,57,70,0.25) !important;
+    box-shadow: 0 0 60px rgba(230,57,70,0.1), 0 25px 50px rgba(0,0,0,0.7);
+}
+#helpModal .modal-header-custom {
+    background: linear-gradient(135deg, rgba(230,57,70,0.18) 0%, rgba(26,29,33,0.5) 60%, rgba(13,15,20,0) 100%);
+    border-bottom: 1px solid rgba(230,57,70,0.2);
+    padding: 1.2rem 1.5rem;
+    position: relative;
+}
+#helpModal .modal-header-custom::after {
+    content: '';
+    position: absolute;
+    bottom: -1px; left: 0;
+    width: 80px; height: 2px;
+    background: #e63946;
+}
+#helpModal .nav-pills-dark .nav-link {
+    background: transparent;
+    color: rgba(255,255,255,0.4);
+    border: 1px solid transparent;
+    border-radius: 6px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    padding: 8px 16px;
+    transition: all 0.2s;
+}
+#helpModal .nav-pills-dark .nav-link:hover {
+    color: rgba(255,255,255,0.8);
+    background: rgba(255,255,255,0.05);
+}
+#helpModal .nav-pills-dark .nav-link.active {
+    background: rgba(230,57,70,0.15);
+    border-color: rgba(230,57,70,0.4);
+    color: #ff6b6b;
+}
+#helpModal .formula-block {
+    background: rgba(0,0,0,0.5);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-left: 3px solid #e63946;
+    border-radius: 8px;
+    padding: 1.1rem 1.3rem;
+    font-family: 'Courier New', monospace;
+    font-size: 0.76rem;
+    line-height: 1.8;
+}
+#helpModal .step-card {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 10px;
+    padding: 1rem;
+    transition: border-color 0.2s, background 0.2s;
+    height: 100%;
+}
+#helpModal .step-card:hover {
+    background: rgba(255,255,255,0.05);
+    border-color: rgba(255,255,255,0.15);
+}
+#helpModal .step-card .step-num {
+    font-size: 1.8rem;
+    font-weight: 900;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+}
+#helpModal .inv-result-box {
+    background: rgba(0,0,0,0.3);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 10px;
+    padding: 1.1rem;
+    text-align: center;
+}
+#helpModal .inv-result-box .result-val {
+    font-size: 1.6rem;
+    font-weight: 900;
+    font-variant-numeric: tabular-nums;
+    line-height: 1.1;
+}
+#helpModal .warning-pill {
+    display: inline-block;
+    background: rgba(255,193,7,0.12);
+    border: 1px solid rgba(255,193,7,0.3);
+    color: #ffc107;
+    border-radius: 20px;
+    padding: 3px 12px;
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
 </style>
 {% endblock %}
 
@@ -44,6 +180,10 @@
         <h2 class="mb-1"><i class="fas fa-percentage text-danger me-2"></i> Configuración Financiera</h2>
         <p class="text-muted small mb-0">Gestión de costos y simulación de coeficientes bancarios.</p>
     </div>
+    <button class="btn btn-help-glow px-4 py-2" data-bs-toggle="modal" data-bs-target="#helpModal">
+        <span class="pulse-dot"></span>
+        <i class="fas fa-calculator me-2"></i>¿Cómo funciona?
+    </button>
 </div>
 
 <!-- Tarjetas de Resumen con Tooltips corregidos -->
@@ -140,11 +280,11 @@
                 
                 <div class="mb-3">
                     <label class="form-label text-secondary small fw-bold">IVA GENERAL <i class="fas fa-question-circle help-icon" data-bs-toggle="tooltip" title="IVA base (21%) aplicado a Aranceles y PagoTech."></i></label>
-                    <div class="input-group"><input type="number" step="0.01" name="iva" class="form-control form-control-dark" value="{{ config.iva }}"><span class="input-group-text input-group-text-custom">%</span></div>
+                    <div class="input-group"><input type="number" step="0.0001" name="iva" class="form-control form-control-dark" value="{{ config.iva }}"><span class="input-group-text input-group-text-custom">%</span></div>
                 </div>
                 <div class="mb-3 border-bottom border-secondary pb-3">
                     <label class="form-label text-secondary small fw-bold">IVA FINANCIACIÓN <i class="fas fa-question-circle help-icon" data-bs-toggle="tooltip" title="IVA aplicado sobre intereses bancarios (10.50%)."></i></label>
-                    <div class="input-group"><input type="number" step="0.01" name="iva_financiacion" class="form-control form-control-dark" value="{{ config.iva_financiacion }}"><span class="input-group-text input-group-text-custom">%</span></div>
+                    <div class="input-group"><input type="number" step="0.0001" name="iva_financiacion" class="form-control form-control-dark" value="{{ config.iva_financiacion }}"><span class="input-group-text input-group-text-custom">%</span></div>
                 </div>
 
                 <!-- SECCIÓN CRÉDITO CON TOOLTIP -->
@@ -155,11 +295,11 @@
                     </h6>
                     <div class="mb-3">
                         <label class="form-label text-muted x-small mb-1 fw-bold text-uppercase">COMISIÓN PAGO TECH</label>
-                        <div class="input-group"><input type="number" step="0.01" name="comision_pago_tech" class="form-control form-control-dark" value="{{ config.comision_pago_tech }}"><span class="input-group-text input-group-text-custom">%</span></div>
+                        <div class="input-group"><input type="number" step="0.0001" name="comision_pago_tech" class="form-control form-control-dark" value="{{ config.comision_pago_tech }}"><span class="input-group-text input-group-text-custom">%</span></div>
                     </div>
                     <div class="mb-4">
                         <label class="form-label text-muted x-small mb-1 fw-bold text-uppercase">ARANCEL PAYWAY</label>
-                        <div class="input-group"><input type="number" step="0.01" name="arancel_plataforma" class="form-control form-control-dark" value="{{ config.arancel_plataforma }}"><span class="input-group-text input-group-text-custom">%</span></div>
+                        <div class="input-group"><input type="number" step="0.0001" name="arancel_plataforma" class="form-control form-control-dark" value="{{ config.arancel_plataforma }}"><span class="input-group-text input-group-text-custom">%</span></div>
                     </div>
                 </div>
 
@@ -171,11 +311,11 @@
                     </h6>
                     <div class="mb-3">
                         <label class="form-label text-muted x-small mb-1 fw-bold text-uppercase">COMISIÓN PAGO TECH</label>
-                        <div class="input-group"><input type="number" step="0.01" name="comision_pago_tech_debito" class="form-control form-control-dark" value="{{ config.comision_pago_tech_debito }}"><span class="input-group-text input-group-text-custom">%</span></div>
+                        <div class="input-group"><input type="number" step="0.0001" name="comision_pago_tech_debito" class="form-control form-control-dark" value="{{ config.comision_pago_tech_debito }}"><span class="input-group-text input-group-text-custom">%</span></div>
                     </div>
                     <div class="mb-4">
                         <label class="form-label text-muted x-small mb-1 fw-bold text-uppercase">ARANCEL PAYWAY</label>
-                        <div class="input-group"><input type="number" step="0.01" name="arancel_plataforma_debito" class="form-control form-control-dark" value="{{ config.arancel_plataforma_debito }}"><span class="input-group-text input-group-text-custom">%</span></div>
+                        <div class="input-group"><input type="number" step="0.0001" name="arancel_plataforma_debito" class="form-control form-control-dark" value="{{ config.arancel_plataforma_debito }}"><span class="input-group-text input-group-text-custom">%</span></div>
                     </div>
                 </div>
 
@@ -235,7 +375,7 @@
                                 <input type="hidden" name="update_cuota" value="1"><input type="hidden" name="cuota_id" value="{{ item.obj.id }}">
                                 <td class="ps-4"><input type="text" name="edit_nombre" class="form-control form-control-sm form-control-dark" value="{{ item.obj.nombre }}"></td>
                                 <td class="text-center"><input type="number" name="edit_numero" class="form-control form-control-sm form-control-dark mx-auto text-center" style="width: 70px;" value="{{ item.obj.numero_cuota }}"></td>
-                                <td><div class="input-group input-group-sm" style="width: 130px;"><input type="number" step="0.01" name="edit_tasa" class="form-control form-control-dark" value="{{ item.obj.tasa_base }}"><span class="input-group-text bg-dark border-secondary text-muted small">%</span></div></td>
+                                <td><div class="input-group input-group-sm" style="width: 130px;"><input type="number" step="0.0001" name="edit_tasa" class="form-control form-control-dark" value="{{ item.obj.tasa_base }}"><span class="input-group-text bg-dark border-secondary text-muted small">%</span></div></td>
                                 <td class="text-center"><span class="badge-status" style="background: rgba(230, 57, 70, 0.1); color: #e63946; border: 1px solid rgba(230, 57, 70, 0.2); padding: 5px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 700;">{{ item.total_descuentos }}%</span></td>
                                 <td class="text-center"><span class="text-success fw-bold">{{ item.coeficiente }}</span></td>
                                 <td class="text-center"><div class="form-check form-switch d-inline-block"><input class="form-check-input" type="checkbox" name="activa" {% if item.obj.activa %}checked{% endif %}></div></td>
@@ -313,7 +453,7 @@
                         </div>
                         <div class="col-6">
                             <label class="form-label text-muted small fw-bold">TASA BANCARIA BASE</label>
-                            <input type="number" step="0.01" name="new_tasa" class="form-control form-control-dark" required>
+                            <input type="number" step="0.0001" name="new_tasa" class="form-control form-control-dark" required>
                         </div>
                     </div>
                 </div>
@@ -325,25 +465,323 @@
         </div>
     </div>
 </div>
+<!-- Modal: Ayuda y Calculadora Inversa -->
+<!-- ===== MODAL: GUÍA Y CALCULADORA ===== -->
+<div class="modal fade" id="helpModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
 
+            <!-- Header -->
+            <div class="modal-header-custom d-flex align-items-center justify-content-between">
+                <div>
+                    <div class="d-flex align-items-center gap-3 mb-1">
+                        <span class="badge text-uppercase fw-bold px-2 py-1" style="background:rgba(230,57,70,0.2);color:#ff6b6b;font-size:0.6rem;border:1px solid rgba(230,57,70,0.3);letter-spacing:1px;">Sistema Financiero</span>
+                    </div>
+                    <h5 class="text-white fw-bold mb-0" style="font-size:1rem;">
+                        Guía de Coeficientes &amp; Calculadora Inversa
+                    </h5>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+
+            <!-- Nav tabs -->
+            <div class="px-4 pt-3 pb-0" style="background:#13151a; border-bottom:1px solid rgba(255,255,255,0.07);">
+                <ul class="nav nav-pills-dark nav-pills gap-2 mb-0" id="helpTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#pane-flujo" type="button">
+                            <i class="fas fa-route me-2"></i>Flujo del dinero
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#pane-formula" type="button">
+                            <i class="fas fa-superscript me-2"></i>Fórmula
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#pane-calc" type="button">
+                            <i class="fas fa-calculator me-2"></i>Calculadora inversa
+                        </button>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Body -->
+            <div class="modal-body p-4" style="background:#13151a;">
+                <div class="tab-content">
+
+                    <!-- TAB 1: FLUJO -->
+                    <div class="tab-pane fade show active" id="pane-flujo">
+                        <p class="text-muted small mb-4">El sistema traslada todos los costos al cliente final para que el vendedor reciba su monto neto intacto.</p>
+
+                        <!-- Diagrama de flujo -->
+                        <div class="d-flex align-items-center gap-2 mb-4" style="min-width:0;">
+                            <div class="step-card text-center flex-fill" style="border-top: 2px solid #17a2b8; min-width:0;">
+                                <div class="step-num text-info mb-1">①</div>
+                                <div class="text-white fw-bold small mb-1">Precio Contado</div>
+                                <div class="text-muted" style="font-size:0.7rem;">Lo que quiere recibir el vendedor</div>
+                            </div>
+
+                            <div class="flex-shrink-0 text-center px-1">
+                                <i class="fas fa-times text-danger" style="font-size:1.1rem;"></i>
+                            </div>
+
+                            <div class="step-card text-center flex-fill" style="border-top: 2px solid #e63946; min-width:0;">
+                                <div class="step-num text-danger mb-1">②</div>
+                                <div class="text-white fw-bold small mb-1">Coeficiente</div>
+                                <div class="text-muted" style="font-size:0.7rem;">Calculado según cuotas e impuestos</div>
+                            </div>
+
+                            <div class="flex-shrink-0 text-center px-1">
+                                <i class="fas fa-equals text-warning" style="font-size:1.1rem;"></i>
+                            </div>
+
+                            <div class="step-card text-center flex-fill" style="border-top: 2px solid #28a745; min-width:0;">
+                                <div class="step-num text-success mb-1">③</div>
+                                <div class="text-white fw-bold small mb-1">Precio al Cliente</div>
+                                <div class="text-muted" style="font-size:0.7rem;">Lo que paga el comprador</div>
+                            </div>
+                        </div>
+
+                        <!-- Qué descuenta Payway -->
+                        <h6 class="text-white fw-bold small text-uppercase mb-3" style="letter-spacing:1px;">
+                            <i class="fas fa-sitemap text-danger me-2"></i>¿Qué descuenta Payway del cobro?
+                        </h6>
+                        <div class="row g-2 mb-3">
+                            <div class="col-md-4">
+                                <div class="step-card" style="border-left:3px solid #e63946;">
+                                    <div class="d-flex align-items-center gap-2 mb-2">
+                                        <i class="fas fa-university text-danger small"></i>
+                                        <span class="text-white fw-bold small">Arancel Payway</span>
+                                    </div>
+                                    <div class="text-muted" style="font-size:0.72rem;">Porcentaje que cobra la pasarela (Prisma/Payzen) por procesar la transacción. Varía por tipo de tarjeta.</div>
+                                    <div class="mt-2"><span class="warning-pill">+ IVA 21%</span></div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="step-card" style="border-left:3px solid #17a2b8;">
+                                    <div class="d-flex align-items-center gap-2 mb-2">
+                                        <i class="fas fa-hand-holding-usd text-info small"></i>
+                                        <span class="text-white fw-bold small">Comisión PagoTech</span>
+                                    </div>
+                                    <div class="text-muted" style="font-size:0.72rem;">Servicio de gestión de la plataforma PagoTech por operar el link de cobro.</div>
+                                    <div class="mt-2"><span class="warning-pill">+ IVA 21%</span></div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="step-card" style="border-left:3px solid #ffc107;">
+                                    <div class="d-flex align-items-center gap-2 mb-2">
+                                        <i class="fas fa-credit-card text-warning small"></i>
+                                        <span class="text-white fw-bold small">Costo Financiero</span>
+                                    </div>
+                                    <div class="text-muted" style="font-size:0.72rem;">Interés bancario por ofrecer cuotas. Solo aplica en crédito con más de 1 cuota.</div>
+                                    <div class="mt-2"><span class="warning-pill" style="background:rgba(255,193,7,0.12);border-color:rgba(255,193,7,0.3);color:#ffc107;">+ IVA 10.5%</span></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="p-3 rounded" style="background:rgba(230,57,70,0.06);border:1px solid rgba(230,57,70,0.2);">
+                            <small class="text-danger fw-bold"><i class="fas fa-shield-alt me-2"></i>Garantía:</small>
+                            <small class="text-muted ms-1">El vendedor siempre recibe exactamente el precio contado ingresado. El 100% de los costos los absorbe el comprador vía coeficiente.</small>
+                        </div>
+                    </div>
+
+                    <!-- TAB 2: FÓRMULA -->
+                    <div class="tab-pane fade" id="pane-formula">
+                        <p class="text-muted small mb-4">Fórmula bancaria estándar usada por Prisma, Payway y Payzen. <strong class="text-white">No</strong> es descuento directo — es multiplicador financiero sobre divisor transaccional.</p>
+
+                        <h6 class="text-white fw-bold small text-uppercase mb-2" style="letter-spacing:1px;"><i class="fas fa-code text-danger me-2"></i>Paso a paso</h6>
+                        <div class="formula-block mb-4">
+                            <div><span class="text-secondary">//</span> <span class="text-muted">Paso 1 — Costos con IVA general (21%)</span></div>
+                            <div class="text-white">costos = <span class="text-warning">(arancel × 1.21)</span> + <span class="text-info">(comisión_PT × 1.21)</span></div>
+                            <div class="mt-2"><span class="text-secondary">//</span> <span class="text-muted">Paso 2 — Divisor transaccional</span></div>
+                            <div class="text-white">divisor = 1 − <span class="text-danger">(costos / 100)</span></div>
+                            <div class="mt-2"><span class="text-secondary">//</span> <span class="text-muted">Paso 3 — Tasa financiera con IVA (10.5%)</span></div>
+                            <div class="text-white">tasa_iva = <span class="text-success">tasa_base × 1.105</span></div>
+                            <div class="mt-2"><span class="text-secondary">//</span> <span class="text-muted">Paso 4 — Multiplicador financiero</span></div>
+                            <div class="text-white">multiplicador = 1 + <span class="text-success">(tasa_iva / 100)</span></div>
+                            <div class="mt-2"><span class="text-secondary">//</span> <span class="text-muted">Paso 5 — Coeficiente final</span></div>
+                            <div class="text-white fw-bold fs-6">coeficiente = <span class="text-success">multiplicador</span> / <span class="text-info">divisor</span></div>
+                        </div>
+
+                        <h6 class="text-white fw-bold small text-uppercase mb-3" style="letter-spacing:1px;"><i class="fas fa-exclamation-triangle text-warning me-2"></i>Tasa Base — ⚠️ atención</h6>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="step-card h-100" style="border-left:3px solid #e63946;">
+                                    <div class="d-flex align-items-center gap-2 mb-2">
+                                        <i class="fas fa-times-circle text-danger"></i>
+                                        <span class="text-danger fw-bold small text-uppercase">TNA del folleto</span>
+                                    </div>
+                                    <div class="text-muted" style="font-size:0.73rem;">El 23.83% que informa el banco en sus documentos comerciales es una <strong class="text-white">Tasa Nominal Anual</strong> — no es el valor que este campo espera. Usarlo directamente produce coeficientes incorrectos.</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="step-card h-100" style="border-left:3px solid #28a745;">
+                                    <div class="d-flex align-items-center gap-2 mb-2">
+                                        <i class="fas fa-check-circle text-success"></i>
+                                        <span class="text-success fw-bold small text-uppercase">Tasa Base interna</span>
+                                    </div>
+                                    <div class="text-muted" style="font-size:0.73rem;">Valor calculado por <strong class="text-white">ingeniería inversa</strong> a partir del coeficiente oficial de Payway. Usá la pestaña <em>"Calculadora inversa"</em> para obtenerlo con un clic.</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- TAB 3: CALCULADORA INVERSA -->
+                    <div class="tab-pane fade" id="pane-calc">
+                        <p class="text-muted small mb-4">Ingresá el coeficiente oficial que te provee Payway para un plan. El sistema aplica ingeniería inversa y devuelve la <strong class="text-white">Tasa Base interna</strong> exacta que debés cargar en la tabla.</p>
+
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-5">
+                                <label class="form-label text-secondary small fw-bold text-uppercase">Coeficiente oficial Payway</label>
+                                <div class="input-group">
+                                    <span class="input-group-text input-group-text-custom"><i class="fas fa-hashtag" style="font-size:0.75rem;"></i></span>
+                                    <input type="number" id="inv_coef" class="form-control form-control-dark" placeholder="Ej: 1.7462" step="0.0001" min="1">
+                                </div>
+                                <small class="text-muted" style="font-size:0.68rem;">El multiplicador de la tabla oficial del banco.</small>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label text-secondary small fw-bold text-uppercase">Arancel sin IVA</label>
+                                <div class="input-group">
+                                    <input type="number" id="inv_arancel" class="form-control form-control-dark" step="0.0001" placeholder="Auto">
+                                    <span class="input-group-text input-group-text-custom">%</span>
+                                </div>
+                                <small class="text-muted" style="font-size:0.68rem;">Se carga del config actual.</small>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label text-secondary small fw-bold text-uppercase">Comisión PT</label>
+                                <div class="input-group">
+                                    <input type="number" id="inv_comision" class="form-control form-control-dark" step="0.0001" placeholder="Auto">
+                                    <span class="input-group-text input-group-text-custom">%</span>
+                                </div>
+                                <small class="text-muted" style="font-size:0.68rem;">Se carga del config actual.</small>
+                            </div>
+                        </div>
+
+                        <button class="btn btn-danger w-100 fw-bold py-2 mb-4 text-uppercase" style="letter-spacing:1px;" onclick="calcularInverso()">
+                            <i class="fas fa-calculator me-2"></i>Calcular Tasa Base Interna
+                        </button>
+
+                        <!-- Resultado (oculto hasta calcular) -->
+                        <div id="inv_resultado" class="d-none">
+                            <div class="row g-3 mb-3">
+                                <div class="col-md-4">
+                                    <div class="inv-result-box" style="border-color:rgba(40,167,69,0.3);">
+                                        <div class="text-muted small mb-1">Tasa Base a ingresar</div>
+                                        <div class="result-val text-success" id="inv_tasa_result">—</div>
+                                        <div class="text-muted" style="font-size:0.68rem;">Campo "Tasa Bancaria Base"</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="inv-result-box" style="border-color:rgba(23,162,184,0.3);">
+                                        <div class="text-muted small mb-1">Coeficiente resultante</div>
+                                        <div class="result-val text-info" id="inv_coef_check">—</div>
+                                        <div class="text-muted" style="font-size:0.68rem;">Debe coincidir con el oficial</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="inv-result-box" style="border-color:rgba(255,193,7,0.3);">
+                                        <div class="text-muted small mb-1">Diferencia</div>
+                                        <div class="result-val" id="inv_diff">—</div>
+                                        <div class="text-muted" style="font-size:0.68rem;">Tolerancia ≤ 0.0001</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="p-3 rounded" id="inv_instruccion" style="background:rgba(40,167,69,0.08);border:1px solid rgba(40,167,69,0.25);">
+                                <small class="text-success">
+                                    <i class="fas fa-arrow-circle-right me-2"></i>
+                                    Ingresá <strong id="inv_tasa_instruccion" class="text-white">—</strong> en el campo <em>"Tasa Bancaria Base"</em> del plan correspondiente y presioná el ícono guardar <i class="fas fa-save"></i>.
+                                </small>
+                            </div>
+                        </div>
+                        <div id="inv_error" class="d-none" style="background:rgba(220,53,69,0.1);border:1px solid rgba(220,53,69,0.3);border-radius:8px;padding:0.75rem 1rem;">
+                            <small class="text-danger fw-bold"><i class="fas fa-exclamation-circle me-2"></i><span id="inv_error_msg"></span></small>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="modal-footer" style="background:#0d0f13;border-top:1px solid rgba(255,255,255,0.07);">
+                <small class="text-muted me-auto" style="font-size:0.68rem;"><i class="fas fa-lock me-1"></i>Fórmula bancaria estándar — Prisma / Payway / Payzen</small>
+                <button type="button" class="btn btn-sm btn-outline-secondary px-4" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
-    document.addEventListener('DOMContentLoaded', function () {
-        // Inicializar tooltips de Bootstrap 5 con el UI exacto
-        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
-        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-            return new bootstrap.Tooltip(tooltipTriggerEl, {
-                delay: { "show": 200, "hide": 100 }
-            });
-        });
+document.addEventListener('DOMContentLoaded', function () {
+    // Tooltips
+    [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]')).forEach(function (el) {
+        new bootstrap.Tooltip(el, { delay: { show: 200, hide: 100 } });
     });
 
-    function openDeleteModal(id, nombre) {
-        document.getElementById('deletePlanName').innerText = nombre;
-        document.getElementById('delete-plan-id').value = id;
-        new bootstrap.Modal(document.getElementById('deletePlanModal')).show();
+    // Precargar config en calculadora al abrir el modal
+    document.getElementById('helpModal').addEventListener('show.bs.modal', function () {
+        const ar = document.querySelector('input[name="arancel_plataforma"]');
+        const co = document.querySelector('input[name="comision_pago_tech"]');
+        if (ar) document.getElementById('inv_arancel').value = ar.value;
+        if (co) document.getElementById('inv_comision').value = co.value;
+        // Limpiar resultado previo
+        document.getElementById('inv_resultado').classList.add('d-none');
+        document.getElementById('inv_error').classList.add('d-none');
+    });
+});
+
+function openDeleteModal(id, nombre) {
+    document.getElementById('deletePlanName').innerText = nombre;
+    document.getElementById('delete-plan-id').value = id;
+    new bootstrap.Modal(document.getElementById('deletePlanModal')).show();
+}
+
+function calcularInverso() {
+    const errEl   = document.getElementById('inv_error');
+    const errMsg  = document.getElementById('inv_error_msg');
+    const resEl   = document.getElementById('inv_resultado');
+
+    errEl.classList.add('d-none');
+    resEl.classList.add('d-none');
+
+    const coef     = parseFloat(document.getElementById('inv_coef').value);
+    const arancel  = parseFloat(document.getElementById('inv_arancel').value);
+    const comision = parseFloat(document.getElementById('inv_comision').value);
+
+    if (isNaN(coef) || coef <= 1) {
+        errMsg.textContent = 'Ingresá un coeficiente válido mayor a 1 (ej: 1.7462).';
+        errEl.classList.remove('d-none'); return;
     }
+    if (isNaN(arancel) || isNaN(comision)) {
+        errMsg.textContent = 'Completá los campos de arancel y comisión PT.';
+        errEl.classList.remove('d-none'); return;
+    }
+
+    // Fórmula inversa
+    const costos  = (arancel * 1.21) + (comision * 1.21);
+    const divisor = 1 - (costos / 100);
+
+    if (divisor <= 0) {
+        errMsg.textContent = 'Los costos transaccionales superan el 100%. Revisá arancel y comisión.';
+        errEl.classList.remove('d-none'); return;
+    }
+
+    const tasa_interna   = ((coef * divisor) - 1) * 100 / 1.105;
+    const multiplicador  = 1 + (tasa_interna * 1.105 / 100);
+    const coef_calculado = multiplicador / divisor;
+    const diferencia     = Math.abs(coef_calculado - coef);
+
+    document.getElementById('inv_tasa_result').textContent      = tasa_interna.toFixed(4) + '%';
+    document.getElementById('inv_coef_check').textContent       = coef_calculado.toFixed(4);
+    document.getElementById('inv_tasa_instruccion').textContent  = tasa_interna.toFixed(4) + '%';
+
+    const diffEl = document.getElementById('inv_diff');
+    diffEl.textContent  = diferencia.toFixed(6);
+    diffEl.className    = 'result-val ' + (diferencia <= 0.0001 ? 'text-success' : 'text-warning');
+
+    resEl.classList.remove('d-none');
+}
 </script>
 {% endblock %}
