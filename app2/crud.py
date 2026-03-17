@@ -206,3 +206,34 @@ def delete_cuota_plan(cuota_id):
         return True, None
     except:
         return False, "Error al eliminar el plan."
+    
+def update_cuota_override(cuota_id, data):
+    """Guarda la configuración financiera personalizada de un CuotaConfig."""
+    from decimal import Decimal, InvalidOperation
+    
+    def to_decimal_or_none(val):
+        if val is None or str(val).strip() == '':
+            return None
+        try:
+            return Decimal(str(val))
+        except (InvalidOperation, ValueError):
+            return None
+
+    try:
+        from app2.models import CuotaConfig
+        cuota = CuotaConfig.objects.get(id=cuota_id)
+        cuota.iva_override              = to_decimal_or_none(data.get('iva_override'))
+        cuota.iva_financiacion_override = to_decimal_or_none(data.get('iva_financiacion_override'))
+        cuota.com_credito_override      = to_decimal_or_none(data.get('com_credito_override'))
+        cuota.com_debito_override       = to_decimal_or_none(data.get('com_debito_override'))
+        cuota.arancel_credito_override  = to_decimal_or_none(data.get('arancel_credito_override'))
+        cuota.arancel_debito_override   = to_decimal_or_none(data.get('arancel_debito_override'))
+        cuota.comision_aplica_iva       = bool(data.get('comision_aplica_iva', False))
+        cuota.arancel_aplica_iva        = bool(data.get('arancel_aplica_iva', False))
+        cuota.tasa_aplica_iva_fin       = bool(data.get('tasa_aplica_iva_fin', False))
+        cuota.save()
+        return True, None
+    except CuotaConfig.DoesNotExist:
+        return False, "Plan no encontrado."
+    except Exception as e:
+        return False, str(e)

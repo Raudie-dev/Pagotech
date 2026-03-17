@@ -13,162 +13,113 @@
         color: white !important; font-size: 0.85rem;
     }
     .form-control-dark:focus { border-color: #e63946 !important; box-shadow: 0 0 0 0.25rem rgba(230, 57, 70, 0.25); }
-    
     .help-icon { font-size: 0.85rem; color: #6c757d; cursor: help; margin-left: 6px; transition: color 0.2s; }
     .help-icon:hover { color: #e63946; }
-    
     .tooltip-inner {
         background-color: #1a1d21 !important; border: 1px solid rgba(255,255,255,0.2);
-        box-shadow: 0 4px 15px rgba(0,0,0,0.5); max-width: 250px; text-align: left; padding: 10px; font-size: 0.75rem;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.5); max-width: 260px; text-align: left; padding: 10px; font-size: 0.75rem;
     }
+    .mini-card-label { font-size: 0.65rem; color: var(--text-muted); font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; display: block; }
+
+    /* ── Danger modal ──────────────────────────────────────────── */
     .modal-confirm-danger .modal-content {
-        background-color: #1a1d21; border: 1px solid #e63946 !important; box-shadow: 0 0 20px rgba(230, 57, 70, 0.15);
+        background-color: #1a1d21; border: 1px solid #e63946 !important; box-shadow: 0 0 20px rgba(230,57,70,0.15);
     }
     .modal-confirm-danger .modal-header {
-        background: linear-gradient(90deg, rgba(230, 57, 70, 0.2) 0%, rgba(26, 29, 33, 0) 100%);
-        border-bottom: 1px solid rgba(230, 57, 70, 0.3);
+        background: linear-gradient(90deg, rgba(230,57,70,0.2) 0%, rgba(26,29,33,0) 100%);
+        border-bottom: 1px solid rgba(230,57,70,0.3);
     }
     .modal-confirm-danger .modal-title { color: #ff4d4d; text-transform: uppercase; letter-spacing: 1px; font-size: 0.9rem; }
-    .modal-confirm-danger .btn-danger { background-color: #e63946; border: none; box-shadow: 0 4px 12px rgba(230, 57, 70, 0.3); }
+    .modal-confirm-danger .btn-danger { background-color: #e63946; border: none; box-shadow: 0 4px 12px rgba(230,57,70,0.3); }
 
-    /* Estilo para etiquetas mini en tarjetas */
-    .mini-card-label { font-size: 0.65rem; color: var(--text-muted); font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; display: block; }
-    /* ===== BOTÓN AYUDA ===== */
-.btn-help-glow {
-    background: linear-gradient(135deg, rgba(230,57,70,0.15) 0%, rgba(230,57,70,0.05) 100%);
-    border: 1px solid rgba(230,57,70,0.5);
-    color: #ff6b6b;
-    font-size: 0.78rem;
-    font-weight: 800;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    position: relative;
-    overflow: hidden;
-    transition: all 0.3s ease;
-}
-.btn-help-glow::before {
-    content: '';
-    position: absolute;
-    top: 0; left: -100%;
-    width: 100%; height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(230,57,70,0.2), transparent);
-    transition: left 0.4s ease;
-}
-.btn-help-glow:hover::before { left: 100%; }
-.btn-help-glow:hover {
-    background: linear-gradient(135deg, rgba(230,57,70,0.3) 0%, rgba(230,57,70,0.1) 100%);
-    border-color: #e63946;
-    color: #fff;
-    box-shadow: 0 0 20px rgba(230,57,70,0.35), 0 4px 15px rgba(0,0,0,0.3);
-    transform: translateY(-1px);
-}
-.btn-help-glow .pulse-dot {
-    display: inline-block;
-    width: 7px; height: 7px;
-    background: #e63946;
-    border-radius: 50%;
-    margin-right: 7px;
-    animation: pulse-red 1.8s infinite;
-    vertical-align: middle;
-}
-@keyframes pulse-red {
-    0%, 100% { box-shadow: 0 0 0 0 rgba(230,57,70,0.7); }
-    50%       { box-shadow: 0 0 0 5px rgba(230,57,70,0); }
-}
+    /* ── Fórmula (usada dentro del modal) ─────────────────────── */
+    .formula-box {
+        background: rgba(0,0,0,0.35); border: 1px solid rgba(255,255,255,0.07);
+        border-radius: 10px; padding: 14px 16px;
+    }
+    .formula-title { font-size: 0.63rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.6px; color: #6c757d; margin-bottom: 8px; }
+    .formula-line {
+        font-family: 'Courier New', monospace; font-size: 0.76rem; color: #c9d1d9;
+        background: rgba(255,255,255,0.04); border-left: 3px solid #e63946;
+        padding: 5px 10px; border-radius: 0 6px 6px 0; margin-bottom: 5px;
+    }
+    .formula-line .var-blue  { color: #79c0ff; }
+    .formula-line .var-green { color: #56d364; }
+    .formula-line .var-yell  { color: #e3b341; }
+    .formula-line .var-red   { color: #ff7b72; }
+    .formula-note { font-size: 0.67rem; color: #495057; margin-top: 6px; line-height: 1.5; }
+    .formula-note span { color: #6c757d; }
 
-/* ===== MODAL AYUDA ===== */
-#helpModal .modal-content {
-    background: #13151a;
-    border: 1px solid rgba(230,57,70,0.25) !important;
-    box-shadow: 0 0 60px rgba(230,57,70,0.1), 0 25px 50px rgba(0,0,0,0.7);
-}
-#helpModal .modal-header-custom {
-    background: linear-gradient(135deg, rgba(230,57,70,0.18) 0%, rgba(26,29,33,0.5) 60%, rgba(13,15,20,0) 100%);
-    border-bottom: 1px solid rgba(230,57,70,0.2);
-    padding: 1.2rem 1.5rem;
-    position: relative;
-}
-#helpModal .modal-header-custom::after {
-    content: '';
-    position: absolute;
-    bottom: -1px; left: 0;
-    width: 80px; height: 2px;
-    background: #e63946;
-}
-#helpModal .nav-pills-dark .nav-link {
-    background: transparent;
-    color: rgba(255,255,255,0.4);
-    border: 1px solid transparent;
-    border-radius: 6px;
-    font-size: 0.72rem;
-    font-weight: 700;
-    letter-spacing: 0.8px;
-    text-transform: uppercase;
-    padding: 8px 16px;
-    transition: all 0.2s;
-}
-#helpModal .nav-pills-dark .nav-link:hover {
-    color: rgba(255,255,255,0.8);
-    background: rgba(255,255,255,0.05);
-}
-#helpModal .nav-pills-dark .nav-link.active {
-    background: rgba(230,57,70,0.15);
-    border-color: rgba(230,57,70,0.4);
-    color: #ff6b6b;
-}
-#helpModal .formula-block {
-    background: rgba(0,0,0,0.5);
-    border: 1px solid rgba(255,255,255,0.06);
-    border-left: 3px solid #e63946;
-    border-radius: 8px;
-    padding: 1.1rem 1.3rem;
-    font-family: 'Courier New', monospace;
-    font-size: 0.76rem;
-    line-height: 1.8;
-}
-#helpModal .step-card {
-    background: rgba(255,255,255,0.03);
-    border: 1px solid rgba(255,255,255,0.07);
-    border-radius: 10px;
-    padding: 1rem;
-    transition: border-color 0.2s, background 0.2s;
-    height: 100%;
-}
-#helpModal .step-card:hover {
-    background: rgba(255,255,255,0.05);
-    border-color: rgba(255,255,255,0.15);
-}
-#helpModal .step-card .step-num {
-    font-size: 1.8rem;
-    font-weight: 900;
-    line-height: 1;
-    font-variant-numeric: tabular-nums;
-}
-#helpModal .inv-result-box {
-    background: rgba(0,0,0,0.3);
-    border: 1px solid rgba(255,255,255,0.08);
-    border-radius: 10px;
-    padding: 1.1rem;
-    text-align: center;
-}
-#helpModal .inv-result-box .result-val {
-    font-size: 1.6rem;
-    font-weight: 900;
-    font-variant-numeric: tabular-nums;
-    line-height: 1.1;
-}
-#helpModal .warning-pill {
-    display: inline-block;
-    background: rgba(255,193,7,0.12);
-    border: 1px solid rgba(255,193,7,0.3);
-    color: #ffc107;
-    border-radius: 20px;
-    padding: 3px 12px;
-    font-size: 0.68rem;
-    font-weight: 800;
-    letter-spacing: 0.5px;
-    text-transform: uppercase;
-}
+    /* ── Modal fórmula ─────────────────────────────────────────── */
+    .modal-formula .modal-content {
+        background-color: #1a1d21; border: 1px solid rgba(255,200,0,0.2);
+        box-shadow: 0 12px 40px rgba(0,0,0,0.7);
+    }
+    .modal-formula .modal-header {
+        border-bottom: 1px solid rgba(255,255,255,0.08);
+        background: linear-gradient(90deg, rgba(227,179,65,0.12) 0%, transparent 100%);
+    }
+    .modal-formula .modal-title { color: #e3b341; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; }
+
+    /* ── Overrides / Config modal ──────────────────────────────── */
+    .override-badge {
+        font-size: 0.58rem; font-weight: 800; letter-spacing: 0.4px;
+        background: rgba(99,102,241,0.15); color: #a5b4fc;
+        border: 1px solid rgba(99,102,241,0.35); padding: 2px 7px; border-radius: 20px;
+    }
+    .modal-plan-config .modal-content {
+        background-color: #1a1d21; border: 1px solid rgba(255,255,255,0.1);
+        box-shadow: 0 12px 40px rgba(0,0,0,0.6);
+    }
+    .modal-plan-config .modal-header {
+        border-bottom: 1px solid rgba(255,255,255,0.08);
+        background: linear-gradient(90deg, rgba(99,102,241,0.15) 0%, transparent 100%);
+    }
+    .modal-plan-config .modal-title { color: #a5b4fc; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; }
+    .config-section {
+        background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07);
+        border-radius: 8px; padding: 14px 16px;
+    }
+    .config-section-title { font-size: 0.68rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; }
+    .global-hint { font-size: 0.67rem; color: #495057; margin-top: 3px; }
+    .global-hint span { color: #6c757d; }
+    .iva-toggle-row {
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 8px 12px; background: rgba(0,0,0,0.25); border-radius: 6px; margin-top: 10px;
+    }
+    .btn-config-plan {
+        background: rgba(99,102,241,0.15); border: 1px solid rgba(99,102,241,0.3); color: #a5b4fc;
+        transition: background 0.2s;
+    }
+    .btn-config-plan:hover { background: rgba(99,102,241,0.3); color: #c7d2fe; }
+
+    /* ── Calculadora en vivo ───────────────────────────────────── */
+    .calc-live-box {
+        background: rgba(0,0,0,0.4); border: 1px solid rgba(86,211,100,0.2);
+        border-radius: 10px; padding: 16px 20px;
+    }
+    .calc-live-title { font-size: 0.65rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.6px; color: #56d364; margin-bottom: 12px; }
+    .calc-result-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+    .calc-result-row:last-child { border-bottom: none; }
+    .calc-result-label { font-size: 0.68rem; color: #6c757d; text-transform: uppercase; font-weight: 700; }
+    .calc-result-value { font-size: 0.85rem; font-weight: 800; }
+    .calc-input-row { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+    .calc-input-label { font-size: 0.68rem; color: #adb5bd; font-weight: 700; text-transform: uppercase; width: 120px; flex-shrink: 0; }
+
+    /* ── Panel lateral ─────────────────────────────────────────── */
+    .global-fallback-note {
+        font-size: 0.67rem; line-height: 1.5;
+        background: rgba(230,57,70,0.07); border: 1px solid rgba(230,57,70,0.2);
+        border-radius: 6px; padding: 8px 12px; color: #adb5bd; margin-bottom: 16px;
+    }
+    .global-fallback-note i { color: #e63946; }
+    .btn-formula-link {
+        background: rgba(227,179,65,0.1); border: 1px solid rgba(227,179,65,0.25);
+        color: #e3b341; font-size: 0.72rem; font-weight: 700; padding: 5px 12px;
+        border-radius: 6px; transition: background 0.2s; width: 100%; text-align: center;
+        display: block; margin-top: 16px; cursor: pointer;
+    }
+    .btn-formula-link:hover { background: rgba(227,179,65,0.2); color: #f0c040; }
 </style>
 {% endblock %}
 
@@ -180,13 +131,9 @@
         <h2 class="mb-1"><i class="fas fa-percentage text-danger me-2"></i> Configuración Financiera</h2>
         <p class="text-muted small mb-0">Gestión de costos y simulación de coeficientes bancarios.</p>
     </div>
-    <button class="btn btn-help-glow px-4 py-2" data-bs-toggle="modal" data-bs-target="#helpModal">
-        <span class="pulse-dot"></span>
-        <i class="fas fa-calculator me-2"></i>¿Cómo funciona?
-    </button>
 </div>
 
-<!-- Tarjetas de Resumen con Tooltips corregidos -->
+<!-- ══════════ TARJETAS DE RESUMEN ══════════ -->
 <div class="row g-4 mb-5">
     <div class="col-md-3">
         <div class="card h-100 hover-lift border-start border-info border-4">
@@ -194,16 +141,16 @@
                 <div class="icon-box me-3"><i class="fas fa-file-invoice-dollar text-info h4 mb-0"></i></div>
                 <div class="flex-grow-1">
                     <div class="card-subtitle text-muted mb-1 small fw-bold">
-                        IVA GENERAL 
-                        <i class="fas fa-question-circle help-icon" data-bs-toggle="tooltip" title="Alicuota base aplicada a comisiones y aranceles (Normalmente 21%)."></i>
+                        IVA GENERAL
+                        <i class="fas fa-question-circle help-icon" data-bs-toggle="tooltip"
+                           title="Alícuota base aplicada sobre Comisión PagoTech y Arancel Payway (normalmente 21%)."></i>
                     </div>
                     <div class="h2 fw-bold mb-0 text-white">{{ config.iva }}%</div>
+                    <div class="global-hint mt-1">Financiación: <span>{{ config.iva_financiacion }}%</span></div>
                 </div>
             </div>
         </div>
     </div>
-
-    <!-- TARJETA COMISIÓN PT (+IVA) CORREGIDA -->
     <div class="col-md-3">
         <div class="card h-100 hover-lift border-start border-success border-4">
             <div class="card-body d-flex align-items-center">
@@ -211,7 +158,8 @@
                 <div class="flex-grow-1">
                     <div class="card-subtitle text-muted mb-1 small fw-bold">
                         COMISIÓN PT (+IVA)
-                        <i class="fas fa-question-circle help-icon" data-bs-toggle="tooltip" title="Costo efectivo neto que se descuenta según el medio de pago."></i>
+                        <i class="fas fa-question-circle help-icon" data-bs-toggle="tooltip"
+                           title="Valores globales por defecto. Los planes con config personalizada pueden tener sus propios valores."></i>
                     </div>
                     <div class="row g-0">
                         <div class="col-6">
@@ -227,7 +175,6 @@
             </div>
         </div>
     </div>
-
     <div class="col-md-3">
         <div class="card h-100 hover-lift border-start border-warning border-4">
             <div class="card-body d-flex align-items-center">
@@ -235,15 +182,14 @@
                 <div class="flex-grow-1">
                     <div class="card-subtitle text-muted mb-1 small fw-bold">
                         PLANES ACTIVOS
-                        <i class="fas fa-question-circle help-icon" data-bs-toggle="tooltip" title="Cantidad de planes financieros para CRÉDITO habilitados."></i>
+                        <i class="fas fa-question-circle help-icon" data-bs-toggle="tooltip"
+                           title="Cantidad de planes financieros para CRÉDITO habilitados."></i>
                     </div>
                     <div class="h2 fw-bold mb-0 text-white">{{ proyecciones|length }}</div>
                 </div>
             </div>
         </div>
     </div>
-
-    <!-- TARJETA ARANCEL (+IVA) CORREGIDA -->
     <div class="col-md-3">
         <div class="card h-100 hover-lift border-start border-danger border-4">
             <div class="card-body d-flex align-items-center">
@@ -251,7 +197,8 @@
                 <div class="flex-grow-1">
                     <div class="card-subtitle text-muted mb-1 small fw-bold">
                         ARANCEL (+IVA)
-                        <i class="fas fa-question-circle help-icon" data-bs-toggle="tooltip" title="Arancel de pasarela (Payway) aplicado según tipo de tarjeta."></i>
+                        <i class="fas fa-question-circle help-icon" data-bs-toggle="tooltip"
+                           title="Valores globales por defecto (Payway). Los planes con config personalizada pueden tener los suyos."></i>
                     </div>
                     <div class="row g-0">
                         <div class="col-6">
@@ -270,101 +217,151 @@
 </div>
 
 <div class="row g-4">
-    <!-- Columna Izquierda: Parámetros Base Dinámicos -->
+
+    <!-- ══════════ COLUMNA IZQUIERDA ══════════ -->
     <div class="col-lg-3">
         <div class="custom-table-container p-4 shadow-lg animate-slide-up">
-            <h5 class="text-white mb-4 small fw-bold text-uppercase border-bottom border-secondary pb-2"><i class="fas fa-sliders-h me-2 text-danger"></i>Parámetros Base</h5>
+
+            <div class="d-flex justify-content-between align-items-center border-bottom border-secondary pb-2 mb-3">
+                <h5 class="text-white mb-0 small fw-bold text-uppercase">
+                    <i class="fas fa-sliders-h me-2 text-danger"></i>Parámetros Globales
+                </h5>
+                <!-- Botón que abre el modal de fórmula -->
+                <button type="button" class="btn btn-sm"
+                    style="background:rgba(227,179,65,0.1); border:1px solid rgba(227,179,65,0.25); color:#e3b341; font-size:0.68rem; padding:3px 10px;"
+                    data-bs-toggle="modal" data-bs-target="#formulaModal"
+                    title="Ver cómo se calcula el coeficiente">
+                    <i class="fas fa-calculator me-1"></i> Fórmula
+                </button>
+            </div>
+
+            <div class="global-fallback-note">
+                <i class="fas fa-layer-group me-2"></i>
+                Valores <strong class="text-white">predeterminados</strong> para todos los planes y para
+                <strong class="text-white">débito</strong>. Cada plan puede sobreescribir cualquiera desde
+                el botón <span style="color:#a5b4fc;"><i class="fas fa-sliders-h"></i></span> de su fila.
+            </div>
+
             <form method="post">
                 {% csrf_token %}
                 <input type="hidden" name="update_general" value="1">
-                
+
                 <div class="mb-3">
-                    <label class="form-label text-secondary small fw-bold">IVA GENERAL <i class="fas fa-question-circle help-icon" data-bs-toggle="tooltip" title="IVA base (21%) aplicado a Aranceles y PagoTech."></i></label>
-                    <div class="input-group"><input type="number" step="0.0001" name="iva" class="form-control form-control-dark" value="{{ config.iva }}"><span class="input-group-text input-group-text-custom">%</span></div>
+                    <label class="form-label text-secondary small fw-bold">
+                        IVA GENERAL
+                        <i class="fas fa-question-circle help-icon" data-bs-toggle="tooltip"
+                           title="21% — Se aplica sobre Comisión PagoTech y Arancel Payway salvo que el plan lo tenga desactivado."></i>
+                    </label>
+                    <div class="input-group">
+                        <input type="number" step="0.01" name="iva" class="form-control form-control-dark" value="{{ config.iva }}">
+                        <span class="input-group-text input-group-text-custom">%</span>
+                    </div>
                 </div>
                 <div class="mb-3 border-bottom border-secondary pb-3">
-                    <label class="form-label text-secondary small fw-bold">IVA FINANCIACIÓN <i class="fas fa-question-circle help-icon" data-bs-toggle="tooltip" title="IVA aplicado sobre intereses bancarios (10.50%)."></i></label>
-                    <div class="input-group"><input type="number" step="0.0001" name="iva_financiacion" class="form-control form-control-dark" value="{{ config.iva_financiacion }}"><span class="input-group-text input-group-text-custom">%</span></div>
+                    <label class="form-label text-secondary small fw-bold">
+                        IVA FINANCIACIÓN
+                        <i class="fas fa-question-circle help-icon" data-bs-toggle="tooltip"
+                           title="10.50% — Se aplica sobre la tasa de interés bancaria de cada cuota."></i>
+                    </label>
+                    <div class="input-group">
+                        <input type="number" step="0.01" name="iva_financiacion" class="form-control form-control-dark" value="{{ config.iva_financiacion }}">
+                        <span class="input-group-text input-group-text-custom">%</span>
+                    </div>
                 </div>
 
-                <!-- SECCIÓN CRÉDITO CON TOOLTIP -->
-                <div class="pt-3 mt-3">
-                    <h6 class="text-danger small fw-bold mb-3 uppercase">
-                        CONFIGURACIÓN CRÉDITO 
-                        <i class="fas fa-question-circle help-icon" data-bs-toggle="tooltip" title="Valores aplicados a transacciones con tarjeta de crédito (Financiadas)."></i>
+                <div class="pt-1">
+                    <h6 class="text-danger small fw-bold mb-3">
+                        CRÉDITO — VALORES BASE
+                        <i class="fas fa-question-circle help-icon" data-bs-toggle="tooltip"
+                           title="Usados en todos los planes sin override configurado."></i>
                     </h6>
                     <div class="mb-3">
                         <label class="form-label text-muted x-small mb-1 fw-bold text-uppercase">COMISIÓN PAGO TECH</label>
-                        <div class="input-group"><input type="number" step="0.0001" name="comision_pago_tech" class="form-control form-control-dark" value="{{ config.comision_pago_tech }}"><span class="input-group-text input-group-text-custom">%</span></div>
+                        <div class="input-group">
+                            <input type="number" step="0.01" name="comision_pago_tech" class="form-control form-control-dark" value="{{ config.comision_pago_tech }}">
+                            <span class="input-group-text input-group-text-custom">%</span>
+                        </div>
                     </div>
                     <div class="mb-4">
                         <label class="form-label text-muted x-small mb-1 fw-bold text-uppercase">ARANCEL PAYWAY</label>
-                        <div class="input-group"><input type="number" step="0.0001" name="arancel_plataforma" class="form-control form-control-dark" value="{{ config.arancel_plataforma }}"><span class="input-group-text input-group-text-custom">%</span></div>
+                        <div class="input-group">
+                            <input type="number" step="0.01" name="arancel_plataforma" class="form-control form-control-dark" value="{{ config.arancel_plataforma }}">
+                            <span class="input-group-text input-group-text-custom">%</span>
+                        </div>
                     </div>
                 </div>
 
-                <!-- SECCIÓN DÉBITO CON TOOLTIP -->
                 <div class="border-top border-secondary pt-3 mt-2">
-                    <h6 class="text-success small fw-bold mb-3 uppercase">
-                        CONFIGURACIÓN DÉBITO 
-                        <i class="fas fa-question-circle help-icon" data-bs-toggle="tooltip" title="Valores aplicados a transacciones con tarjeta de débito (Inmediatas)."></i>
+                    <h6 class="text-success small fw-bold mb-3">
+                        DÉBITO — VALORES FIJOS
+                        <i class="fas fa-question-circle help-icon" data-bs-toggle="tooltip"
+                           title="El débito no usa planes de cuotas. Siempre usa estos valores globales."></i>
                     </h6>
                     <div class="mb-3">
                         <label class="form-label text-muted x-small mb-1 fw-bold text-uppercase">COMISIÓN PAGO TECH</label>
-                        <div class="input-group"><input type="number" step="0.0001" name="comision_pago_tech_debito" class="form-control form-control-dark" value="{{ config.comision_pago_tech_debito }}"><span class="input-group-text input-group-text-custom">%</span></div>
+                        <div class="input-group">
+                            <input type="number" step="0.01" name="comision_pago_tech_debito" class="form-control form-control-dark" value="{{ config.comision_pago_tech_debito }}">
+                            <span class="input-group-text input-group-text-custom">%</span>
+                        </div>
                     </div>
                     <div class="mb-4">
                         <label class="form-label text-muted x-small mb-1 fw-bold text-uppercase">ARANCEL PAYWAY</label>
-                        <div class="input-group"><input type="number" step="0.0001" name="arancel_plataforma_debito" class="form-control form-control-dark" value="{{ config.arancel_plataforma_debito }}"><span class="input-group-text input-group-text-custom">%</span></div>
+                        <div class="input-group">
+                            <input type="number" step="0.01" name="arancel_plataforma_debito" class="form-control form-control-dark" value="{{ config.arancel_plataforma_debito }}">
+                            <span class="input-group-text input-group-text-custom">%</span>
+                        </div>
                     </div>
                 </div>
 
-                <button type="submit" class="btn btn-primary w-100 py-2 fw-bold shadow"><i class="fas fa-save me-2"></i> ACTUALIZAR TODO</button>
+                <button type="submit" class="btn btn-primary w-100 py-2 fw-bold shadow">
+                    <i class="fas fa-save me-2"></i> GUARDAR PARÁMETROS
+                </button>
             </form>
         </div>
     </div>
 
-    <!-- Columna Derecha: Tabla -->
+    <!-- ══════════ COLUMNA DERECHA — Tabla ══════════ -->
     <div class="col-lg-9">
         <div class="custom-table-container shadow-lg animate-slide-up">
             <div class="table-header border-bottom border-strong d-flex justify-content-between align-items-center p-3">
                 <div>
                     <h6 class="mb-0 text-white fw-bold">Matriz de Coeficientes y Tasas (CRÉDITO)</h6>
-                    <small class="user-sub-text">Cálculo de planes proyectado sobre los aranceles de CRÉDITO configurados.</small>
+                    <small class="user-sub-text">
+                        Planes con <span class="override-badge"><i class="fas fa-sliders-h me-1"></i>CUSTOM</span>
+                        usan parámetros propios. El coeficiente y desc. total reflejan siempre los valores efectivos del plan.
+                    </small>
                 </div>
-                <button class="btn btn-sm btn-outline-danger px-3" data-bs-toggle="modal" data-bs-target="#addPlanModal"><i class="fas fa-plus me-1"></i> Nuevo Plan</button>
+                <button class="btn btn-sm btn-outline-danger px-3" data-bs-toggle="modal" data-bs-target="#addPlanModal">
+                    <i class="fas fa-plus me-1"></i> Nuevo Plan
+                </button>
             </div>
-            
+
             <div class="table-responsive">
                 <table class="table table-hover align-middle mb-0 custom-dark-table">
                     <thead>
                         <tr>
-                            <th class="ps-4" style="width: 20%;">
-                                NOMBRE 
-                                <i class="fas fa-info-circle help-icon" data-bs-toggle="tooltip" title="Nombre del plan que verá el comercio titular."></i>
+                            <th class="ps-4" style="width: 22%;">
+                                NOMBRE
+                                <i class="fas fa-info-circle help-icon" data-bs-toggle="tooltip" title="Nombre del plan visible para el comercio titular."></i>
                             </th>
-                            <th class="text-center" style="width: 120px;">
-                                CUOTAS 
-                                <i class="fas fa-info-circle help-icon" data-bs-toggle="tooltip" title="Cantidad de cuotas elegidas para pagar."></i>
+                            <th class="text-center">
+                                CUOTAS
+                                <i class="fas fa-info-circle help-icon" data-bs-toggle="tooltip" title="Número de cuotas del plan."></i>
                             </th>
                             <th style="width: 150px;">
-                                TASA BASE 
-                                <i class="fas fa-info-circle help-icon" data-bs-toggle="tooltip" title="Costo bancario del financiamiento sin impuestos (Valor base Payway)."></i>
+                                TASA BASE
+                                <i class="fas fa-info-circle help-icon" data-bs-toggle="tooltip" title="Costo bancario del financiamiento sin IVA (valor base Payway)."></i>
                             </th>
                             <th class="text-center">
-                                DESC. TOTAL 
-                                <i class="fas fa-info-circle help-icon" data-bs-toggle="tooltip" title="Total que se resta (Crédito+IVA+PT+IVA)."></i>
+                                DESC. TOTAL
+                                <i class="fas fa-info-circle help-icon" data-bs-toggle="tooltip" title="Suma de todos los costos efectivos: tasa_iva + comisión_eff + arancel_eff."></i>
                             </th>
                             <th class="text-center">
-                                COEFICIENTE 
-                                <i class="fas fa-info-circle help-icon" data-bs-toggle="tooltip" title="Precio Contado x Coeficiente = Precio Venta Cliente."></i>
+                                COEFICIENTE
+                                <i class="fas fa-info-circle help-icon" data-bs-toggle="tooltip" title="Precio Contado × Coeficiente = Precio de Venta al Cliente."></i>
                             </th>
-                            <th class="text-center">
-                                ESTADO 
-                            </th>
-                            <th class="text-end pe-4">
-                                ACCIONES
-                            </th>
+                            <th class="text-center">ESTADO</th>
+                            <th class="text-end pe-4">ACCIONES</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -372,17 +369,60 @@
                         <tr class="user-row border-bottom border-opacity-10">
                             <form method="post">
                                 {% csrf_token %}
-                                <input type="hidden" name="update_cuota" value="1"><input type="hidden" name="cuota_id" value="{{ item.obj.id }}">
-                                <td class="ps-4"><input type="text" name="edit_nombre" class="form-control form-control-sm form-control-dark" value="{{ item.obj.nombre }}"></td>
-                                <td class="text-center"><input type="number" name="edit_numero" class="form-control form-control-sm form-control-dark mx-auto text-center" style="width: 70px;" value="{{ item.obj.numero_cuota }}"></td>
-                                <td><div class="input-group input-group-sm" style="width: 130px;"><input type="number" step="0.0001" name="edit_tasa" class="form-control form-control-dark" value="{{ item.obj.tasa_base }}"><span class="input-group-text bg-dark border-secondary text-muted small">%</span></div></td>
-                                <td class="text-center"><span class="badge-status" style="background: rgba(230, 57, 70, 0.1); color: #e63946; border: 1px solid rgba(230, 57, 70, 0.2); padding: 5px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 700;">{{ item.total_descuentos }}%</span></td>
-                                <td class="text-center"><span class="text-success fw-bold">{{ item.coeficiente }}</span></td>
-                                <td class="text-center"><div class="form-check form-switch d-inline-block"><input class="form-check-input" type="checkbox" name="activa" {% if item.obj.activa %}checked{% endif %}></div></td>
+                                <input type="hidden" name="update_cuota" value="1">
+                                <input type="hidden" name="cuota_id" value="{{ item.obj.id }}">
+                                <td class="ps-4">
+                                    <input type="text" name="edit_nombre" class="form-control form-control-sm form-control-dark" value="{{ item.obj.nombre }}">
+                                    {% if item.obj.tiene_overrides %}
+                                    <span class="override-badge d-inline-block mt-1">
+                                        <i class="fas fa-sliders-h me-1"></i>CUSTOM
+                                    </span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-center">
+                                    <input type="number" name="edit_numero"
+                                        class="form-control form-control-sm form-control-dark mx-auto text-center"
+                                        style="width:70px;" value="{{ item.obj.numero_cuota }}">
+                                </td>
+                                <td>
+                                    <div class="input-group input-group-sm" style="width:130px;">
+                                        <input type="number" step="0.01" name="edit_tasa"
+                                            class="form-control form-control-dark" value="{{ item.obj.tasa_base }}">
+                                        <span class="input-group-text bg-dark border-secondary text-muted small">%</span>
+                                    </div>
+                                </td>
+                                <td class="text-center">
+                                    <span style="background:rgba(230,57,70,0.1); color:#e63946;
+                                                 border:1px solid rgba(230,57,70,0.2); padding:5px 12px;
+                                                 border-radius:20px; font-size:0.75rem; font-weight:700;">
+                                        {{ item.total_descuentos }}%
+                                    </span>
+                                </td>
+                                <td class="text-center">
+                                    <span class="text-success fw-bold">{{ item.coeficiente }}</span>
+                                </td>
+                                <td class="text-center">
+                                    <div class="form-check form-switch d-inline-block">
+                                        <input class="form-check-input" type="checkbox"
+                                            name="activa" {% if item.obj.activa %}checked{% endif %}>
+                                    </div>
+                                </td>
                                 <td class="text-end pe-4">
                                     <div class="d-flex justify-content-end gap-2">
-                                        <button type="submit" class="btn btn-sm btn-action-dark text-info"><i class="fas fa-save"></i></button>
-                                        <button type="button" class="btn btn-sm btn-action-dark text-danger" onclick="openDeleteModal('{{ item.obj.id }}', '{{ item.obj.nombre }}')"><i class="fas fa-trash-alt"></i></button>
+                                        <button type="submit" class="btn btn-sm btn-action-dark text-info"
+                                            title="Guardar nombre / cuotas / tasa / estado">
+                                            <i class="fas fa-save"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-config-plan"
+                                            title="Configuración financiera personalizada"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#configModal_{{ item.obj.id }}">
+                                            <i class="fas fa-sliders-h"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-action-dark text-danger"
+                                            onclick="openDeleteModal('{{ item.obj.id }}', '{{ item.obj.nombre }}')">
+                                            <i class="fas fa-trash-alt"></i>
+                                        </button>
                                     </div>
                                 </td>
                             </form>
@@ -395,26 +435,556 @@
     </div>
 </div>
 
+
+<!-- ══════════════════════════════════════════════════════════════
+     MODAL: CÓMO SE CALCULA
+══════════════════════════════════════════════════════════════ -->
+<div class="modal fade modal-formula" id="formulaModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header py-3">
+                <h5 class="modal-title fw-bold">
+                    <i class="fas fa-calculator me-2"></i> Cómo se Calcula el Coeficiente
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+
+                <p class="text-muted small mb-4">
+                    El coeficiente es el multiplicador que transforma el <strong class="text-white">precio de contado</strong>
+                    en el <strong class="text-white">precio de venta con tarjeta</strong>, absorbiendo todos los costos
+                    del financiamiento y las comisiones de la pasarela. Fórmula estándar <strong class="text-white">Payway / Prisma / Payzen</strong>.
+                </p>
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="formula-box h-100">
+                            <div class="formula-title"><span style="color:#e3b341;">Paso 1</span> — Tasa de interés con IVA</div>
+                            <div class="formula-line">
+                                <span class="var-blue">tasa_iva</span> = <span class="var-yell">tasa_base</span> × (1 + <span class="var-green">IVA_fin</span> / 100)
+                            </div>
+                            <div class="formula-note">
+                                Aplica el IVA de financiación (normalmente 10.5%) sobre la tasa bancaria pura del plan.<br>
+                                Ej: tasa_base <span>5%</span>, IVA_fin <span>10.5%</span> → tasa_iva = <span>5.525%</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="formula-box h-100">
+                            <div class="formula-title"><span style="color:#e3b341;">Paso 2</span> — Multiplicador financiero</div>
+                            <div class="formula-line">
+                                <span class="var-blue">mult</span> = 1 + (<span class="var-yell">tasa_iva</span> / 100)
+                            </div>
+                            <div class="formula-note">
+                                Convierte la tasa en un factor de recargo sobre el precio.<br>
+                                Ej: tasa_iva <span>5.525%</span> → mult = <span>1.05525</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-12">
+                        <div class="formula-box">
+                            <div class="formula-title"><span style="color:#e3b341;">Paso 3</span> — Costos transaccionales (descuentos)</div>
+                            <div class="row g-2">
+                                <div class="col-md-4">
+                                    <div class="formula-line">
+                                        <span class="var-blue">pt_eff</span> = <span class="var-yell">comisión_PT</span> × (1 + <span class="var-green">IVA_gen</span>)
+                                        <em class="text-muted" style="font-size:0.65rem;"> [si aplica IVA]</em>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="formula-line">
+                                        <span class="var-blue">ar_eff</span> = <span class="var-yell">arancel</span> × (1 + <span class="var-green">IVA_gen</span>)
+                                        <em class="text-muted" style="font-size:0.65rem;"> [si aplica IVA]</em>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="formula-line">
+                                        <span class="var-red">divisor</span> = 1 − (<span class="var-blue">pt_eff</span> + <span class="var-blue">ar_eff</span>) / 100
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="formula-note mt-2">
+                                El toggle <strong class="text-white">IVA SÍ/NO</strong> en la config de cada plan controla si se suma IVA general
+                                a la comisión PT y/o al arancel. Si está desactivado, se usa el valor puro sin IVA.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="formula-box h-100">
+                            <div class="formula-title"><span style="color:#e3b341;">Paso 4</span> — Coeficiente final</div>
+                            <div class="formula-line">
+                                <span class="var-green">coeficiente</span> = <span class="var-blue">mult</span> / <span class="var-red">divisor</span>
+                            </div>
+                            <div class="formula-note">
+                                División del multiplicador financiero sobre el complemento de los costos transaccionales.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="formula-box h-100">
+                            <div class="formula-title"><span style="color:#56d364;">Resultado</span> — Precio de venta</div>
+                            <div class="formula-line">
+                                <span class="var-green">precio_venta</span> = <span class="var-yell">precio_contado</span> × <span class="var-green">coeficiente</span>
+                            </div>
+                            <div class="formula-note">
+                                El <strong class="text-white">DESC. TOTAL</strong> de la tabla = pt_eff + ar_eff + tasa_iva.<br>
+                                El <strong class="text-white">COEFICIENTE</strong> es el factor listo para multiplicar.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+            <div class="modal-footer border-0 pb-4">
+                <button type="button" class="btn btn-dark btn-sm px-4" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════════════════
+     MODALES CONFIGURACIÓN PERSONALIZADA (uno por plan)
+══════════════════════════════════════════════════════════════ -->
+{% for item in proyecciones %}
+<div class="modal fade modal-plan-config" id="configModal_{{ item.obj.id }}" tabindex="-1" aria-hidden="true"
+     data-tasa="{{ item.obj.tasa_base }}"
+     data-iva="{{ item.obj.iva_override|default:config.iva }}"
+     data-iva-fin="{{ item.obj.iva_financiacion_override|default:config.iva_financiacion }}"
+     data-com-cred="{{ item.obj.com_credito_override|default:config.comision_pago_tech }}"
+     data-ar-cred="{{ item.obj.arancel_credito_override|default:config.arancel_plataforma }}"
+     data-com-iva="{% if item.obj.comision_aplica_iva %}1{% else %}0{% endif %}"
+     data-ar-iva="{% if item.obj.arancel_aplica_iva %}1{% else %}0{% endif %}"
+     data-global-iva="{{ config.iva }}"
+     data-global-iva-fin="{{ config.iva_financiacion }}"
+     data-global-com-cred="{{ config.comision_pago_tech }}"
+     data-global-ar-cred="{{ config.arancel_plataforma }}"
+data-tasa-iva-fin="{% if item.obj.tasa_aplica_iva_fin %}1{% else %}0{% endif %}">
+    <div class="modal-dialog modal-dialog-centered modal-xl modal-dialog-scrollable">
+        <div class="modal-content">
+            <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="update_cuota_override" value="1">
+                <input type="hidden" name="cuota_id" value="{{ item.obj.id }}">
+
+                <div class="modal-header py-3">
+                    <h5 class="modal-title fw-bold">
+                        <i class="fas fa-sliders-h me-2"></i>Config. Personalizada —
+                        <span class="text-white">{{ item.obj.nombre }}</span>
+                        <small class="text-muted ms-2" style="font-size:0.7rem;">{{ item.obj.numero_cuota }} cuota(s)</small>
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+
+                <div class="modal-body p-4">
+                    <div class="alert border-secondary small mb-4 py-2 px-3" style="background:rgba(255,255,255,0.04);">
+                        <i class="fas fa-info-circle text-info me-2"></i>
+                        Deja el campo <strong class="text-white">vacío</strong> para heredar el valor global.
+                        La calculadora de la derecha se actualiza en tiempo real con los valores que ingreses.
+                    </div>
+
+                    <div class="row g-3">
+
+                        <!-- ── COLUMNA IZQUIERDA: formularios ── -->
+                        <div class="col-lg-7">
+                            <div class="row g-3">
+
+                                <!-- IVA -->
+                                <div class="col-md-6">
+                                    <div class="config-section h-100">
+                                        <div class="config-section-title text-info">
+                                            <i class="fas fa-file-invoice-dollar me-2"></i>Tasas de IVA
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label text-muted x-small fw-bold text-uppercase mb-1">IVA General</label>
+                                            <div class="input-group input-group-sm">
+                                                <input type="number" step="0.01" min="0" max="100"
+                                                    name="iva_override"
+                                                    class="form-control form-control-dark calc-trigger-{{ item.obj.id }}"
+                                                    data-calc-field="iva"
+                                                    value="{{ item.obj.iva_override|default:'' }}"
+                                                    placeholder="{{ config.iva }}">
+                                                <span class="input-group-text input-group-text-custom">%</span>
+                                            </div>
+                                            <div class="global-hint">Global: <span>{{ config.iva }}%</span></div>
+                                        </div>
+                                        <div>
+                                            <label class="form-label text-muted x-small fw-bold text-uppercase mb-1">IVA Financiación</label>
+                                            <div class="input-group input-group-sm">
+                                                <input type="number" step="0.01" min="0" max="100"
+                                                    name="iva_financiacion_override"
+                                                    class="form-control form-control-dark calc-trigger-{{ item.obj.id }}"
+                                                    data-calc-field="iva_fin"
+                                                    value="{{ item.obj.iva_financiacion_override|default:'' }}"
+                                                    placeholder="{{ config.iva_financiacion }}">
+                                                <span class="input-group-text input-group-text-custom">%</span>
+                                            </div>
+                                            <div class="global-hint">Global: <span>{{ config.iva_financiacion }}%</span></div>
+                                        </div>
+
+                                        <!-- Toggle IVA sobre tasa de financiación -->
+                                        <div class="iva-toggle-row mt-2">
+                                            <div>
+                                                <span class="text-white small fw-bold">
+                                                    <i class="fas fa-percentage me-2 text-warning"></i>Cobrar IVA Financiación sobre tasa
+                                                </span>
+                                                <div class="global-hint mt-0">Si está desactivado, la tasa base se usa sin IVA fin.</div>
+                                            </div>
+                                            <div class="form-check form-switch mb-0 ms-3">
+                                                <input class="form-check-input calc-trigger-{{ item.obj.id }}"
+                                                    type="checkbox" name="tasa_aplica_iva_fin"
+                                                    data-calc-field="tasa_iva_fin"
+                                                    id="tasa_iva_fin_toggle_{{ item.obj.id }}"
+                                                    {% if item.obj.tasa_aplica_iva_fin %}checked{% endif %}
+                                                    onchange="updateToggleLabel(this, 'tasa_iva_fin_lbl_{{ item.obj.id }}'); recalcPlan('{{ item.obj.id }}')">
+                                                <label class="form-check-label small fw-bold"
+                                                    id="tasa_iva_fin_lbl_{{ item.obj.id }}"
+                                                    for="tasa_iva_fin_toggle_{{ item.obj.id }}"
+                                                    style="color:{% if item.obj.tasa_aplica_iva_fin %}#4ade80{% else %}#f87171{% endif %}">
+                                                    {% if item.obj.tasa_aplica_iva_fin %}SÍ{% else %}NO{% endif %}
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Comisión PT -->
+                                <div class="col-md-6">
+                                    <div class="config-section h-100">
+                                        <div class="config-section-title text-success">
+                                            <i class="fas fa-hand-holding-usd me-2"></i>Comisión PagoTech
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label text-muted x-small fw-bold text-uppercase mb-1">Crédito</label>
+                                            <div class="input-group input-group-sm">
+                                                <input type="number" step="0.01" min="0"
+                                                    name="com_credito_override"
+                                                    class="form-control form-control-dark calc-trigger-{{ item.obj.id }}"
+                                                    data-calc-field="com_cred"
+                                                    value="{{ item.obj.com_credito_override|default:'' }}"
+                                                    placeholder="{{ config.comision_pago_tech }}">
+                                                <span class="input-group-text input-group-text-custom">%</span>
+                                            </div>
+                                            <div class="global-hint">Global: <span>{{ config.comision_pago_tech }}%</span></div>
+                                        </div>
+                                        <div class="mb-2">
+                                            <label class="form-label text-muted x-small fw-bold text-uppercase mb-1">Débito</label>
+                                            <div class="input-group input-group-sm">
+                                                <input type="number" step="0.01" min="0"
+                                                    name="com_debito_override"
+                                                    class="form-control form-control-dark"
+                                                    value="{{ item.obj.com_debito_override|default:'' }}"
+                                                    placeholder="{{ config.comision_pago_tech_debito }}">
+                                                <span class="input-group-text input-group-text-custom">%</span>
+                                            </div>
+                                            <div class="global-hint">Global: <span>{{ config.comision_pago_tech_debito }}%</span></div>
+                                        </div>
+                                        <!-- Toggle IVA Comisión -->
+                                        <div class="iva-toggle-row">
+                                            <div>
+                                                <span class="text-white small fw-bold">
+                                                    <i class="fas fa-percentage me-2 text-warning"></i>Cobrar IVA
+                                                </span>
+                                                <div class="global-hint mt-0">Sobre comisión Pago Tech</div>
+                                            </div>
+                                            <div class="form-check form-switch mb-0 ms-3">
+                                                <input class="form-check-input calc-trigger-{{ item.obj.id }}"
+                                                    type="checkbox" name="comision_aplica_iva"
+                                                    data-calc-field="com_iva"
+                                                    id="com_iva_toggle_{{ item.obj.id }}"
+                                                    {% if item.obj.comision_aplica_iva %}checked{% endif %}
+                                                    onchange="updateToggleLabel(this, 'com_iva_lbl_{{ item.obj.id }}'); recalcPlan('{{ item.obj.id }}')">
+                                                <label class="form-check-label small fw-bold"
+                                                    id="com_iva_lbl_{{ item.obj.id }}"
+                                                    for="com_iva_toggle_{{ item.obj.id }}"
+                                                    style="color:{% if item.obj.comision_aplica_iva %}#4ade80{% else %}#f87171{% endif %}">
+                                                    {% if item.obj.comision_aplica_iva %}SÍ{% else %}NO{% endif %}
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Arancel -->
+                                <div class="col-md-12">
+                                    <div class="config-section">
+                                        <div class="config-section-title text-danger">
+                                            <i class="fas fa-university me-2"></i>Arancel Payway
+                                        </div>
+                                        <div class="row g-3 mb-1">
+                                            <div class="col-md-6">
+                                                <label class="form-label text-muted x-small fw-bold text-uppercase mb-1">Crédito</label>
+                                                <div class="input-group input-group-sm">
+                                                    <input type="number" step="0.01" min="0"
+                                                        name="arancel_credito_override"
+                                                        class="form-control form-control-dark calc-trigger-{{ item.obj.id }}"
+                                                        data-calc-field="ar_cred"
+                                                        value="{{ item.obj.arancel_credito_override|default:'' }}"
+                                                        placeholder="{{ config.arancel_plataforma }}">
+                                                    <span class="input-group-text input-group-text-custom">%</span>
+                                                </div>
+                                                <div class="global-hint">Global: <span>{{ config.arancel_plataforma }}%</span></div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label text-muted x-small fw-bold text-uppercase mb-1">Débito</label>
+                                                <div class="input-group input-group-sm">
+                                                    <input type="number" step="0.01" min="0"
+                                                        name="arancel_debito_override"
+                                                        class="form-control form-control-dark"
+                                                        value="{{ item.obj.arancel_debito_override|default:'' }}"
+                                                        placeholder="{{ config.arancel_plataforma_debito }}">
+                                                    <span class="input-group-text input-group-text-custom">%</span>
+                                                </div>
+                                                <div class="global-hint">Global: <span>{{ config.arancel_plataforma_debito }}%</span></div>
+                                            </div>
+                                        </div>
+                                        <!-- Toggle IVA Arancel -->
+                                        <div class="iva-toggle-row">
+                                            <div>
+                                                <span class="text-white small fw-bold">
+                                                    <i class="fas fa-percentage me-2 text-warning"></i>Cobrar IVA
+                                                </span>
+                                                <div class="global-hint mt-0">Sobre arancel Payway</div>
+                                            </div>
+                                            <div class="form-check form-switch mb-0 ms-3">
+                                                <input class="form-check-input calc-trigger-{{ item.obj.id }}"
+                                                    type="checkbox" name="arancel_aplica_iva"
+                                                    data-calc-field="ar_iva"
+                                                    id="ar_iva_toggle_{{ item.obj.id }}"
+                                                    {% if item.obj.arancel_aplica_iva %}checked{% endif %}
+                                                    onchange="updateToggleLabel(this, 'ar_iva_lbl_{{ item.obj.id }}'); recalcPlan('{{ item.obj.id }}')">
+                                                <label class="form-check-label small fw-bold"
+                                                    id="ar_iva_lbl_{{ item.obj.id }}"
+                                                    for="ar_iva_toggle_{{ item.obj.id }}"
+                                                    style="color:{% if item.obj.arancel_aplica_iva %}#4ade80{% else %}#f87171{% endif %}">
+                                                    {% if item.obj.arancel_aplica_iva %}SÍ{% else %}NO{% endif %}
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>{# /row formularios #}
+                        </div>{# /col-lg-7 #}
+
+                        <!-- ── COLUMNA DERECHA: Calculadora en vivo ── -->
+                        <div class="col-lg-5">
+                            <div class="calc-live-box h-100 d-flex flex-column">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <div class="calc-live-title mb-0">
+                                        <i class="fas fa-calculator me-2"></i>Calculadora en Vivo
+                                    </div>
+                                    <!-- Toggle Directo / Inverso -->
+                                    <div class="d-flex align-items-center gap-1"
+                                        style="background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.08); border-radius:6px; padding:3px;">
+                                        <button type="button"
+                                            class="btn btn-sm calc-mode-btn active"
+                                            id="btn_directo_{{ item.obj.id }}"
+                                            onclick="setCalcMode('{{ item.obj.id }}', 'directo')"
+                                            style="font-size:0.65rem; font-weight:800; padding:3px 10px;
+                                                background:rgba(86,211,100,0.2); border:1px solid rgba(86,211,100,0.35); color:#56d364; border-radius:4px;">
+                                            <i class="fas fa-arrow-right me-1"></i>DIRECTO
+                                        </button>
+                                        <button type="button"
+                                            class="btn btn-sm calc-mode-btn"
+                                            id="btn_inverso_{{ item.obj.id }}"
+                                            onclick="setCalcMode('{{ item.obj.id }}', 'inverso')"
+                                            style="font-size:0.65rem; font-weight:800; padding:3px 10px;
+                                                background:transparent; border:1px solid transparent; color:#6c757d; border-radius:4px;">
+                                            <i class="fas fa-arrow-left me-1"></i>INVERSO
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- ══ MODO DIRECTO ══ -->
+                                <div id="calc_directo_{{ item.obj.id }}">
+                                    <div class="calc-input-row mb-3">
+                                        <label class="calc-input-label">Precio contado</label>
+                                        <div class="input-group input-group-sm flex-grow-1">
+                                            <span class="input-group-text input-group-text-custom">$</span>
+                                            <input type="number" step="0.01" min="0"
+                                                id="calc_monto_{{ item.obj.id }}"
+                                                class="form-control form-control-dark"
+                                                placeholder="100.00"
+                                                oninput="recalcPlan('{{ item.obj.id }}')">
+                                        </div>
+                                    </div>
+
+                                    <div class="flex-grow-1">
+                                        <div class="calc-result-row">
+                                            <span class="calc-result-label">Tasa base</span>
+                                            <span class="calc-result-value" style="color:#adb5bd;"
+                                                id="calc_tasa_{{ item.obj.id }}">{{ item.obj.tasa_base }}%</span>
+                                        </div>
+                                        <div class="calc-result-row">
+                                            <span class="calc-result-label">IVA fin. usado</span>
+                                            <span class="calc-result-value" style="color:#79c0ff;"
+                                                id="calc_iva_fin_{{ item.obj.id }}">
+                                                {{ item.obj.iva_financiacion_override|default:config.iva_financiacion }}%
+                                            </span>
+                                        </div>
+                                        <div class="calc-result-row">
+                                            <span class="calc-result-label">Tasa con IVA fin.</span>
+                                            <span class="calc-result-value" style="color:#79c0ff;"
+                                                id="calc_tasa_iva_{{ item.obj.id }}">—</span>
+                                        </div>
+                                        <div class="calc-result-row">
+                                            <span class="calc-result-label">Comisión PT eff.</span>
+                                            <span class="calc-result-value" style="color:#56d364;"
+                                                id="calc_pt_eff_{{ item.obj.id }}">—</span>
+                                        </div>
+                                        <div class="calc-result-row">
+                                            <span class="calc-result-label">Arancel eff.</span>
+                                            <span class="calc-result-value" style="color:#56d364;"
+                                                id="calc_ar_eff_{{ item.obj.id }}">—</span>
+                                        </div>
+                                        <div class="calc-result-row">
+                                            <span class="calc-result-label">Desc. total</span>
+                                            <span class="calc-result-value" style="color:#ff7b72;"
+                                                id="calc_desc_{{ item.obj.id }}">—</span>
+                                        </div>
+                                    </div>
+
+                                    <div class="mt-3 pt-3 border-top border-secondary">
+                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                            <span class="calc-result-label" style="font-size:0.7rem;">COEFICIENTE</span>
+                                            <span class="fw-bold" style="color:#56d364; font-size:1.1rem;"
+                                                id="calc_coef_{{ item.obj.id }}">{{ item.coeficiente }}</span>
+                                        </div>
+                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                            <span class="calc-result-label" style="font-size:0.7rem;">PRECIO VENTA</span>
+                                            <span class="fw-bold text-white" style="font-size:1.05rem;"
+                                                id="calc_precio_{{ item.obj.id }}">—</span>
+                                        </div>
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <span class="calc-result-label" style="font-size:0.7rem;">RECARGO $</span>
+                                            <span class="fw-bold" style="color:#ff7b72; font-size:0.9rem;"
+                                                id="calc_recargo_{{ item.obj.id }}">—</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- ══ MODO INVERSO ══ -->
+                                <div id="calc_inverso_{{ item.obj.id }}" style="display:none;">
+
+                                    <p class="text-muted mb-3" style="font-size:0.68rem; line-height:1.5;">
+                                        Ingresá un <strong class="text-white">coeficiente deseado</strong> y la app calculará
+                                        qué <strong class="text-white">tasa base</strong> lo genera con los parámetros actuales del plan.
+                                        Opcionalmente, ingresá el precio contado para ver el precio final.
+                                    </p>
+
+                                    <div class="calc-input-row mb-2">
+                                        <label class="calc-input-label">Coeficiente</label>
+                                        <div class="input-group input-group-sm flex-grow-1">
+                                            <input type="number" step="0.000001" min="0"
+                                                id="inv_coef_{{ item.obj.id }}"
+                                                class="form-control form-control-dark"
+                                                placeholder="1.150000"
+                                                oninput="recalcInverse('{{ item.obj.id }}')">
+                                        </div>
+                                    </div>
+                                    <div class="calc-input-row mb-3">
+                                        <label class="calc-input-label">Precio contado</label>
+                                        <div class="input-group input-group-sm flex-grow-1">
+                                            <span class="input-group-text input-group-text-custom">$</span>
+                                            <input type="number" step="0.01" min="0"
+                                                id="inv_monto_{{ item.obj.id }}"
+                                                class="form-control form-control-dark"
+                                                placeholder="100.00"
+                                                oninput="recalcInverse('{{ item.obj.id }}')">
+                                        </div>
+                                    </div>
+
+                                    <div class="flex-grow-1">
+                                        <div class="calc-result-row">
+                                            <span class="calc-result-label">Costos transacc. (eff.)</span>
+                                            <span class="calc-result-value" style="color:#56d364;"
+                                                id="inv_costos_{{ item.obj.id }}">—</span>
+                                        </div>
+                                        <div class="calc-result-row">
+                                            <span class="calc-result-label">Tasa IVA resultante</span>
+                                            <span class="calc-result-value" style="color:#79c0ff;"
+                                                id="inv_tasa_iva_{{ item.obj.id }}">—</span>
+                                        </div>
+                                        <div class="calc-result-row">
+                                            <span class="calc-result-label">
+                                                Tasa base implícita
+                                                <i class="fas fa-question-circle help-icon" data-bs-toggle="tooltip"
+                                                title="Es la tasa_base que deberías configurar en el plan para obtener exactamente ese coeficiente."></i>
+                                            </span>
+                                            <span class="calc-result-value" style="color:#e3b341; font-size:1rem;"
+                                                id="inv_tasa_base_{{ item.obj.id }}">—</span>
+                                        </div>
+                                        <div class="calc-result-row">
+                                            <span class="calc-result-label">Desc. total implícito</span>
+                                            <span class="calc-result-value" style="color:#ff7b72;"
+                                                id="inv_desc_{{ item.obj.id }}">—</span>
+                                        </div>
+                                    </div>
+
+                                    <div class="mt-3 pt-3 border-top border-secondary">
+                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                            <span class="calc-result-label" style="font-size:0.7rem;">PRECIO VENTA</span>
+                                            <span class="fw-bold text-white" style="font-size:1.05rem;"
+                                                id="inv_precio_{{ item.obj.id }}">—</span>
+                                        </div>
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <span class="calc-result-label" style="font-size:0.7rem;">RECARGO $</span>
+                                            <span class="fw-bold" style="color:#ff7b72; font-size:0.9rem;"
+                                                id="inv_recargo_{{ item.obj.id }}">—</span>
+                                        </div>
+                                    </div>
+
+                                    <!-- Sugerencia de aplicar tasa -->
+                                    <div id="inv_sugerencia_{{ item.obj.id }}" style="display:none; margin-top:14px;">
+                                        <div style="background:rgba(227,179,65,0.08); border:1px solid rgba(227,179,65,0.25);
+                                                    border-radius:8px; padding:10px 14px;">
+                                            <div style="font-size:0.65rem; color:#e3b341; font-weight:800; text-transform:uppercase; margin-bottom:6px;">
+                                                <i class="fas fa-lightbulb me-1"></i> ¿Aplicar esta tasa al plan?
+                                            </div>
+                                            <div style="font-size:0.72rem; color:#adb5bd; margin-bottom:8px;">
+                                                La tasa base resultante es
+                                                <strong class="text-white" id="inv_sugerencia_val_{{ item.obj.id }}">—</strong>.
+                                                Podés copiarla al campo Tasa Base del formulario de edición (fila de la tabla).
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>{# /col-lg-5 #}
+
+                    </div>{# /row #}
+                </div>{# /modal-body #}
+
+                <div class="modal-footer border-0 pt-0 pb-4 px-4 gap-2">
+                    <button type="button" class="btn btn-dark btn-sm px-3" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-sm px-4 fw-bold"
+                        style="background:rgba(99,102,241,0.75); border:1px solid rgba(99,102,241,0.5); color:white;">
+                        <i class="fas fa-save me-2"></i>GUARDAR CONFIGURACIÓN
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+
 <!-- Modal: Confirmar Eliminación -->
 <div class="modal fade modal-confirm-danger" id="deletePlanModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-sm">
         <div class="modal-content">
             <div class="modal-header py-2">
-                <h5 class="modal-title fw-bold">
-                    <i class="fas fa-exclamation-triangle me-2"></i> ATENCIÓN
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <h5 class="modal-title fw-bold"><i class="fas fa-exclamation-triangle me-2"></i> ATENCIÓN</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body text-center py-4">
-                <div class="mb-3">
-                    <i class="fas fa-trash-alt text-danger display-6 opacity-75"></i>
-                </div>
+                <div class="mb-3"><i class="fas fa-trash-alt text-danger display-6 opacity-75"></i></div>
                 <p class="text-white-50 small mb-1">¿Estás seguro de eliminar el plan?</p>
                 <h6 class="text-white fw-bold" id="deletePlanName">Nombre del Plan</h6>
                 <div class="mt-3 p-2 rounded">
-                    <small class="text-danger fw-bold">
-                        <i class="fas fa-info-circle me-1"></i> Esta acción no se puede deshacer.
-                    </small>
+                    <small class="text-danger fw-bold"><i class="fas fa-info-circle me-1"></i> Esta acción no se puede deshacer.</small>
                 </div>
             </div>
             <div class="modal-footer border-0 pt-0 justify-content-center pb-4">
@@ -430,7 +1000,7 @@
     </div>
 </div>
 
-<!-- Modal: Añadir Plan (Respetando consistencia) -->
+<!-- Modal: Añadir Plan -->
 <div class="modal fade" id="addPlanModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content bg-dark border-secondary">
@@ -453,7 +1023,7 @@
                         </div>
                         <div class="col-6">
                             <label class="form-label text-muted small fw-bold">TASA BANCARIA BASE</label>
-                            <input type="number" step="0.0001" name="new_tasa" class="form-control form-control-dark" required>
+                            <input type="number" step="0.01" name="new_tasa" class="form-control form-control-dark" required>
                         </div>
                     </div>
                 </div>
@@ -465,270 +1035,27 @@
         </div>
     </div>
 </div>
-<!-- Modal: Ayuda y Calculadora Inversa -->
-<!-- ===== MODAL: GUÍA Y CALCULADORA ===== -->
-<div class="modal fade" id="helpModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
-        <div class="modal-content">
 
-            <!-- Header -->
-            <div class="modal-header-custom d-flex align-items-center justify-content-between">
-                <div>
-                    <div class="d-flex align-items-center gap-3 mb-1">
-                        <span class="badge text-uppercase fw-bold px-2 py-1" style="background:rgba(230,57,70,0.2);color:#ff6b6b;font-size:0.6rem;border:1px solid rgba(230,57,70,0.3);letter-spacing:1px;">Sistema Financiero</span>
-                    </div>
-                    <h5 class="text-white fw-bold mb-0" style="font-size:1rem;">
-                        Guía de Coeficientes &amp; Calculadora Inversa
-                    </h5>
-                </div>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-
-            <!-- Nav tabs -->
-            <div class="px-4 pt-3 pb-0" style="background:#13151a; border-bottom:1px solid rgba(255,255,255,0.07);">
-                <ul class="nav nav-pills-dark nav-pills gap-2 mb-0" id="helpTabs" role="tablist">
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#pane-flujo" type="button">
-                            <i class="fas fa-route me-2"></i>Flujo del dinero
-                        </button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#pane-formula" type="button">
-                            <i class="fas fa-superscript me-2"></i>Fórmula
-                        </button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#pane-calc" type="button">
-                            <i class="fas fa-calculator me-2"></i>Calculadora inversa
-                        </button>
-                    </li>
-                </ul>
-            </div>
-
-            <!-- Body -->
-            <div class="modal-body p-4" style="background:#13151a;">
-                <div class="tab-content">
-
-                    <!-- TAB 1: FLUJO -->
-                    <div class="tab-pane fade show active" id="pane-flujo">
-                        <p class="text-muted small mb-4">El sistema traslada todos los costos al cliente final para que el vendedor reciba su monto neto intacto.</p>
-
-                        <!-- Diagrama de flujo -->
-                        <div class="d-flex align-items-center gap-2 mb-4" style="min-width:0;">
-                            <div class="step-card text-center flex-fill" style="border-top: 2px solid #17a2b8; min-width:0;">
-                                <div class="step-num text-info mb-1">①</div>
-                                <div class="text-white fw-bold small mb-1">Precio Contado</div>
-                                <div class="text-muted" style="font-size:0.7rem;">Lo que quiere recibir el vendedor</div>
-                            </div>
-
-                            <div class="flex-shrink-0 text-center px-1">
-                                <i class="fas fa-times text-danger" style="font-size:1.1rem;"></i>
-                            </div>
-
-                            <div class="step-card text-center flex-fill" style="border-top: 2px solid #e63946; min-width:0;">
-                                <div class="step-num text-danger mb-1">②</div>
-                                <div class="text-white fw-bold small mb-1">Coeficiente</div>
-                                <div class="text-muted" style="font-size:0.7rem;">Calculado según cuotas e impuestos</div>
-                            </div>
-
-                            <div class="flex-shrink-0 text-center px-1">
-                                <i class="fas fa-equals text-warning" style="font-size:1.1rem;"></i>
-                            </div>
-
-                            <div class="step-card text-center flex-fill" style="border-top: 2px solid #28a745; min-width:0;">
-                                <div class="step-num text-success mb-1">③</div>
-                                <div class="text-white fw-bold small mb-1">Precio al Cliente</div>
-                                <div class="text-muted" style="font-size:0.7rem;">Lo que paga el comprador</div>
-                            </div>
-                        </div>
-
-                        <!-- Qué descuenta Payway -->
-                        <h6 class="text-white fw-bold small text-uppercase mb-3" style="letter-spacing:1px;">
-                            <i class="fas fa-sitemap text-danger me-2"></i>¿Qué descuenta Payway del cobro?
-                        </h6>
-                        <div class="row g-2 mb-3">
-                            <div class="col-md-4">
-                                <div class="step-card" style="border-left:3px solid #e63946;">
-                                    <div class="d-flex align-items-center gap-2 mb-2">
-                                        <i class="fas fa-university text-danger small"></i>
-                                        <span class="text-white fw-bold small">Arancel Payway</span>
-                                    </div>
-                                    <div class="text-muted" style="font-size:0.72rem;">Porcentaje que cobra la pasarela (Prisma/Payzen) por procesar la transacción. Varía por tipo de tarjeta.</div>
-                                    <div class="mt-2"><span class="warning-pill">+ IVA 21%</span></div>
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="step-card" style="border-left:3px solid #17a2b8;">
-                                    <div class="d-flex align-items-center gap-2 mb-2">
-                                        <i class="fas fa-hand-holding-usd text-info small"></i>
-                                        <span class="text-white fw-bold small">Comisión PagoTech</span>
-                                    </div>
-                                    <div class="text-muted" style="font-size:0.72rem;">Servicio de gestión de la plataforma PagoTech por operar el link de cobro.</div>
-                                    <div class="mt-2"><span class="warning-pill">+ IVA 21%</span></div>
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="step-card" style="border-left:3px solid #ffc107;">
-                                    <div class="d-flex align-items-center gap-2 mb-2">
-                                        <i class="fas fa-credit-card text-warning small"></i>
-                                        <span class="text-white fw-bold small">Costo Financiero</span>
-                                    </div>
-                                    <div class="text-muted" style="font-size:0.72rem;">Interés bancario por ofrecer cuotas. Solo aplica en crédito con más de 1 cuota.</div>
-                                    <div class="mt-2"><span class="warning-pill" style="background:rgba(255,193,7,0.12);border-color:rgba(255,193,7,0.3);color:#ffc107;">+ IVA 10.5%</span></div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="p-3 rounded" style="background:rgba(230,57,70,0.06);border:1px solid rgba(230,57,70,0.2);">
-                            <small class="text-danger fw-bold"><i class="fas fa-shield-alt me-2"></i>Garantía:</small>
-                            <small class="text-muted ms-1">El vendedor siempre recibe exactamente el precio contado ingresado. El 100% de los costos los absorbe el comprador vía coeficiente.</small>
-                        </div>
-                    </div>
-
-                    <!-- TAB 2: FÓRMULA -->
-                    <div class="tab-pane fade" id="pane-formula">
-                        <p class="text-muted small mb-4">Fórmula bancaria estándar usada por Prisma, Payway y Payzen. <strong class="text-white">No</strong> es descuento directo — es multiplicador financiero sobre divisor transaccional.</p>
-
-                        <h6 class="text-white fw-bold small text-uppercase mb-2" style="letter-spacing:1px;"><i class="fas fa-code text-danger me-2"></i>Paso a paso</h6>
-                        <div class="formula-block mb-4">
-                            <div><span class="text-secondary">//</span> <span class="text-muted">Paso 1 — Costos con IVA general (21%)</span></div>
-                            <div class="text-white">costos = <span class="text-warning">(arancel × 1.21)</span> + <span class="text-info">(comisión_PT × 1.21)</span></div>
-                            <div class="mt-2"><span class="text-secondary">//</span> <span class="text-muted">Paso 2 — Divisor transaccional</span></div>
-                            <div class="text-white">divisor = 1 − <span class="text-danger">(costos / 100)</span></div>
-                            <div class="mt-2"><span class="text-secondary">//</span> <span class="text-muted">Paso 3 — Tasa financiera con IVA (10.5%)</span></div>
-                            <div class="text-white">tasa_iva = <span class="text-success">tasa_base × 1.105</span></div>
-                            <div class="mt-2"><span class="text-secondary">//</span> <span class="text-muted">Paso 4 — Multiplicador financiero</span></div>
-                            <div class="text-white">multiplicador = 1 + <span class="text-success">(tasa_iva / 100)</span></div>
-                            <div class="mt-2"><span class="text-secondary">//</span> <span class="text-muted">Paso 5 — Coeficiente final</span></div>
-                            <div class="text-white fw-bold fs-6">coeficiente = <span class="text-success">multiplicador</span> / <span class="text-info">divisor</span></div>
-                        </div>
-
-                        <h6 class="text-white fw-bold small text-uppercase mb-3" style="letter-spacing:1px;"><i class="fas fa-exclamation-triangle text-warning me-2"></i>Tasa Base — ⚠️ atención</h6>
-                        <div class="row g-3">
-                            <div class="col-md-6">
-                                <div class="step-card h-100" style="border-left:3px solid #e63946;">
-                                    <div class="d-flex align-items-center gap-2 mb-2">
-                                        <i class="fas fa-times-circle text-danger"></i>
-                                        <span class="text-danger fw-bold small text-uppercase">TNA del folleto</span>
-                                    </div>
-                                    <div class="text-muted" style="font-size:0.73rem;">El 23.83% que informa el banco en sus documentos comerciales es una <strong class="text-white">Tasa Nominal Anual</strong> — no es el valor que este campo espera. Usarlo directamente produce coeficientes incorrectos.</div>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="step-card h-100" style="border-left:3px solid #28a745;">
-                                    <div class="d-flex align-items-center gap-2 mb-2">
-                                        <i class="fas fa-check-circle text-success"></i>
-                                        <span class="text-success fw-bold small text-uppercase">Tasa Base interna</span>
-                                    </div>
-                                    <div class="text-muted" style="font-size:0.73rem;">Valor calculado por <strong class="text-white">ingeniería inversa</strong> a partir del coeficiente oficial de Payway. Usá la pestaña <em>"Calculadora inversa"</em> para obtenerlo con un clic.</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- TAB 3: CALCULADORA INVERSA -->
-                    <div class="tab-pane fade" id="pane-calc">
-                        <p class="text-muted small mb-4">Ingresá el coeficiente oficial que te provee Payway para un plan. El sistema aplica ingeniería inversa y devuelve la <strong class="text-white">Tasa Base interna</strong> exacta que debés cargar en la tabla.</p>
-
-                        <div class="row g-3 mb-3">
-                            <div class="col-md-5">
-                                <label class="form-label text-secondary small fw-bold text-uppercase">Coeficiente oficial Payway</label>
-                                <div class="input-group">
-                                    <span class="input-group-text input-group-text-custom"><i class="fas fa-hashtag" style="font-size:0.75rem;"></i></span>
-                                    <input type="number" id="inv_coef" class="form-control form-control-dark" placeholder="Ej: 1.7462" step="0.0001" min="1">
-                                </div>
-                                <small class="text-muted" style="font-size:0.68rem;">El multiplicador de la tabla oficial del banco.</small>
-                            </div>
-                            <div class="col-md-4">
-                                <label class="form-label text-secondary small fw-bold text-uppercase">Arancel sin IVA</label>
-                                <div class="input-group">
-                                    <input type="number" id="inv_arancel" class="form-control form-control-dark" step="0.0001" placeholder="Auto">
-                                    <span class="input-group-text input-group-text-custom">%</span>
-                                </div>
-                                <small class="text-muted" style="font-size:0.68rem;">Se carga del config actual.</small>
-                            </div>
-                            <div class="col-md-3">
-                                <label class="form-label text-secondary small fw-bold text-uppercase">Comisión PT</label>
-                                <div class="input-group">
-                                    <input type="number" id="inv_comision" class="form-control form-control-dark" step="0.0001" placeholder="Auto">
-                                    <span class="input-group-text input-group-text-custom">%</span>
-                                </div>
-                                <small class="text-muted" style="font-size:0.68rem;">Se carga del config actual.</small>
-                            </div>
-                        </div>
-
-                        <button class="btn btn-danger w-100 fw-bold py-2 mb-4 text-uppercase" style="letter-spacing:1px;" onclick="calcularInverso()">
-                            <i class="fas fa-calculator me-2"></i>Calcular Tasa Base Interna
-                        </button>
-
-                        <!-- Resultado (oculto hasta calcular) -->
-                        <div id="inv_resultado" class="d-none">
-                            <div class="row g-3 mb-3">
-                                <div class="col-md-4">
-                                    <div class="inv-result-box" style="border-color:rgba(40,167,69,0.3);">
-                                        <div class="text-muted small mb-1">Tasa Base a ingresar</div>
-                                        <div class="result-val text-success" id="inv_tasa_result">—</div>
-                                        <div class="text-muted" style="font-size:0.68rem;">Campo "Tasa Bancaria Base"</div>
-                                    </div>
-                                </div>
-                                <div class="col-md-4">
-                                    <div class="inv-result-box" style="border-color:rgba(23,162,184,0.3);">
-                                        <div class="text-muted small mb-1">Coeficiente resultante</div>
-                                        <div class="result-val text-info" id="inv_coef_check">—</div>
-                                        <div class="text-muted" style="font-size:0.68rem;">Debe coincidir con el oficial</div>
-                                    </div>
-                                </div>
-                                <div class="col-md-4">
-                                    <div class="inv-result-box" style="border-color:rgba(255,193,7,0.3);">
-                                        <div class="text-muted small mb-1">Diferencia</div>
-                                        <div class="result-val" id="inv_diff">—</div>
-                                        <div class="text-muted" style="font-size:0.68rem;">Tolerancia ≤ 0.0001</div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="p-3 rounded" id="inv_instruccion" style="background:rgba(40,167,69,0.08);border:1px solid rgba(40,167,69,0.25);">
-                                <small class="text-success">
-                                    <i class="fas fa-arrow-circle-right me-2"></i>
-                                    Ingresá <strong id="inv_tasa_instruccion" class="text-white">—</strong> en el campo <em>"Tasa Bancaria Base"</em> del plan correspondiente y presioná el ícono guardar <i class="fas fa-save"></i>.
-                                </small>
-                            </div>
-                        </div>
-                        <div id="inv_error" class="d-none" style="background:rgba(220,53,69,0.1);border:1px solid rgba(220,53,69,0.3);border-radius:8px;padding:0.75rem 1rem;">
-                            <small class="text-danger fw-bold"><i class="fas fa-exclamation-circle me-2"></i><span id="inv_error_msg"></span></small>
-                        </div>
-                    </div>
-
-                </div>
-            </div>
-
-            <!-- Footer -->
-            <div class="modal-footer" style="background:#0d0f13;border-top:1px solid rgba(255,255,255,0.07);">
-                <small class="text-muted me-auto" style="font-size:0.68rem;"><i class="fas fa-lock me-1"></i>Fórmula bancaria estándar — Prisma / Payway / Payzen</small>
-                <button type="button" class="btn btn-sm btn-outline-secondary px-4" data-bs-dismiss="modal">Cerrar</button>
-            </div>
-
-        </div>
-    </div>
-</div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     // Tooltips
-    [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]')).forEach(function (el) {
-        new bootstrap.Tooltip(el, { delay: { show: 200, hide: 100 } });
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.map(function (el) {
+        return new bootstrap.Tooltip(el, { delay: { show: 200, hide: 100 } });
     });
 
-    // Precargar config en calculadora al abrir el modal
-    document.getElementById('helpModal').addEventListener('show.bs.modal', function () {
-        const ar = document.querySelector('input[name="arancel_plataforma"]');
-        const co = document.querySelector('input[name="comision_pago_tech"]');
-        if (ar) document.getElementById('inv_arancel').value = ar.value;
-        if (co) document.getElementById('inv_comision').value = co.value;
-        // Limpiar resultado previo
-        document.getElementById('inv_resultado').classList.add('d-none');
-        document.getElementById('inv_error').classList.add('d-none');
+    // Al abrir cada modal dispara cálculo inicial y escucha cambios
+    document.querySelectorAll('.modal-plan-config').forEach(function(modalEl) {
+        modalEl.addEventListener('shown.bs.modal', function () {
+            const planId = modalEl.id.replace('configModal_', '');
+            recalcPlan(planId);
+            modalEl.querySelectorAll('.calc-trigger-' + planId).forEach(function(inp) {
+                inp.addEventListener('input', function() { recalcPlan(planId); });
+            });
+        });
     });
 });
 
@@ -738,50 +1065,192 @@ function openDeleteModal(id, nombre) {
     new bootstrap.Modal(document.getElementById('deletePlanModal')).show();
 }
 
-function calcularInverso() {
-    const errEl   = document.getElementById('inv_error');
-    const errMsg  = document.getElementById('inv_error_msg');
-    const resEl   = document.getElementById('inv_resultado');
-
-    errEl.classList.add('d-none');
-    resEl.classList.add('d-none');
-
-    const coef     = parseFloat(document.getElementById('inv_coef').value);
-    const arancel  = parseFloat(document.getElementById('inv_arancel').value);
-    const comision = parseFloat(document.getElementById('inv_comision').value);
-
-    if (isNaN(coef) || coef <= 1) {
-        errMsg.textContent = 'Ingresá un coeficiente válido mayor a 1 (ej: 1.7462).';
-        errEl.classList.remove('d-none'); return;
+function updateToggleLabel(checkbox, labelId) {
+    const label = document.getElementById(labelId);
+    if (checkbox.checked) {
+        label.textContent = 'SÍ';
+        label.style.color = '#4ade80';
+    } else {
+        label.textContent = 'NO';
+        label.style.color = '#f87171';
     }
-    if (isNaN(arancel) || isNaN(comision)) {
-        errMsg.textContent = 'Completá los campos de arancel y comisión PT.';
-        errEl.classList.remove('d-none'); return;
+}
+
+/* ─── Cambiar modo Directo / Inverso ─────────────────────────── */
+function setCalcMode(planId, modo) {
+    const directo = document.getElementById('calc_directo_' + planId);
+    const inverso = document.getElementById('calc_inverso_' + planId);
+    const btnDir  = document.getElementById('btn_directo_'  + planId);
+    const btnInv  = document.getElementById('btn_inverso_'  + planId);
+
+    if (modo === 'directo') {
+        directo.style.display = '';
+        inverso.style.display = 'none';
+        // Estilo botón activo
+        btnDir.style.background = 'rgba(86,211,100,0.2)';
+        btnDir.style.border     = '1px solid rgba(86,211,100,0.35)';
+        btnDir.style.color      = '#56d364';
+        btnInv.style.background = 'transparent';
+        btnInv.style.border     = '1px solid transparent';
+        btnInv.style.color      = '#6c757d';
+        recalcPlan(planId);
+    } else {
+        directo.style.display = 'none';
+        inverso.style.display = '';
+        btnInv.style.background = 'rgba(99,102,241,0.25)';
+        btnInv.style.border     = '1px solid rgba(99,102,241,0.4)';
+        btnInv.style.color      = '#a5b4fc';
+        btnDir.style.background = 'transparent';
+        btnDir.style.border     = '1px solid transparent';
+        btnDir.style.color      = '#6c757d';
+        recalcInverse(planId);
+    }
+}
+
+/* ─── Leer parámetros efectivos del modal ─────────────────────── */
+function getEffectiveParams(planId) {
+    const modal = document.getElementById('configModal_' + planId);
+    if (!modal) return null;
+
+    const globalIva     = parseFloat(modal.dataset.globalIva);
+    const globalIvaFin  = parseFloat(modal.dataset.globalIvaFin);
+    const globalComCred = parseFloat(modal.dataset.globalComCred);
+    const globalArCred  = parseFloat(modal.dataset.globalArCred);
+    const tasaBase      = parseFloat(modal.dataset.tasa);
+
+    const ivaInput      = modal.querySelector('[data-calc-field="iva"]');
+    const ivaFinInput   = modal.querySelector('[data-calc-field="iva_fin"]');
+    const comInput      = modal.querySelector('[data-calc-field="com_cred"]');
+    const arInput       = modal.querySelector('[data-calc-field="ar_cred"]');
+    const comToggle     = modal.querySelector('[data-calc-field="com_iva"]');
+    const arToggle      = modal.querySelector('[data-calc-field="ar_iva"]');
+    const tasaIvaToggle = modal.querySelector('[data-calc-field="tasa_iva_fin"]'); // NUEVO
+
+    const iva        = (ivaInput    && ivaInput.value    !== '') ? parseFloat(ivaInput.value)   : globalIva;
+    const ivaFin     = (ivaFinInput && ivaFinInput.value !== '') ? parseFloat(ivaFinInput.value) : globalIvaFin;
+    const comCred    = (comInput    && comInput.value    !== '') ? parseFloat(comInput.value)    : globalComCred;
+    const arCred     = (arInput     && arInput.value     !== '') ? parseFloat(arInput.value)     : globalArCred;
+    const comIva     = comToggle     ? comToggle.checked     : true;
+    const arIva      = arToggle      ? arToggle.checked      : true;
+    const tasaAplIva = tasaIvaToggle ? tasaIvaToggle.checked : true; // NUEVO
+
+    return { iva, ivaFin, comCred, arCred, comIva, arIva, tasaAplIva, tasaBase };
+}
+
+/* ─── MODO DIRECTO: tasa → coeficiente ────────────────────────── */
+function recalcPlan(planId) {
+    const p = getEffectiveParams(planId);
+    if (!p) return;
+    if ([p.iva, p.ivaFin, p.comCred, p.arCred, p.tasaBase].some(isNaN)) return;
+
+    const ivaF   = p.iva    / 100;
+    const ivaFinF= p.ivaFin / 100;
+
+   const tasaIva = p.tasaAplIva
+        ? p.tasaBase * (1 + ivaFinF)
+        : p.tasaBase;
+    const mult    = 1 + (tasaIva / 100);
+
+    const ptEff  = p.comIva ? p.comCred * (1 + ivaF) : p.comCred;
+    const arEff  = p.arIva  ? p.arCred  * (1 + ivaF) : p.arCred;
+    const costos = ptEff + arEff;
+    const divisor= 1 - (costos / 100);
+
+    const coef      = divisor > 0 ? mult / divisor : 0;
+    const descTotal = costos + tasaIva;
+
+    const montoEl = document.getElementById('calc_monto_' + planId);
+    const monto   = montoEl && montoEl.value !== '' ? parseFloat(montoEl.value) : null;
+    const pVenta  = monto !== null ? monto * coef : null;
+
+    setText('calc_iva_fin_'  + planId, p.ivaFin.toFixed(2) + '%');
+    setText('calc_tasa_iva_' + planId, tasaIva.toFixed(4)  + '%');
+    setText('calc_pt_eff_'   + planId, ptEff.toFixed(4)    + '%');
+    setText('calc_ar_eff_'   + planId, arEff.toFixed(4)    + '%');
+    setText('calc_desc_'     + planId, descTotal.toFixed(4) + '%');
+    setText('calc_coef_'     + planId, coef.toFixed(6));
+
+    if (pVenta !== null) {
+        setText('calc_precio_'  + planId, '$ ' + pVenta.toFixed(2));
+        setText('calc_recargo_' + planId, '$ ' + (pVenta - monto).toFixed(2));
+    } else {
+        setText('calc_precio_'  + planId, '—');
+        setText('calc_recargo_' + planId, '—');
+    }
+}
+
+/* ─── MODO INVERSO: coeficiente → tasa_base ───────────────────── */
+function recalcInverse(planId) {
+    const p = getEffectiveParams(planId);
+    if (!p) return;
+    if ([p.iva, p.ivaFin, p.comCred, p.arCred].some(isNaN)) return;
+
+    const coefEl = document.getElementById('inv_coef_' + planId);
+    const coef   = coefEl && coefEl.value !== '' ? parseFloat(coefEl.value) : null;
+
+    if (coef === null || isNaN(coef) || coef <= 0) {
+        ['inv_costos_','inv_tasa_iva_','inv_tasa_base_','inv_desc_',
+         'inv_precio_','inv_recargo_'].forEach(p => setText(p + planId, '—'));
+        const sug = document.getElementById('inv_sugerencia_' + planId);
+        if (sug) sug.style.display = 'none';
+        return;
     }
 
-    // Fórmula inversa
-    const costos  = (arancel * 1.21) + (comision * 1.21);
-    const divisor = 1 - (costos / 100);
+    const ivaF    = p.iva    / 100;
+    const ivaFinF = p.ivaFin / 100;
 
-    if (divisor <= 0) {
-        errMsg.textContent = 'Los costos transaccionales superan el 100%. Revisá arancel y comisión.';
-        errEl.classList.remove('d-none'); return;
+    // Costos transaccionales con IVA según toggles (no dependen de la tasa)
+    const ptEff  = p.comIva ? p.comCred * (1 + ivaF) : p.comCred;
+    const arEff  = p.arIva  ? p.arCred  * (1 + ivaF) : p.arCred;
+    const costos = ptEff + arEff;
+    const divisor= 1 - (costos / 100);
+
+    /*
+     * Fórmula inversa:
+     *   coef = mult / divisor  →  mult = coef × divisor
+     *   mult = 1 + tasa_iva/100
+     *   tasa_iva = (mult - 1) × 100
+     *   tasa_base = tasa_iva / (1 + ivaFin/100)
+     */
+    const mult      = coef * divisor;
+    const tasaIva   = (mult - 1) * 100;
+    const tasaBase = p.tasaAplIva
+        ? tasaIva / (1 + ivaFinF)
+        : tasaIva;
+    const descTotal = costos + tasaIva;
+
+    setText('inv_costos_'    + planId, costos.toFixed(4)   + '%');
+    setText('inv_tasa_iva_'  + planId, tasaIva.toFixed(4)  + '%');
+    setText('inv_tasa_base_' + planId, tasaBase.toFixed(4) + '%');
+    setText('inv_desc_'      + planId, descTotal.toFixed(4) + '%');
+
+    // Precio de venta opcional
+    const montoEl = document.getElementById('inv_monto_' + planId);
+    const monto   = montoEl && montoEl.value !== '' ? parseFloat(montoEl.value) : null;
+    if (monto !== null && !isNaN(monto)) {
+        const pVenta = monto * coef;
+        setText('inv_precio_'  + planId, '$ ' + pVenta.toFixed(2));
+        setText('inv_recargo_' + planId, '$ ' + (pVenta - monto).toFixed(2));
+    } else {
+        setText('inv_precio_'  + planId, '—');
+        setText('inv_recargo_' + planId, '—');
     }
 
-    const tasa_interna   = ((coef * divisor) - 1) * 100 / 1.105;
-    const multiplicador  = 1 + (tasa_interna * 1.105 / 100);
-    const coef_calculado = multiplicador / divisor;
-    const diferencia     = Math.abs(coef_calculado - coef);
+    // Mostrar sugerencia si la tasa es válida (≥ 0)
+    const sug = document.getElementById('inv_sugerencia_' + planId);
+    if (sug) {
+        if (tasaBase >= 0) {
+            setText('inv_sugerencia_val_' + planId, tasaBase.toFixed(4) + '%');
+            sug.style.display = '';
+        } else {
+            sug.style.display = 'none';
+        }
+    }
+}
 
-    document.getElementById('inv_tasa_result').textContent      = tasa_interna.toFixed(4) + '%';
-    document.getElementById('inv_coef_check').textContent       = coef_calculado.toFixed(4);
-    document.getElementById('inv_tasa_instruccion').textContent  = tasa_interna.toFixed(4) + '%';
-
-    const diffEl = document.getElementById('inv_diff');
-    diffEl.textContent  = diferencia.toFixed(6);
-    diffEl.className    = 'result-val ' + (diferencia <= 0.0001 ? 'text-success' : 'text-warning');
-
-    resEl.classList.remove('d-none');
+function setText(id, val) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = val;
 }
 </script>
 {% endblock %}

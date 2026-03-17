@@ -143,64 +143,58 @@ def creacion_link(request):
                 cuotas_num = int(request.POST.get('cuotas', '1'))
                 tipo = request.POST.get('tipo_tarjeta', 'credito')
 
-                logger.debug(f"Preview solicitado — usuario={user_id} monto={monto_neto} tipo={tipo} cuotas={cuotas_num}")
-
-                iva_gen = (Decimal(str(config.iva)) / 100) + 1
-                iva_fin = (Decimal(str(config.iva_financiacion)) / 100) + 1
-
                 if tipo == 'debito':
-                    pt_pct = Decimal(str(config.comision_pago_tech_debito))
-                    ar_pct = Decimal(str(config.arancel_plataforma_debito))
-                    tasa_finan_iva = Decimal('0')
+                    # Débito siempre usa configuración global (no hay plan de cuotas para débito)
                     cuotas_num = 1
-                else:
-                    pt_pct = Decimal(str(config.comision_pago_tech))
-                    ar_pct = Decimal(str(config.arancel_plataforma))
+                    iva_f  = Decimal(str(config.iva)) / 100
+                    pt_eff = Decimal(str(config.comision_pago_tech_debito)) * (1 + iva_f)
+                    ar_eff = Decimal(str(config.arancel_plataforma_debito)) * (1 + iva_f)
                     tasa_finan_iva = Decimal('0')
-                    if cuotas_num > 1:
-                        plan = CuotaConfig.objects.filter(numero_cuota=cuotas_num, activa=True).first()
-                        if plan:
-                            tasa_finan_iva = Decimal(str(plan.tasa_base)) * iva_fin
-                            logger.debug(f"Preview — plan encontrado: {plan.nombre} tasa_base={plan.tasa_base} tasa_con_iva={tasa_finan_iva}")
-                        else:
-                            logger.warning(f"Preview — plan de {cuotas_num} cuotas no encontrado o inactivo")
-
-                # 1. Calculamos los costos transaccionales con IVA (Descuento directo del total)
-                pt_iva_pct = pt_pct * iva_gen
-                ar_iva_pct = ar_pct * iva_gen
-                costos_transaccionales = pt_iva_pct + ar_iva_pct
-                
-                divisor_transaccional = 1 - (costos_transaccionales / 100)
-
-                # 2. Calculamos el multiplicador financiero (Recargo)
-                multiplicador_financiero = 1 + (tasa_finan_iva / 100)
-
-                # 3. Calculamos el Coeficiente final y el monto de venta
-                if divisor_transaccional > Decimal('0'):
-                    coeficiente = multiplicador_financiero / divisor_transaccional
                 else:
-                    coeficiente = Decimal('0')
+                    # Crédito: cargar plan y usar sus valores efectivos
+                    plan = CuotaConfig.objects.filter(numero_cuota=cuotas_num, activa=True).first()
 
-                monto_venta = (monto_neto * coeficiente).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
-                comision_trasladada = monto_venta - monto_neto
+                    if plan:
+                        iva_val     = plan.iva_override              if plan.iva_override is not None              else config.iva
+                        iva_fin_val = plan.iva_financiacion_override if plan.iva_financiacion_override is not None else config.iva_financiacion
+                        com_val     = plan.com_credito_override      if plan.com_credito_override is not None      else config.comision_pago_tech
+                        ar_val      = plan.arancel_credito_override  if plan.arancel_credito_override is not None  else config.arancel_plataforma
 
-                logger.debug(
-                    f"Preview calculado — usuario={user_id} "
-                    f"total_costos={costos_transaccionales:.4f}% divisor={divisor_transaccional:.6f} "
-                    f"neto={monto_neto} → bruto={monto_venta} comision={comision_trasladada}"
-                )
+                        iva_f     = Decimal(str(iva_val))     / 100
+                        iva_fin_f = Decimal(str(iva_fin_val)) / 100
+
+                        pt_eff = Decimal(str(com_val)) * (1 + iva_f) if plan.comision_aplica_iva else Decimal(str(com_val))
+                        ar_eff = Decimal(str(ar_val))  * (1 + iva_f) if plan.arancel_aplica_iva  else Decimal(str(ar_val))
+
+                        if cuotas_num > 1:
+                            if plan.tasa_aplica_iva_fin:
+                                tasa_finan_iva = Decimal(str(plan.tasa_base)) * (1 + iva_fin_f)
+                            else:
+                                tasa_finan_iva = Decimal(str(plan.tasa_base))
+                        else:
+                            tasa_finan_iva = Decimal('0')
+                    else:
+                        # Fallback global si no existe el plan
+                        iva_f  = Decimal(str(config.iva)) / 100
+                        pt_eff = Decimal(str(config.comision_pago_tech)) * (1 + iva_f)
+                        ar_eff = Decimal(str(config.arancel_plataforma)) * (1 + iva_f)
+                        tasa_finan_iva = Decimal('0')
+
+                costos    = pt_eff + ar_eff
+                divisor   = 1 - (costos / 100)
+                mult      = 1 + (tasa_finan_iva / 100)
+                coef      = mult / divisor if divisor > Decimal('0') else Decimal('0')
+                monto_venta = (monto_neto * coef).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
 
                 return JsonResponse({
                     'success': True,
                     'monto_venta': float(monto_venta),
-                    'comision': float(comision_trasladada),
-                    'neto': float(monto_neto)
+                    'comision':    float(monto_venta - monto_neto),
+                    'neto':        float(monto_neto)
                 })
-
             except Exception as e:
                 logger.error(f"Error en preview — usuario={user_id}: {e}")
                 return JsonResponse({'success': False})
-
         # --- CASO B: Confirmación y Generación Final ---
         if 'confirm' in request.POST:
             monto_contado = request.POST.get('monto', '').strip()

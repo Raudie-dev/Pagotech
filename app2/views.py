@@ -235,106 +235,124 @@ def configuracion_financiera(request):
     user_id = request.session.get('user_admin_id')
     if not user_id:
         return redirect('login')
-    
+
     user_admin = User_admin.objects.get(id=user_id)
 
     if request.method == 'POST':
+
         if 'update_general' in request.POST:
-            # Capturamos todos los parámetros incluyendo los de Débito
             data = {
-                'iva': request.POST.get('iva'),
-                'iva_financiacion': request.POST.get('iva_financiacion'),
-                # Crédito
-                'comision_pago_tech': request.POST.get('comision_pago_tech'),
-                'arancel_plataforma': request.POST.get('arancel_plataforma'),
-                # Débito
-                'comision_pago_tech_debito': request.POST.get('comision_pago_tech_debito'),
-                'arancel_plataforma_debito': request.POST.get('arancel_plataforma_debito'),
+                'iva':                          request.POST.get('iva'),
+                'iva_financiacion':             request.POST.get('iva_financiacion'),
+                'comision_pago_tech':           request.POST.get('comision_pago_tech'),
+                'arancel_plataforma':           request.POST.get('arancel_plataforma'),
+                'comision_pago_tech_debito':    request.POST.get('comision_pago_tech_debito'),
+                'arancel_plataforma_debito':    request.POST.get('arancel_plataforma_debito'),
             }
             admin_crud.update_financiero(data)
             messages.success(request, 'Parámetros base actualizados correctamente.')
-            
+
         elif 'add_cuota' in request.POST:
             data = {
                 'numero_cuota': request.POST.get('new_numero'),
-                'nombre': request.POST.get('new_nombre'),
-                'tasa_base': request.POST.get('new_tasa'),
+                'nombre':       request.POST.get('new_nombre'),
+                'tasa_base':    request.POST.get('new_tasa'),
             }
             admin_crud.create_cuota_plan(data)
             messages.success(request, 'Nuevo plan de cuotas añadido.')
-        
+
         elif 'update_cuota' in request.POST:
             cuota_id = request.POST.get('cuota_id')
             data = {
-                'nombre': request.POST.get('edit_nombre'),
+                'nombre':       request.POST.get('edit_nombre'),
                 'numero_cuota': request.POST.get('edit_numero'),
-                'tasa_base': request.POST.get('edit_tasa'),
-                'activa': request.POST.get('activa')
+                'tasa_base':    request.POST.get('edit_tasa'),
+                'activa':       request.POST.get('activa'),
             }
             admin_crud.update_cuota_plan(cuota_id, data)
             messages.success(request, 'Plan actualizado.')
 
+        elif 'update_cuota_override' in request.POST:
+            cuota_id = request.POST.get('cuota_id')
+            data = {
+                'iva_override':              request.POST.get('iva_override', '').strip() or None,
+                'iva_financiacion_override': request.POST.get('iva_financiacion_override', '').strip() or None,
+                'com_credito_override':      request.POST.get('com_credito_override', '').strip() or None,
+                'com_debito_override':       request.POST.get('com_debito_override', '').strip() or None,
+                'arancel_credito_override':  request.POST.get('arancel_credito_override', '').strip() or None,
+                'arancel_debito_override':   request.POST.get('arancel_debito_override', '').strip() or None,
+                # checkboxes: presente = True, ausente = False
+                'comision_aplica_iva': 'comision_aplica_iva' in request.POST,
+                'arancel_aplica_iva':  'arancel_aplica_iva'  in request.POST,
+                'tasa_aplica_iva_fin': 'tasa_aplica_iva_fin' in request.POST,
+            }
+            ok, err = admin_crud.update_cuota_override(cuota_id, data)
+            if ok:
+                messages.success(request, 'Configuración personalizada guardada correctamente.')
+            else:
+                messages.error(request, err or 'Error al guardar la configuración.')
+
         elif 'delete_cuota' in request.POST:
             admin_crud.delete_cuota_plan(request.POST.get('delete_id'))
             messages.warning(request, 'Plan financiero eliminado.')
-            
+
         return redirect('configuracion_financiera')
 
-    # --- LÓGICA DE CARGA ---
+    # ── GET: Carga ─────────────────────────────────────────────────────
     config = admin_crud.get_or_create_config()
     cuotas = admin_crud.list_cuotas_config()
-    
-    # Factores de IVA
-    iva_f = Decimal(str(config.iva)) / 100
-    iva_fin_f = Decimal(str(config.iva_financiacion)) / 100
-    
-    # Comisiones de CRÉDITO con IVA (Columna Roja)
-    com_pt_cred_iva = Decimal(str(config.comision_pago_tech)) * (1 + iva_f)
-    arancel_cred_iva = Decimal(str(config.arancel_plataforma)) * (1 + iva_f)
 
-    # Comisiones de DÉBITO con IVA (Columna Roja)
-    com_pt_deb_iva = Decimal(str(config.comision_pago_tech_debito)) * (1 + iva_f)
-    arancel_deb_iva = Decimal(str(config.arancel_plataforma_debito)) * (1 + iva_f)
-    
-    # Proyecciones (Para Crédito, que es donde hay cuotas y coeficiente)
+    # Valores globales para las tarjetas de resumen (usan config global + IVA 21%)
+    iva_global_f = Decimal(str(config.iva)) / 100
+    com_pt_cred_iva  = Decimal(str(config.comision_pago_tech))           * (1 + iva_global_f)
+    arancel_cred_iva = Decimal(str(config.arancel_plataforma))           * (1 + iva_global_f)
+    com_pt_deb_iva   = Decimal(str(config.comision_pago_tech_debito))    * (1 + iva_global_f)
+    arancel_deb_iva  = Decimal(str(config.arancel_plataforma_debito))    * (1 + iva_global_f)
+
+    # ── Proyecciones con valores efectivos por plan ────────────────────
     proyecciones = []
     for c in cuotas:
-        # 1. Calculamos la tasa de interés con su IVA (Generalmente 10.5%)
-        tasa_cuota_iva = Decimal(str(c.tasa_base)) * (1 + iva_fin_f)
-        
-        # 2. Las pasarelas aplican el interés como un RECARGO (Multiplicador)
+        iva_val     = c.iva_override              if c.iva_override is not None              else config.iva
+        iva_fin_val = c.iva_financiacion_override if c.iva_financiacion_override is not None else config.iva_financiacion
+        com_cred    = c.com_credito_override      if c.com_credito_override is not None      else config.comision_pago_tech
+        ar_cred     = c.arancel_credito_override  if c.arancel_credito_override is not None  else config.arancel_plataforma
+
+        iva_f     = Decimal(str(iva_val))     / 100
+        iva_fin_f = Decimal(str(iva_fin_val)) / 100
+
+        # ── NUEVO: toggle tasa financiación ──────────────────────────
+        if c.tasa_aplica_iva_fin:
+            tasa_cuota_iva = Decimal(str(c.tasa_base)) * (1 + iva_fin_f)
+        else:
+            tasa_cuota_iva = Decimal(str(c.tasa_base))
+
+        com_cred_eff = Decimal(str(com_cred)) * (1 + iva_f) if c.comision_aplica_iva else Decimal(str(com_cred))
+        ar_cred_eff  = Decimal(str(ar_cred))  * (1 + iva_f) if c.arancel_aplica_iva  else Decimal(str(ar_cred))
+
         multiplicador_financiero = 1 + (tasa_cuota_iva / 100)
-        
-        # 3. Las comisiones y aranceles (con IVA 21%) son DESCUENTOS sobre el precio final inflado
-        costos_transaccionales = com_pt_cred_iva + arancel_cred_iva 
-        divisor_transaccional = 1 - (costos_transaccionales / 100)
-        
+        costos_transaccionales   = com_cred_eff + ar_cred_eff
+        divisor_transaccional    = 1 - (costos_transaccionales / 100)
+
         try:
-            # 4. FÓRMULA ESTÁNDAR DE PASARELAS (Ej: Prisma, Payway, Payzen)
-            if divisor_transaccional > 0:
-                coeficiente = multiplicador_financiero / divisor_transaccional
-            else:
-                coeficiente = Decimal('0')
-                
+            coeficiente      = multiplicador_financiero / divisor_transaccional if divisor_transaccional > 0 else Decimal('0')
             total_descuentos = costos_transaccionales + tasa_cuota_iva
-        except Exception as e:
-            coeficiente = Decimal('0')
+        except Exception:
+            coeficiente      = Decimal('0')
             total_descuentos = Decimal('0')
-        
+
         proyecciones.append({
-            'obj': c,
+            'obj':              c,
             'total_descuentos': total_descuentos.quantize(Decimal('0.0001'), rounding=ROUND_HALF_UP),
-            'coeficiente': coeficiente.quantize(Decimal('0.000000'), rounding=ROUND_HALF_UP),
+            'coeficiente':      coeficiente.quantize(Decimal('0.000000'),    rounding=ROUND_HALF_UP),
         })
 
     context = {
-        'user': user_admin,
-        'config': config,
-        'proyecciones': proyecciones,
-        # Variables para las tarjetas de resumen
-        'com_pt_cred_iva': com_pt_cred_iva,
+        'user':             user_admin,
+        'config':           config,
+        'proyecciones':     proyecciones,
+        'com_pt_cred_iva':  com_pt_cred_iva,
         'arancel_cred_iva': arancel_cred_iva,
-        'com_pt_deb_iva': com_pt_deb_iva,
-        'arancel_deb_iva': arancel_deb_iva,
+        'com_pt_deb_iva':   com_pt_deb_iva,
+        'arancel_deb_iva':  arancel_deb_iva,
     }
     return render(request, 'configuracion_financiera.html', context)
