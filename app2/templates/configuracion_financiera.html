@@ -386,7 +386,7 @@
                                 </td>
                                 <td>
                                     <div class="input-group input-group-sm" style="width:130px;">
-                                        <input type="number" step="0.01" name="edit_tasa"
+                                        <input type="number" step="0.0001" name="edit_tasa"
                                             class="form-control form-control-dark" value="{{ item.obj.tasa_base }}">
                                         <span class="input-group-text bg-dark border-secondary text-muted small">%</span>
                                     </div>
@@ -593,8 +593,9 @@ data-tasa-iva-fin="{% if item.obj.tasa_aplica_iva_fin %}1{% else %}0{% endif %}"
                                 <div class="col-md-6">
                                     <div class="config-section h-100">
                                         <div class="config-section-title text-info">
-                                            <i class="fas fa-file-invoice-dollar me-2"></i>Tasas de IVA
+                                            <i class="fas fa-file-invoice-dollar me-2"></i>Control de IVA
                                         </div>
+
                                         <div class="mb-3">
                                             <label class="form-label text-muted x-small fw-bold text-uppercase mb-1">IVA General</label>
                                             <div class="input-group input-group-sm">
@@ -608,7 +609,8 @@ data-tasa-iva-fin="{% if item.obj.tasa_aplica_iva_fin %}1{% else %}0{% endif %}"
                                             </div>
                                             <div class="global-hint">Global: <span>{{ config.iva }}%</span></div>
                                         </div>
-                                        <div>
+
+                                        <div class="mb-3">
                                             <label class="form-label text-muted x-small fw-bold text-uppercase mb-1">IVA Financiación</label>
                                             <div class="input-group input-group-sm">
                                                 <input type="number" step="0.01" min="0" max="100"
@@ -622,28 +624,73 @@ data-tasa-iva-fin="{% if item.obj.tasa_aplica_iva_fin %}1{% else %}0{% endif %}"
                                             <div class="global-hint">Global: <span>{{ config.iva_financiacion }}%</span></div>
                                         </div>
 
-                                        <!-- Toggle IVA sobre tasa de financiación -->
-                                        <div class="iva-toggle-row mt-2">
-                                            <div>
-                                                <span class="text-white small fw-bold">
-                                                    <i class="fas fa-percentage me-2 text-warning"></i>Cobrar IVA Financiación sobre tasa
-                                                </span>
-                                                <div class="global-hint mt-0">Si está desactivado, la tasa base se usa sin IVA fin.</div>
+                                        <!-- ── Separador visual ── -->
+                                        <div class="border-top border-secondary pt-3 mt-1">
+                                            <div style="font-size:0.63rem; font-weight:800; text-transform:uppercase;
+                                                        letter-spacing:0.5px; color:#6c757d; margin-bottom:10px;">
+                                                <i class="fas fa-toggle-on me-1"></i> ¿Cuáles IVA se cobran?
                                             </div>
-                                            <div class="form-check form-switch mb-0 ms-3">
-                                                <input class="form-check-input calc-trigger-{{ item.obj.id }}"
-                                                    type="checkbox" name="tasa_aplica_iva_fin"
-                                                    data-calc-field="tasa_iva_fin"
-                                                    id="tasa_iva_fin_toggle_{{ item.obj.id }}"
-                                                    {% if item.obj.tasa_aplica_iva_fin %}checked{% endif %}
-                                                    onchange="updateToggleLabel(this, 'tasa_iva_fin_lbl_{{ item.obj.id }}'); recalcPlan('{{ item.obj.id }}')">
-                                                <label class="form-check-label small fw-bold"
-                                                    id="tasa_iva_fin_lbl_{{ item.obj.id }}"
-                                                    for="tasa_iva_fin_toggle_{{ item.obj.id }}"
-                                                    style="color:{% if item.obj.tasa_aplica_iva_fin %}#4ade80{% else %}#f87171{% endif %}">
-                                                    {% if item.obj.tasa_aplica_iva_fin %}SÍ{% else %}NO{% endif %}
-                                                </label>
+
+                                            <!-- Toggle IVA General 21% — controla Comisión Y Arancel -->
+                                            <div class="iva-toggle-row">
+                                                <div>
+                                                    <span class="text-white small fw-bold">
+                                                        <i class="fas fa-percentage me-2 text-warning"></i>
+                                                        IVA General
+                                                        <span style="background:rgba(255,193,7,0.15); color:#ffc107;
+                                                                    border:1px solid rgba(255,193,7,0.3);
+                                                                    font-size:0.6rem; padding:1px 6px; border-radius:10px; margin-left:4px;">
+                                                            {{ item.obj.iva_override|default:config.iva }}%
+                                                        </span>
+                                                    </span>
+                                                    <div class="global-hint mt-0">Aplica sobre Comisión PT y Arancel Payway</div>
+                                                </div>
+                                                <div class="form-check form-switch mb-0 ms-3">
+                                                    <input class="form-check-input calc-trigger-{{ item.obj.id }}"
+                                                        type="checkbox" name="iva_general_aplica"
+                                                        data-calc-field="iva_general"
+                                                        id="iva_general_toggle_{{ item.obj.id }}"
+                                                        {% if item.obj.comision_aplica_iva %}checked{% endif %}
+                                                        onchange="updateToggleLabel(this, 'iva_general_lbl_{{ item.obj.id }}'); recalcPlan('{{ item.obj.id }}')">
+                                                    <label class="form-check-label small fw-bold"
+                                                        id="iva_general_lbl_{{ item.obj.id }}"
+                                                        for="iva_general_toggle_{{ item.obj.id }}"
+                                                        style="color:{% if item.obj.comision_aplica_iva %}#4ade80{% else %}#f87171{% endif %}">
+                                                        {% if item.obj.comision_aplica_iva %}SÍ{% else %}NO{% endif %}
+                                                    </label>
+                                                </div>
                                             </div>
+
+                                            <!-- Toggle IVA Financiación 10.5% — controla la tasa -->
+                                            <div class="iva-toggle-row mt-2">
+                                                <div>
+                                                    <span class="text-white small fw-bold">
+                                                        <i class="fas fa-percentage me-2 text-warning"></i>
+                                                        IVA Financiación
+                                                        <span style="background:rgba(121,192,255,0.15); color:#79c0ff;
+                                                                    border:1px solid rgba(121,192,255,0.3);
+                                                                    font-size:0.6rem; padding:1px 6px; border-radius:10px; margin-left:4px;">
+                                                            {{ item.obj.iva_financiacion_override|default:config.iva_financiacion }}%
+                                                        </span>
+                                                    </span>
+                                                    <div class="global-hint mt-0">Aplica sobre la tasa bancaria base</div>
+                                                </div>
+                                                <div class="form-check form-switch mb-0 ms-3">
+                                                    <input class="form-check-input calc-trigger-{{ item.obj.id }}"
+                                                        type="checkbox" name="tasa_aplica_iva_fin"
+                                                        data-calc-field="tasa_iva_fin"
+                                                        id="tasa_iva_fin_toggle_{{ item.obj.id }}"
+                                                        {% if item.obj.tasa_aplica_iva_fin %}checked{% endif %}
+                                                        onchange="updateToggleLabel(this, 'tasa_iva_fin_lbl_{{ item.obj.id }}'); recalcPlan('{{ item.obj.id }}')">
+                                                    <label class="form-check-label small fw-bold"
+                                                        id="tasa_iva_fin_lbl_{{ item.obj.id }}"
+                                                        for="tasa_iva_fin_toggle_{{ item.obj.id }}"
+                                                        style="color:{% if item.obj.tasa_aplica_iva_fin %}#4ade80{% else %}#f87171{% endif %}">
+                                                        {% if item.obj.tasa_aplica_iva_fin %}SÍ{% else %}NO{% endif %}
+                                                    </label>
+                                                </div>
+                                            </div>
+
                                         </div>
                                     </div>
                                 </div>
@@ -667,7 +714,7 @@ data-tasa-iva-fin="{% if item.obj.tasa_aplica_iva_fin %}1{% else %}0{% endif %}"
                                             </div>
                                             <div class="global-hint">Global: <span>{{ config.comision_pago_tech }}%</span></div>
                                         </div>
-                                        <div class="mb-2">
+                                        <div>
                                             <label class="form-label text-muted x-small fw-bold text-uppercase mb-1">Débito</label>
                                             <div class="input-group input-group-sm">
                                                 <input type="number" step="0.01" min="0"
@@ -679,28 +726,11 @@ data-tasa-iva-fin="{% if item.obj.tasa_aplica_iva_fin %}1{% else %}0{% endif %}"
                                             </div>
                                             <div class="global-hint">Global: <span>{{ config.comision_pago_tech_debito }}%</span></div>
                                         </div>
-                                        <!-- Toggle IVA Comisión -->
-                                        <div class="iva-toggle-row">
-                                            <div>
-                                                <span class="text-white small fw-bold">
-                                                    <i class="fas fa-percentage me-2 text-warning"></i>Cobrar IVA
-                                                </span>
-                                                <div class="global-hint mt-0">Sobre comisión Pago Tech</div>
-                                            </div>
-                                            <div class="form-check form-switch mb-0 ms-3">
-                                                <input class="form-check-input calc-trigger-{{ item.obj.id }}"
-                                                    type="checkbox" name="comision_aplica_iva"
-                                                    data-calc-field="com_iva"
-                                                    id="com_iva_toggle_{{ item.obj.id }}"
-                                                    {% if item.obj.comision_aplica_iva %}checked{% endif %}
-                                                    onchange="updateToggleLabel(this, 'com_iva_lbl_{{ item.obj.id }}'); recalcPlan('{{ item.obj.id }}')">
-                                                <label class="form-check-label small fw-bold"
-                                                    id="com_iva_lbl_{{ item.obj.id }}"
-                                                    for="com_iva_toggle_{{ item.obj.id }}"
-                                                    style="color:{% if item.obj.comision_aplica_iva %}#4ade80{% else %}#f87171{% endif %}">
-                                                    {% if item.obj.comision_aplica_iva %}SÍ{% else %}NO{% endif %}
-                                                </label>
-                                            </div>
+                                        <!-- Nota informativa, ya no hay toggle aquí -->
+                                        <div class="global-fallback-note mt-3 mb-0" style="font-size:0.65rem;">
+                                            <i class="fas fa-info-circle me-1"></i>
+                                            El IVA sobre esta comisión se controla con el toggle
+                                            <strong class="text-white">IVA General</strong> de la columna izquierda.
                                         </div>
                                     </div>
                                 </div>
@@ -738,28 +768,11 @@ data-tasa-iva-fin="{% if item.obj.tasa_aplica_iva_fin %}1{% else %}0{% endif %}"
                                                 <div class="global-hint">Global: <span>{{ config.arancel_plataforma_debito }}%</span></div>
                                             </div>
                                         </div>
-                                        <!-- Toggle IVA Arancel -->
-                                        <div class="iva-toggle-row">
-                                            <div>
-                                                <span class="text-white small fw-bold">
-                                                    <i class="fas fa-percentage me-2 text-warning"></i>Cobrar IVA
-                                                </span>
-                                                <div class="global-hint mt-0">Sobre arancel Payway</div>
-                                            </div>
-                                            <div class="form-check form-switch mb-0 ms-3">
-                                                <input class="form-check-input calc-trigger-{{ item.obj.id }}"
-                                                    type="checkbox" name="arancel_aplica_iva"
-                                                    data-calc-field="ar_iva"
-                                                    id="ar_iva_toggle_{{ item.obj.id }}"
-                                                    {% if item.obj.arancel_aplica_iva %}checked{% endif %}
-                                                    onchange="updateToggleLabel(this, 'ar_iva_lbl_{{ item.obj.id }}'); recalcPlan('{{ item.obj.id }}')">
-                                                <label class="form-check-label small fw-bold"
-                                                    id="ar_iva_lbl_{{ item.obj.id }}"
-                                                    for="ar_iva_toggle_{{ item.obj.id }}"
-                                                    style="color:{% if item.obj.arancel_aplica_iva %}#4ade80{% else %}#f87171{% endif %}">
-                                                    {% if item.obj.arancel_aplica_iva %}SÍ{% else %}NO{% endif %}
-                                                </label>
-                                            </div>
+                                        <!-- Nota informativa -->
+                                        <div class="global-fallback-note mt-2 mb-0" style="font-size:0.65rem;">
+                                            <i class="fas fa-info-circle me-1"></i>
+                                            El IVA sobre este arancel se controla con el toggle
+                                            <strong class="text-white">IVA General</strong> de la columna izquierda.
                                         </div>
                                     </div>
                                 </div>
@@ -1023,7 +1036,7 @@ data-tasa-iva-fin="{% if item.obj.tasa_aplica_iva_fin %}1{% else %}0{% endif %}"
                         </div>
                         <div class="col-6">
                             <label class="form-label text-muted small fw-bold">TASA BANCARIA BASE</label>
-                            <input type="number" step="0.01" name="new_tasa" class="form-control form-control-dark" required>
+                            <input type="number" step="0.0001" name="new_tasa" class="form-control form-control-dark" required>
                         </div>
                     </div>
                 </div>
@@ -1118,21 +1131,25 @@ function getEffectiveParams(planId) {
     const globalArCred  = parseFloat(modal.dataset.globalArCred);
     const tasaBase      = parseFloat(modal.dataset.tasa);
 
-    const ivaInput      = modal.querySelector('[data-calc-field="iva"]');
-    const ivaFinInput   = modal.querySelector('[data-calc-field="iva_fin"]');
-    const comInput      = modal.querySelector('[data-calc-field="com_cred"]');
-    const arInput       = modal.querySelector('[data-calc-field="ar_cred"]');
-    const comToggle     = modal.querySelector('[data-calc-field="com_iva"]');
-    const arToggle      = modal.querySelector('[data-calc-field="ar_iva"]');
-    const tasaIvaToggle = modal.querySelector('[data-calc-field="tasa_iva_fin"]'); // NUEVO
+    const ivaInput       = modal.querySelector('[data-calc-field="iva"]');
+    const ivaFinInput    = modal.querySelector('[data-calc-field="iva_fin"]');
+    const comInput       = modal.querySelector('[data-calc-field="com_cred"]');
+    const arInput        = modal.querySelector('[data-calc-field="ar_cred"]');
+
+    // UN solo toggle para IVA General (aplica a comisión Y arancel)
+    const ivaGenToggle   = modal.querySelector('[data-calc-field="iva_general"]');
+    const tasaIvaToggle  = modal.querySelector('[data-calc-field="tasa_iva_fin"]');
 
     const iva        = (ivaInput    && ivaInput.value    !== '') ? parseFloat(ivaInput.value)   : globalIva;
     const ivaFin     = (ivaFinInput && ivaFinInput.value !== '') ? parseFloat(ivaFinInput.value) : globalIvaFin;
     const comCred    = (comInput    && comInput.value    !== '') ? parseFloat(comInput.value)    : globalComCred;
     const arCred     = (arInput     && arInput.value     !== '') ? parseFloat(arInput.value)     : globalArCred;
-    const comIva     = comToggle     ? comToggle.checked     : true;
-    const arIva      = arToggle      ? arToggle.checked      : true;
-    const tasaAplIva = tasaIvaToggle ? tasaIvaToggle.checked : true; // NUEVO
+
+    // El mismo toggle controla comIva y arIva
+    const ivaGeneral = ivaGenToggle  ? ivaGenToggle.checked  : true;
+    const comIva     = ivaGeneral;
+    const arIva      = ivaGeneral;
+    const tasaAplIva = tasaIvaToggle ? tasaIvaToggle.checked : true;
 
     return { iva, ivaFin, comCred, arCred, comIva, arIva, tasaAplIva, tasaBase };
 }

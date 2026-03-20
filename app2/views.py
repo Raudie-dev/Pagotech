@@ -274,6 +274,10 @@ def configuracion_financiera(request):
 
         elif 'update_cuota_override' in request.POST:
             cuota_id = request.POST.get('cuota_id')
+            
+            # UN solo checkbox controla AMBOS (comisión y arancel)
+            iva_general_aplica = 'iva_general_aplica' in request.POST
+            
             data = {
                 'iva_override':              request.POST.get('iva_override', '').strip() or None,
                 'iva_financiacion_override': request.POST.get('iva_financiacion_override', '').strip() or None,
@@ -281,9 +285,9 @@ def configuracion_financiera(request):
                 'com_debito_override':       request.POST.get('com_debito_override', '').strip() or None,
                 'arancel_credito_override':  request.POST.get('arancel_credito_override', '').strip() or None,
                 'arancel_debito_override':   request.POST.get('arancel_debito_override', '').strip() or None,
-                # checkboxes: presente = True, ausente = False
-                'comision_aplica_iva': 'comision_aplica_iva' in request.POST,
-                'arancel_aplica_iva':  'arancel_aplica_iva'  in request.POST,
+                # El toggle único IVA 21% controla ambos campos del modelo
+                'comision_aplica_iva': iva_general_aplica,
+                'arancel_aplica_iva':  iva_general_aplica,
                 'tasa_aplica_iva_fin': 'tasa_aplica_iva_fin' in request.POST,
             }
             ok, err = admin_crud.update_cuota_override(cuota_id, data)

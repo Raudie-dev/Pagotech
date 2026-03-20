@@ -199,3 +199,12 @@ LOGGING = {
         },
     },
 }
+
+# Tiempo máximo de sesión en segundos
+SESSION_COOKIE_AGE = 60 * 60 * 2  # 2 horas (ajustá el valor que quieras)
+
+# La sesión expira cuando el navegador se cierra (independiente del tiempo)
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+
+# Renueva el tiempo en cada request (si está en False, el tiempo corre desde el login)
+SESSION_SAVE_EVERY_REQUEST = True
