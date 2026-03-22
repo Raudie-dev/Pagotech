@@ -139,22 +139,20 @@ def creacion_link(request):
         # --- CASO A: AJAX Preview ---
         if 'preview' in request.POST:
             try:
-                monto_neto = Decimal(request.POST.get('monto', '0'))
-                cuotas_num = int(request.POST.get('cuotas', '1'))
-                tipo = request.POST.get('tipo_tarjeta', 'credito')
+                # Modelo ABSORBE: monto ingresado = lo que cobra al cliente
+                monto_cobrado = Decimal(request.POST.get('monto', '0'))
+                cuotas_num    = int(request.POST.get('cuotas', '1'))
+                tipo          = request.POST.get('tipo_tarjeta', 'credito')
 
                 if tipo == 'debito':
-                    # Débito siempre usa configuración global (no hay plan de cuotas para débito)
                     cuotas_num = 1
-                    iva_f  = Decimal(str(config.iva)) / 100
-                    pt_eff = Decimal(str(config.comision_pago_tech_debito)) * (1 + iva_f)
-                    ar_eff = Decimal(str(config.arancel_plataforma_debito)) * (1 + iva_f)
-                    tasa_finan_iva = Decimal('0')
+                    iva_f    = Decimal(str(config.iva)) / 100
+                    pt_eff   = Decimal(str(config.comision_pago_tech_debito)) * (1 + iva_f)
+                    ar_eff   = Decimal(str(config.arancel_plataforma_debito)) * (1 + iva_f)
+                    tasa_eff = Decimal('0')
                 else:
-                    # Crédito: cargar plan y usar sus valores efectivos
                     plan = CuotaConfig.objects.filter(numero_cuota=cuotas_num, activa=True).first()
-
-                    if plan:
+                    if plan and cuotas_num > 1:
                         iva_val     = plan.iva_override              if plan.iva_override is not None              else config.iva
                         iva_fin_val = plan.iva_financiacion_override if plan.iva_financiacion_override is not None else config.iva_financiacion
                         com_val     = plan.com_credito_override      if plan.com_credito_override is not None      else config.comision_pago_tech
@@ -163,34 +161,29 @@ def creacion_link(request):
                         iva_f     = Decimal(str(iva_val))     / 100
                         iva_fin_f = Decimal(str(iva_fin_val)) / 100
 
-                        pt_eff = Decimal(str(com_val)) * (1 + iva_f) if plan.comision_aplica_iva else Decimal(str(com_val))
-                        ar_eff = Decimal(str(ar_val))  * (1 + iva_f) if plan.arancel_aplica_iva  else Decimal(str(ar_val))
-
-                        if cuotas_num > 1:
-                            if plan.tasa_aplica_iva_fin:
-                                tasa_finan_iva = Decimal(str(plan.tasa_base)) * (1 + iva_fin_f)
-                            else:
-                                tasa_finan_iva = Decimal(str(plan.tasa_base))
-                        else:
-                            tasa_finan_iva = Decimal('0')
+                        tasa_eff = Decimal(str(plan.tasa_base)) * (1 + iva_fin_f) if plan.tasa_aplica_iva_fin else Decimal(str(plan.tasa_base))
+                        pt_eff   = Decimal(str(com_val))        * (1 + iva_f)     if plan.comision_aplica_iva  else Decimal(str(com_val))
+                        ar_eff   = Decimal(str(ar_val))         * (1 + iva_f)     if plan.comision_aplica_iva  else Decimal(str(ar_val))
                     else:
-                        # Fallback global si no existe el plan
-                        iva_f  = Decimal(str(config.iva)) / 100
-                        pt_eff = Decimal(str(config.comision_pago_tech)) * (1 + iva_f)
-                        ar_eff = Decimal(str(config.arancel_plataforma)) * (1 + iva_f)
-                        tasa_finan_iva = Decimal('0')
+                        # Contado o fallback global
+                        iva_f    = Decimal(str(config.iva)) / 100
+                        pt_eff   = Decimal(str(config.comision_pago_tech)) * (1 + iva_f)
+                        ar_eff   = Decimal(str(config.arancel_plataforma)) * (1 + iva_f)
+                        tasa_eff = Decimal('0')
 
-                costos    = pt_eff + ar_eff
-                divisor   = 1 - (costos / 100)
-                mult      = 1 + (tasa_finan_iva / 100)
-                coef      = mult / divisor if divisor > Decimal('0') else Decimal('0')
-                monto_venta = (monto_neto * coef).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+                total_desc    = tasa_eff + pt_eff + ar_eff
+                descuento_pesos = (monto_cobrado * (total_desc / 100)).quantize(
+                    Decimal('0.01'), rounding=ROUND_HALF_UP
+                )
+                neto_vendedor = (monto_cobrado - descuento_pesos).quantize(
+                    Decimal('0.01'), rounding=ROUND_HALF_UP
+                )
 
                 return JsonResponse({
-                    'success': True,
-                    'monto_venta': float(monto_venta),
-                    'comision':    float(monto_venta - monto_neto),
-                    'neto':        float(monto_neto)
+                    'success':     True,
+                    'monto_venta': float(monto_cobrado),    # lo que paga el cliente
+                    'comision':    float(descuento_pesos),  # descuento Payway
+                    'neto':        float(neto_vendedor)     # lo que recibe el vendedor
                 })
             except Exception as e:
                 logger.error(f"Error en preview — usuario={user_id}: {e}")
@@ -293,119 +286,119 @@ def logout_cliente(request):
 def ticket_pdf(request, link_id):
     user_id = request.session.get('user_id')
     if not user_id:
-        logger.debug(f"PDF solicitado sin sesión — link_id={link_id}")
         return redirect('login_cliente')
 
     logger.info(f"Generando PDF — link_id={link_id} usuario={user_id}")
 
     try:
-        link = LinkPago.objects.get(id=link_id, cliente_id=user_id)
+        link   = LinkPago.objects.get(id=link_id, cliente_id=user_id)
         config = ParametroFinanciero.objects.first()
 
         if not config:
-            logger.error(f"PDF — ParametroFinanciero no encontrado — link_id={link_id}")
             return HttpResponse("Configuración financiera no encontrada.", status=500)
 
-        # 2. Constantes base
-        monto_pagado_cliente = Decimal(str(link.monto))
-        total_descuentos_pago_tech = Decimal(str(link.commission_amount))
-        neto_para_vendedor = Decimal(str(link.receiver_amount))
+        monto            = Decimal(str(link.monto))
+        total_commission = Decimal(str(link.commission_amount))
+
+        # ── Parámetros efectivos del plan ──────────────────────────────
+        if link.tipo_tarjeta == 'debito':
+            iva_val          = config.iva
+            iva_fin_val      = config.iva_financiacion
+            com_base         = config.comision_pago_tech_debito
+            ar_base          = config.arancel_plataforma_debito
+            tasa_base        = Decimal('0')
+            aplica_iva_gen   = True
+            aplica_iva_fin   = False   # débito nunca tiene financiación
+        else:
+            plan = CuotaConfig.objects.filter(
+                numero_cuota=link.cuotas_elegidas, activa=True
+            ).first()
+
+            if plan:
+                iva_val        = plan.iva_override              if plan.iva_override is not None              else config.iva
+                iva_fin_val    = plan.iva_financiacion_override if plan.iva_financiacion_override is not None else config.iva_financiacion
+                com_base       = plan.com_credito_override      if plan.com_credito_override is not None      else config.comision_pago_tech
+                ar_base        = plan.arancel_credito_override  if plan.arancel_credito_override is not None  else config.arancel_plataforma
+                tasa_base      = plan.tasa_base if link.cuotas_elegidas > 1 else Decimal('0')
+                aplica_iva_gen = plan.comision_aplica_iva
+                aplica_iva_fin = plan.tasa_aplica_iva_fin and link.cuotas_elegidas > 1
+            else:
+                # Fallback global
+                iva_val        = config.iva
+                iva_fin_val    = config.iva_financiacion
+                com_base       = config.comision_pago_tech
+                ar_base        = config.arancel_plataforma
+                tasa_base      = Decimal('0')
+                aplica_iva_gen = True
+                aplica_iva_fin = False
+
+        iva_f     = Decimal(str(iva_val))     / 100
+        iva_fin_f = Decimal(str(iva_fin_val)) / 100
+
+        # ── Porcentajes efectivos — cada toggle independiente ──────────
+        tasa_pct = Decimal(str(tasa_base)) * (1 + iva_fin_f) if aplica_iva_fin else Decimal(str(tasa_base))
+        com_pct  = Decimal(str(com_base))  * (1 + iva_f)     if aplica_iva_gen else Decimal(str(com_base))
+        ar_pct   = Decimal(str(ar_base))   * (1 + iva_f)     if aplica_iva_gen else Decimal(str(ar_base))
+        total_pct = tasa_pct + com_pct + ar_pct
+
+        # ── Desglose proporcional en $ ─────────────────────────────────
+        if total_pct > 0:
+            ar_monto   = (total_commission * (ar_pct   / total_pct)).quantize(Decimal('0.01'), ROUND_HALF_UP)
+            tasa_monto = (total_commission * (tasa_pct / total_pct)).quantize(Decimal('0.01'), ROUND_HALF_UP)
+            com_monto  = total_commission - ar_monto - tasa_monto
+        else:
+            ar_monto = tasa_monto = Decimal('0.00')
+            com_monto = total_commission
+
+        # ── IVA desglosado por separado ────────────────────────────────
+        iva_21  = Decimal('0.00')
+        iva_105 = Decimal('0.00')
+
+        if aplica_iva_gen and (ar_monto + com_monto) > 0:
+            base_com_ar = (ar_monto + com_monto) / (1 + iva_f)
+            iva_21 = (ar_monto + com_monto - base_com_ar).quantize(Decimal('0.01'), ROUND_HALF_UP)
+
+        if aplica_iva_fin and tasa_monto > 0:
+            base_tasa = tasa_monto / (1 + iva_fin_f)
+            iva_105   = (tasa_monto - base_tasa).quantize(Decimal('0.01'), ROUND_HALF_UP)
+
+        cuota_valor = (monto / link.cuotas_elegidas).quantize(Decimal('0.01'), ROUND_HALF_UP)
 
         logger.debug(
-            f"PDF desglose base — link_id={link_id} "
-            f"bruto={monto_pagado_cliente} commission={total_descuentos_pago_tech} neto={neto_para_vendedor} "
-            f"tipo={link.tipo_tarjeta} cuotas={link.cuotas_elegidas}"
+            f"PDF — ar={ar_monto} com={com_monto} tasa={tasa_monto} "
+            f"iva_21={iva_21} iva_105={iva_105} total={total_commission}"
         )
-
-        iva_general_factor = (Decimal(str(config.iva)) / 100) + 1
-        iva_finan_factor = (Decimal(str(config.iva_financiacion)) / 100) + 1
-
-        # 3. Arancel
-        if link.tipo_tarjeta == 'debito':
-            arancel_base = Decimal(str(config.arancel_plataforma_debito))
-        else:
-            arancel_base = Decimal(str(config.arancel_plataforma))
-
-        arancel_monto = (monto_pagado_cliente * (arancel_base * iva_general_factor / 100)).quantize(Decimal('0.01'), ROUND_HALF_UP)
-        logger.debug(f"PDF — arancel_base={arancel_base}% arancel_con_iva={arancel_monto}")
-
-        # 4. Servicio de Gestión
-        if link.tipo_tarjeta == 'debito':
-            gestion_base = Decimal(str(config.comision_pago_tech_debito))
-        else:
-            gestion_base = Decimal(str(config.comision_pago_tech))
-
-        servicio_gestion_monto = (monto_pagado_cliente * (gestion_base * iva_general_factor / 100)).quantize(Decimal('0.01'), ROUND_HALF_UP)
-        logger.debug(f"PDF — gestion_base={gestion_base}% servicio_con_iva={servicio_gestion_monto}")
-
-        # 5. Costo Financiero (resto para que la suma cierre perfecta)
-        costo_financiero_monto = max(
-            Decimal('0.00'),
-            total_descuentos_pago_tech - arancel_monto - servicio_gestion_monto
-        )
-        if link.cuotas_elegidas <= 1:
-            logger.debug(f"PDF — 1 cuota: absorbiendo centavo de redondeo ({costo_financiero_monto}) en servicio_gestion")
-            servicio_gestion_monto += costo_financiero_monto
-            costo_financiero_monto = Decimal('0.00')
-
-        logger.debug(f"PDF — costo_financiero={costo_financiero_monto}")
-
-        # 6. IVA desglosado
-        iva_21 = ((arancel_monto + servicio_gestion_monto) / iva_general_factor * (Decimal(str(config.iva)) / 100)).quantize(Decimal('0.01'), ROUND_HALF_UP)
-        iva_105 = Decimal('0.00')
-        if costo_financiero_monto > 0:
-            iva_105 = (costo_financiero_monto / iva_finan_factor * (Decimal(str(config.iva_financiacion)) / 100)).quantize(Decimal('0.01'), ROUND_HALF_UP)
-
-        logger.debug(f"PDF — iva_21={iva_21} iva_105={iva_105}")
-
-        # 7. Cuota individual
-        cuota_valor = (monto_pagado_cliente / link.cuotas_elegidas).quantize(Decimal('0.01'), ROUND_HALF_UP)
-
-        # Validación final de cuadre
-        suma_desglose = arancel_monto + servicio_gestion_monto + costo_financiero_monto
-        diferencia = abs(suma_desglose - total_descuentos_pago_tech)
-        if diferencia > Decimal('0.02'):
-            logger.warning(
-                f"PDF — desglose no cuadra exactamente — link_id={link_id} "
-                f"suma_items={suma_desglose} total_commission={total_descuentos_pago_tech} diff={diferencia}"
-            )
-        else:
-            logger.debug(f"PDF — desglose cuadrado OK — diferencia={diferencia}")
 
         context = {
-            'link': link,
-            'cliente': link.cliente,
-            'config': config,
+            'link':     link,
+            'cliente':  link.cliente,
+            'config':   config,
             'desglose': {
-                'arancel': arancel_monto,
-                'servicio': servicio_gestion_monto,
-                'costo_finan': costo_financiero_monto,
-                'iva_21': iva_21,
-                'iva_105': iva_105,
-                'cuota_valor': cuota_valor
+                'arancel':     ar_monto,
+                'servicio':    com_monto,
+                'costo_finan': tasa_monto,
+                'iva_21':      iva_21,
+                'iva_105':     iva_105,
+                'cuota_valor': cuota_valor,
             },
-            'liq_nro': link.auth_code if link.auth_code else f"00{link.id}",
+            'liq_nro':  link.auth_code if link.auth_code else f"00{link.id}",
             'lote_nro': link.lote_number if link.lote_number else "001",
         }
 
         html_string = render_to_string('ticket_pdf.html', context)
-        html = HTML(string=html_string, base_url=request.build_absolute_uri())
-        pdf_file = html.write_pdf()
-
-        logger.info(f"PDF generado exitosamente — link_id={link_id} usuario={user_id} filename=Liquidacion_{link.auth_code if link.auth_code else link.id}.pdf")
+        html        = HTML(string=html_string, base_url=request.build_absolute_uri())
+        pdf_file    = html.write_pdf()
 
         response = HttpResponse(pdf_file, content_type='application/pdf')
-        filename = f"Liquidacion_{link.auth_code if link.auth_code else link.id}.pdf"
+        filename  = f"Liquidacion_{link.auth_code if link.auth_code else link.id}.pdf"
         response['Content-Disposition'] = f'inline; filename="{filename}"'
         return response
 
     except LinkPago.DoesNotExist:
-        logger.warning(f"PDF — link no encontrado o no pertenece al usuario — link_id={link_id} usuario={user_id}")
         return HttpResponse("El comprobante solicitado no existe.", status=404)
     except Exception as e:
-        logger.exception(f"PDF — error inesperado — link_id={link_id} usuario={user_id}: {e}")
-        return HttpResponse(f"Error interno al generar el PDF: {str(e)}", status=500)
-
+        logger.exception(f"PDF — error inesperado — link_id={link_id}: {e}")
+        return HttpResponse(f"Error interno: {str(e)}", status=500)
 
 def download_ticket(request, link_id):
     user_id = request.session.get('user_id')

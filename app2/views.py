@@ -324,25 +324,18 @@ def configuracion_financiera(request):
         iva_f     = Decimal(str(iva_val))     / 100
         iva_fin_f = Decimal(str(iva_fin_val)) / 100
 
-        # ── NUEVO: toggle tasa financiación ──────────────────────────
-        if c.tasa_aplica_iva_fin:
-            tasa_cuota_iva = Decimal(str(c.tasa_base)) * (1 + iva_fin_f)
-        else:
-            tasa_cuota_iva = Decimal(str(c.tasa_base))
+        # Cada toggle es independiente
+        tasa_eff = Decimal(str(c.tasa_base)) * (1 + iva_fin_f) if c.tasa_aplica_iva_fin  else Decimal(str(c.tasa_base))
+        com_eff  = Decimal(str(com_cred))    * (1 + iva_f)     if c.comision_aplica_iva  else Decimal(str(com_cred))
+        ar_eff   = Decimal(str(ar_cred))     * (1 + iva_f)     if c.comision_aplica_iva  else Decimal(str(ar_cred))
 
-        com_cred_eff = Decimal(str(com_cred)) * (1 + iva_f) if c.comision_aplica_iva else Decimal(str(com_cred))
-        ar_cred_eff  = Decimal(str(ar_cred))  * (1 + iva_f) if c.arancel_aplica_iva  else Decimal(str(ar_cred))
-
-        multiplicador_financiero = 1 + (tasa_cuota_iva / 100)
-        costos_transaccionales   = com_cred_eff + ar_cred_eff
-        divisor_transaccional    = 1 - (costos_transaccionales / 100)
+        total_descuentos      = tasa_eff + com_eff + ar_eff
+        divisor_transaccional = 1 - (total_descuentos / 100)
 
         try:
-            coeficiente      = multiplicador_financiero / divisor_transaccional if divisor_transaccional > 0 else Decimal('0')
-            total_descuentos = costos_transaccionales + tasa_cuota_iva
+            coeficiente = Decimal('1') / divisor_transaccional if divisor_transaccional > 0 else Decimal('0')
         except Exception:
-            coeficiente      = Decimal('0')
-            total_descuentos = Decimal('0')
+            coeficiente = Decimal('0')
 
         proyecciones.append({
             'obj':              c,

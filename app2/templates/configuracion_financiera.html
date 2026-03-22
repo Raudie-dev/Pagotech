@@ -120,6 +120,31 @@
         display: block; margin-top: 16px; cursor: pointer;
     }
     .btn-formula-link:hover { background: rgba(227,179,65,0.2); color: #f0c040; }
+    /* ── Mobile ────────────────────────────────────────────────────── */
+    @media (max-width: 991px) {
+        .modal.modal-plan-config .modal-dialog { max-width: 98vw; margin: 0.5rem auto; }
+        .modal-plan-config .modal-body { padding: 1rem !important; }
+        .calc-live-box { padding: 12px 14px; }
+        .calc-input-label { width: 85px; font-size: 0.61rem; }
+    }
+    @media (max-width: 767px) {
+        /* Tabla principal — scroll horizontal */
+        .custom-dark-table thead th,
+        .custom-dark-table tbody td { white-space: nowrap; }
+        /* Cards resumen — 2 columnas en mobile */
+        .row.g-4.mb-5 > .col-md-3 { flex: 0 0 50%; max-width: 50%; }
+        /* Header de la página */
+        .d-flex.justify-content-between.align-items-end { flex-direction: column; align-items: flex-start !important; gap: 8px; }
+    }
+    @media (max-width: 575px) {
+        .row.g-4.mb-5 > .col-md-3 { flex: 0 0 100%; max-width: 100%; }
+        .modal-dialog { margin: 0.25rem; }
+        .modal-plan-config .modal-footer { flex-direction: column; gap: 8px !important; }
+        .modal-plan-config .modal-footer .btn { width: 100%; }
+    }
+
+    /* ── Tabla responsive — fijar ancho mínimo ─────────────────────── */
+    .custom-dark-table { min-width: 680px; }
 </style>
 {% endblock %}
 
@@ -811,8 +836,10 @@ data-tasa-iva-fin="{% if item.obj.tasa_aplica_iva_fin %}1{% else %}0{% endif %}"
 
                                 <!-- ══ MODO DIRECTO ══ -->
                                 <div id="calc_directo_{{ item.obj.id }}">
+
+                                    <!-- Input precio contado -->
                                     <div class="calc-input-row mb-3">
-                                        <label class="calc-input-label">Precio contado</label>
+                                        <label class="calc-input-label">Precio al cliente</label>
                                         <div class="input-group input-group-sm flex-grow-1">
                                             <span class="input-group-text input-group-text-custom">$</span>
                                             <input type="number" step="0.01" min="0"
@@ -823,58 +850,136 @@ data-tasa-iva-fin="{% if item.obj.tasa_aplica_iva_fin %}1{% else %}0{% endif %}"
                                         </div>
                                     </div>
 
-                                    <div class="flex-grow-1">
-                                        <div class="calc-result-row">
-                                            <span class="calc-result-label">Tasa base</span>
-                                            <span class="calc-result-value" style="color:#adb5bd;"
-                                                id="calc_tasa_{{ item.obj.id }}">{{ item.obj.tasa_base }}%</span>
+                                    <!-- Coeficiente siempre visible -->
+                                    <div style="background:rgba(86,211,100,0.07); border:1px solid rgba(86,211,100,0.2);
+                                                border-radius:8px; padding:10px 14px; margin-bottom:12px;">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <span style="font-size:0.65rem; font-weight:800; text-transform:uppercase;
+                                                        letter-spacing:0.5px; color:#6c757d;">COEFICIENTE</span>
+                                            <span class="fw-bold" style="color:#56d364; font-size:1.2rem;"
+                                                id="calc_coef_{{ item.obj.id }}">{{ item.coeficiente }}</span>
                                         </div>
-                                        <div class="calc-result-row">
-                                            <span class="calc-result-label">IVA fin. usado</span>
-                                            <span class="calc-result-value" style="color:#79c0ff;"
-                                                id="calc_iva_fin_{{ item.obj.id }}">
-                                                {{ item.obj.iva_financiacion_override|default:config.iva_financiacion }}%
+                                        <div class="d-flex justify-content-between align-items-center mt-1">
+                                            <span style="font-size:0.62rem; color:#495057; text-transform:uppercase; font-weight:700;">
+                                                DESC. TOTAL
                                             </span>
-                                        </div>
-                                        <div class="calc-result-row">
-                                            <span class="calc-result-label">Tasa con IVA fin.</span>
-                                            <span class="calc-result-value" style="color:#79c0ff;"
-                                                id="calc_tasa_iva_{{ item.obj.id }}">—</span>
-                                        </div>
-                                        <div class="calc-result-row">
-                                            <span class="calc-result-label">Comisión PT eff.</span>
-                                            <span class="calc-result-value" style="color:#56d364;"
-                                                id="calc_pt_eff_{{ item.obj.id }}">—</span>
-                                        </div>
-                                        <div class="calc-result-row">
-                                            <span class="calc-result-label">Arancel eff.</span>
-                                            <span class="calc-result-value" style="color:#56d364;"
-                                                id="calc_ar_eff_{{ item.obj.id }}">—</span>
-                                        </div>
-                                        <div class="calc-result-row">
-                                            <span class="calc-result-label">Desc. total</span>
-                                            <span class="calc-result-value" style="color:#ff7b72;"
-                                                id="calc_desc_{{ item.obj.id }}">—</span>
+                                            <span style="font-size:0.78rem; color:#ff7b72; font-weight:800;"
+                                                id="calc_desc_pct_{{ item.obj.id }}">{{ item.total_descuentos }}%</span>
                                         </div>
                                     </div>
 
-                                    <div class="mt-3 pt-3 border-top border-secondary">
-                                        <div class="d-flex justify-content-between align-items-center mb-2">
-                                            <span class="calc-result-label" style="font-size:0.7rem;">COEFICIENTE</span>
-                                            <span class="fw-bold" style="color:#56d364; font-size:1.1rem;"
-                                                id="calc_coef_{{ item.obj.id }}">{{ item.coeficiente }}</span>
+                                    <!-- Desglose estilo Excel (visible solo si hay monto) -->
+                                    <div id="calc_desglose_{{ item.obj.id }}" style="display:none;">
+
+                                        <!-- Importe de venta -->
+                                        <div style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1);
+                                                    border-radius:6px; padding:8px 12px; margin-bottom:8px;">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <span style="font-size:0.68rem; color:#adb5bd; font-weight:700; text-transform:uppercase;">
+                                                    <i class="fas fa-shopping-cart me-1 text-info"></i>Importe de Venta
+                                                </span>
+                                                <span style="font-size:0.92rem; font-weight:800; color:white;"
+                                                    id="calc_venta_{{ item.obj.id }}">—</span>
+                                            </div>
+                                            <div style="font-size:0.6rem; color:#495057; margin-top:2px;">
+                                                Lo que paga el cliente
+                                            </div>
                                         </div>
-                                        <div class="d-flex justify-content-between align-items-center mb-2">
-                                            <span class="calc-result-label" style="font-size:0.7rem;">PRECIO VENTA</span>
-                                            <span class="fw-bold text-white" style="font-size:1.05rem;"
-                                                id="calc_precio_{{ item.obj.id }}">—</span>
+
+                                        <!-- Líneas de descuento — estilo resumen Payway -->
+                                        <div style="background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.06);
+                                                    border-radius:6px; overflow:hidden; margin-bottom:8px;">
+
+                                            <!-- Arancel -->
+                                            <div style="display:flex; justify-content:space-between; align-items:center;
+                                                        padding:7px 12px; border-bottom:1px solid rgba(255,255,255,0.05);">
+                                                <div>
+                                                    <span style="font-size:0.66rem; color:#6c757d; font-weight:700; text-transform:uppercase;">
+                                                        Arancel Payway
+                                                    </span>
+                                                    <span style="font-size:0.6rem; color:#495057; margin-left:6px;"
+                                                        id="calc_ar_pct_{{ item.obj.id }}"></span>
+                                                </div>
+                                                <span style="font-size:0.78rem; font-weight:800; color:#e63946;"
+                                                    id="calc_ar_monto_{{ item.obj.id }}">—</span>
+                                            </div>
+
+                                            <!-- Costos Financieros (tasa) -->
+                                            <div style="display:flex; justify-content:space-between; align-items:center;
+                                                        padding:7px 12px; border-bottom:1px solid rgba(255,255,255,0.05);">
+                                                <div>
+                                                    <span style="font-size:0.66rem; color:#6c757d; font-weight:700; text-transform:uppercase;">
+                                                        Costos Financieros
+                                                    </span>
+                                                    <span style="font-size:0.6rem; color:#495057; margin-left:6px;"
+                                                        id="calc_tasa_pct_{{ item.obj.id }}"></span>
+                                                </div>
+                                                <span style="font-size:0.78rem; font-weight:800; color:#e63946;"
+                                                    id="calc_tasa_monto_{{ item.obj.id }}">—</span>
+                                            </div>
+
+                                            <!-- Comisión PT -->
+                                            <div style="display:flex; justify-content:space-between; align-items:center;
+                                                        padding:7px 12px; border-bottom:1px solid rgba(255,255,255,0.05);">
+                                                <div>
+                                                    <span style="font-size:0.66rem; color:#6c757d; font-weight:700; text-transform:uppercase;">
+                                                        Comisión PagoTech
+                                                    </span>
+                                                    <span style="font-size:0.6rem; color:#495057; margin-left:6px;"
+                                                        id="calc_pt_pct_{{ item.obj.id }}"></span>
+                                                </div>
+                                                <span style="font-size:0.78rem; font-weight:800; color:#e63946;"
+                                                    id="calc_pt_monto_{{ item.obj.id }}">—</span>
+                                            </div>
+
+                                            <!-- IVA -->
+                                            <div style="display:flex; justify-content:space-between; align-items:center;
+                                                        padding:7px 12px;">
+                                                <div>
+                                                    <span style="font-size:0.66rem; color:#6c757d; font-weight:700; text-transform:uppercase;">
+                                                        IVA
+                                                    </span>
+                                                    <span style="font-size:0.6rem; color:#495057; margin-left:6px;"
+                                                        id="calc_iva_pct_lbl_{{ item.obj.id }}"></span>
+                                                </div>
+                                                <span style="font-size:0.78rem; font-weight:800; color:#e63946;"
+                                                    id="calc_iva_monto_{{ item.obj.id }}">—</span>
+                                            </div>
                                         </div>
-                                        <div class="d-flex justify-content-between align-items-center">
-                                            <span class="calc-result-label" style="font-size:0.7rem;">RECARGO $</span>
-                                            <span class="fw-bold" style="color:#ff7b72; font-size:0.9rem;"
-                                                id="calc_recargo_{{ item.obj.id }}">—</span>
+
+                                        <!-- Total Descuento -->
+                                        <div style="display:flex; justify-content:space-between; align-items:center;
+                                                    padding:7px 12px; background:rgba(230,57,70,0.1);
+                                                    border:1px solid rgba(230,57,70,0.2); border-radius:6px; margin-bottom:6px;">
+                                            <span style="font-size:0.68rem; color:#ff7b72; font-weight:800; text-transform:uppercase;">
+                                                Total Descuento
+                                            </span>
+                                            <span style="font-size:0.85rem; font-weight:800; color:#ff7b72;"
+                                                id="calc_desc_monto_{{ item.obj.id }}">—</span>
+                                        </div>
+
+                                        <!-- Saldo al comercio -->
+                                        <div style="display:flex; justify-content:space-between; align-items:center;
+                                                    padding:10px 14px; background:rgba(86,211,100,0.1);
+                                                    border:1px solid rgba(86,211,100,0.25); border-radius:6px;">
+                                            <div>
+                                                <span style="font-size:0.68rem; color:#56d364; font-weight:800; text-transform:uppercase;">
+                                                    Saldo al Comercio
+                                                </span>
+                                                <div style="font-size:0.6rem; color:#495057;">Precio contado ingresado</div>
+                                            </div>
+                                            <span style="font-size:1rem; font-weight:800; color:#56d364;"
+                                                id="calc_neto_{{ item.obj.id }}">—</span>
                                         </div>
                                     </div>
+
+                                    <!-- Placeholder cuando no hay monto -->
+                                    <div id="calc_placeholder_{{ item.obj.id }}"
+                                        style="text-align:center; padding:20px 0; color:#495057;">
+                                        <i class="fas fa-arrow-up mb-2" style="font-size:1.2rem; display:block;"></i>
+                                        <span style="font-size:0.7rem;">Ingresá el precio contado para ver el desglose</span>
+                                    </div>
+
                                 </div>
 
                                 <!-- ══ MODO INVERSO ══ -->
@@ -937,12 +1042,12 @@ data-tasa-iva-fin="{% if item.obj.tasa_aplica_iva_fin %}1{% else %}0{% endif %}"
 
                                     <div class="mt-3 pt-3 border-top border-secondary">
                                         <div class="d-flex justify-content-between align-items-center mb-2">
-                                            <span class="calc-result-label" style="font-size:0.7rem;">PRECIO VENTA</span>
+                                            <span class="calc-result-label" style="font-size:0.7rem;">SALDO COMERCIO</span>
                                             <span class="fw-bold text-white" style="font-size:1.05rem;"
                                                 id="inv_precio_{{ item.obj.id }}">—</span>
                                         </div>
                                         <div class="d-flex justify-content-between align-items-center">
-                                            <span class="calc-result-label" style="font-size:0.7rem;">RECARGO $</span>
+                                            <span class="calc-result-label" style="font-size:0.7rem;">DESCUENTO $</span>
                                             <span class="fw-bold" style="color:#ff7b72; font-size:0.9rem;"
                                                 id="inv_recargo_{{ item.obj.id }}">—</span>
                                         </div>
@@ -1154,110 +1259,133 @@ function getEffectiveParams(planId) {
     return { iva, ivaFin, comCred, arCred, comIva, arIva, tasaAplIva, tasaBase };
 }
 
-/* ─── MODO DIRECTO: tasa → coeficiente ────────────────────────── */
+/* ─── MODO DIRECTO — modelo ABSORBE ──────────────────────────── */
 function recalcPlan(planId) {
     const p = getEffectiveParams(planId);
     if (!p) return;
     if ([p.iva, p.ivaFin, p.comCred, p.arCred, p.tasaBase].some(isNaN)) return;
 
-    const ivaF   = p.iva    / 100;
-    const ivaFinF= p.ivaFin / 100;
+    const ivaF    = p.iva    / 100;
+    const ivaFinF = p.ivaFin / 100;
 
-   const tasaIva = p.tasaAplIva
-        ? p.tasaBase * (1 + ivaFinF)
-        : p.tasaBase;
-    const mult    = 1 + (tasaIva / 100);
+    // Cada toggle completamente independiente
+    const tasaEff = p.tasaAplIva ? p.tasaBase * (1 + ivaFinF) : p.tasaBase;
+    const ptEff   = p.comIva     ? p.comCred  * (1 + ivaF)    : p.comCred;
+    const arEff   = p.comIva     ? p.arCred   * (1 + ivaF)    : p.arCred;
 
-    const ptEff  = p.comIva ? p.comCred * (1 + ivaF) : p.comCred;
-    const arEff  = p.arIva  ? p.arCred  * (1 + ivaF) : p.arCred;
-    const costos = ptEff + arEff;
-    const divisor= 1 - (costos / 100);
+    const totalDescPct = tasaEff + ptEff + arEff;
+    const divisor      = 1 - (totalDescPct / 100);
+    const coef         = divisor > 0 ? 1 / divisor : 0;
 
-    const coef      = divisor > 0 ? mult / divisor : 0;
-    const descTotal = costos + tasaIva;
+    setText('calc_coef_'     + planId, coef.toFixed(6));
+    setText('calc_desc_pct_' + planId, totalDescPct.toFixed(4) + '%');
+    setText('calc_ar_pct_'      + planId, p.arCred.toFixed(2)   + '%');
+    setText('calc_tasa_pct_'    + planId, p.tasaBase.toFixed(4) + '%');
+    setText('calc_pt_pct_'      + planId, p.comCred.toFixed(2)  + '%');
+
+    // Label IVA dinámico según estado de ambos toggles
+    let ivaLabel = 'no aplica';
+    if (p.comIva && p.tasaAplIva) ivaLabel = `21% (com/ar) + ${p.ivaFin.toFixed(1)}% (tasa)`;
+    else if (p.comIva)             ivaLabel = `${p.iva.toFixed(0)}% sobre com. y arancel`;
+    else if (p.tasaAplIva)         ivaLabel = `${p.ivaFin.toFixed(1)}% solo sobre tasa`;
+    setText('calc_iva_pct_lbl_' + planId, ivaLabel);
 
     const montoEl = document.getElementById('calc_monto_' + planId);
     const monto   = montoEl && montoEl.value !== '' ? parseFloat(montoEl.value) : null;
-    const pVenta  = monto !== null ? monto * coef : null;
+    const desglose    = document.getElementById('calc_desglose_'    + planId);
+    const placeholder = document.getElementById('calc_placeholder_' + planId);
 
-    setText('calc_iva_fin_'  + planId, p.ivaFin.toFixed(2) + '%');
-    setText('calc_tasa_iva_' + planId, tasaIva.toFixed(4)  + '%');
-    setText('calc_pt_eff_'   + planId, ptEff.toFixed(4)    + '%');
-    setText('calc_ar_eff_'   + planId, arEff.toFixed(4)    + '%');
-    setText('calc_desc_'     + planId, descTotal.toFixed(4) + '%');
-    setText('calc_coef_'     + planId, coef.toFixed(6));
-
-    if (pVenta !== null) {
-        setText('calc_precio_'  + planId, '$ ' + pVenta.toFixed(2));
-        setText('calc_recargo_' + planId, '$ ' + (pVenta - monto).toFixed(2));
-    } else {
-        setText('calc_precio_'  + planId, '—');
-        setText('calc_recargo_' + planId, '—');
+    if (monto === null || isNaN(monto) || monto <= 0) {
+        if (desglose)    desglose.style.display    = 'none';
+        if (placeholder) placeholder.style.display = '';
+        return;
     }
+    if (desglose)    desglose.style.display    = '';
+    if (placeholder) placeholder.style.display = 'none';
+
+    const pVenta = monto;  // modelo ABSORBE
+
+    // Base sin IVA para cada componente
+    const ar_base_monto   = pVenta * p.arCred   / 100;
+    const tasa_base_monto = pVenta * p.tasaBase  / 100;
+    const pt_base_monto   = pVenta * p.comCred   / 100;
+
+    // IVA por separado según cada toggle
+    const iva_com_ar = p.comIva     ? (ar_base_monto + pt_base_monto) * ivaF    : 0;
+    const iva_tasa   = p.tasaAplIva ? tasa_base_monto * ivaFinF                  : 0;
+    const iva_total  = iva_com_ar + iva_tasa;
+
+    const total_desc_monto = ar_base_monto + tasa_base_monto + pt_base_monto + iva_total;
+    const neto             = pVenta - total_desc_monto;
+
+    const fmt = v => '$ ' + v.toLocaleString('es-AR', {
+        minimumFractionDigits: 2, maximumFractionDigits: 2
+    });
+
+    setText('calc_venta_'      + planId, fmt(pVenta));
+    setText('calc_ar_monto_'   + planId, '- ' + fmt(ar_base_monto));
+    setText('calc_tasa_monto_' + planId, '- ' + fmt(tasa_base_monto));
+    setText('calc_pt_monto_'   + planId, '- ' + fmt(pt_base_monto));
+    setText('calc_iva_monto_'  + planId, (p.comIva || p.tasaAplIva)
+        ? '- ' + fmt(iva_total)
+        : '$ 0,00');
+    setText('calc_desc_monto_' + planId, fmt(total_desc_monto));
+    setText('calc_neto_'       + planId, fmt(neto));
 }
 
-/* ─── MODO INVERSO: coeficiente → tasa_base ───────────────────── */
+/* ─── MODO INVERSO — modelo ABSORBE ──────────────────────────── */
 function recalcInverse(planId) {
     const p = getEffectiveParams(planId);
     if (!p) return;
-    if ([p.iva, p.ivaFin, p.comCred, p.arCred].some(isNaN)) return;
 
     const coefEl = document.getElementById('inv_coef_' + planId);
     const coef   = coefEl && coefEl.value !== '' ? parseFloat(coefEl.value) : null;
 
     if (coef === null || isNaN(coef) || coef <= 0) {
-        ['inv_costos_','inv_tasa_iva_','inv_tasa_base_','inv_desc_',
-         'inv_precio_','inv_recargo_'].forEach(p => setText(p + planId, '—'));
+        ['inv_costos_', 'inv_tasa_iva_', 'inv_tasa_base_', 'inv_desc_',
+         'inv_precio_', 'inv_recargo_'].forEach(pre => setText(pre + planId, '—'));
         const sug = document.getElementById('inv_sugerencia_' + planId);
         if (sug) sug.style.display = 'none';
         return;
     }
 
-    const ivaF    = p.iva    / 100;
-    const ivaFinF = p.ivaFin / 100;
+    const ivaF      = p.iva / 100;
+    const ivaFactor = p.comIva ? (1 + ivaF) : 1;
 
-    // Costos transaccionales con IVA según toggles (no dependen de la tasa)
-    const ptEff  = p.comIva ? p.comCred * (1 + ivaF) : p.comCred;
-    const arEff  = p.arIva  ? p.arCred  * (1 + ivaF) : p.arCred;
-    const costos = ptEff + arEff;
-    const divisor= 1 - (costos / 100);
+    const com_eff   = p.comCred * ivaFactor;
+    const ar_eff    = p.arCred  * ivaFactor;
+    const total_eff = (1 - 1 / coef) * 100;
+    const tasa_eff  = total_eff - com_eff - ar_eff;
+    const tasa_base = tasa_eff / ivaFactor;
+
+    setText('inv_costos_'    + planId, (com_eff + ar_eff).toFixed(4) + '%');
+    setText('inv_tasa_iva_'  + planId, tasa_eff.toFixed(4)  + '%');
+    setText('inv_tasa_base_' + planId, tasa_base.toFixed(4) + '%');
+    setText('inv_desc_'      + planId, total_eff.toFixed(4) + '%');
 
     /*
-     * Fórmula inversa:
-     *   coef = mult / divisor  →  mult = coef × divisor
-     *   mult = 1 + tasa_iva/100
-     *   tasa_iva = (mult - 1) × 100
-     *   tasa_base = tasa_iva / (1 + ivaFin/100)
+     * MODELO ABSORBE en inverso:
+     * monto ingresado = lo que cobra al cliente (bruto)
+     * neto = monto / coef = lo que recibe el comercio
+     * descuento = monto - neto
      */
-    const mult      = coef * divisor;
-    const tasaIva   = (mult - 1) * 100;
-    const tasaBase = p.tasaAplIva
-        ? tasaIva / (1 + ivaFinF)
-        : tasaIva;
-    const descTotal = costos + tasaIva;
-
-    setText('inv_costos_'    + planId, costos.toFixed(4)   + '%');
-    setText('inv_tasa_iva_'  + planId, tasaIva.toFixed(4)  + '%');
-    setText('inv_tasa_base_' + planId, tasaBase.toFixed(4) + '%');
-    setText('inv_desc_'      + planId, descTotal.toFixed(4) + '%');
-
-    // Precio de venta opcional
     const montoEl = document.getElementById('inv_monto_' + planId);
     const monto   = montoEl && montoEl.value !== '' ? parseFloat(montoEl.value) : null;
-    if (monto !== null && !isNaN(monto)) {
-        const pVenta = monto * coef;
-        setText('inv_precio_'  + planId, '$ ' + pVenta.toFixed(2));
-        setText('inv_recargo_' + planId, '$ ' + (pVenta - monto).toFixed(2));
+
+    if (monto !== null && !isNaN(monto) && monto > 0) {
+        const neto_vendedor  = monto / coef;
+        const descuento_peso = monto - neto_vendedor;
+        setText('inv_precio_'  + planId, '$ ' + neto_vendedor.toFixed(2));   // saldo comercio
+        setText('inv_recargo_' + planId, '$ ' + descuento_peso.toFixed(2));  // descuento $
     } else {
         setText('inv_precio_'  + planId, '—');
         setText('inv_recargo_' + planId, '—');
     }
 
-    // Mostrar sugerencia si la tasa es válida (≥ 0)
     const sug = document.getElementById('inv_sugerencia_' + planId);
     if (sug) {
-        if (tasaBase >= 0) {
-            setText('inv_sugerencia_val_' + planId, tasaBase.toFixed(4) + '%');
+        if (tasa_base >= 0) {
+            setText('inv_sugerencia_val_' + planId, tasa_base.toFixed(4) + '%');
             sug.style.display = '';
         } else {
             sug.style.display = 'none';

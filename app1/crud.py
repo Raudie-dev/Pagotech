@@ -189,29 +189,27 @@ def get_dashboard_stats(cliente_pk: Any) -> Dict[str, Any]:
 
 def create_link(cliente_pk, monto_contado, cuotas=1, tipo_tarjeta='credito', descripcion=None):
     """
-    Crea un link de pago trasladando el costo financiero al cliente final.
-    Utiliza parámetros dinámicos de App2 (Débito vs Crédito).
-    Garantiza que el Débito sea siempre en 1 pago para evitar errores de pasarela.
+    Modelo ABSORBE: el vendedor ingresa el precio que cobra al cliente.
+    Payway descuenta sobre ese precio y el vendedor recibe el neto resultante.
     """
     logger.info(
-        f"create_link — cliente={cliente_pk} monto={monto_contado} "
+        f"create_link — cliente={cliente_pk} monto_cobrado={monto_contado} "
         f"tipo={tipo_tarjeta} cuotas={cuotas} descripcion='{descripcion}'"
     )
-
     cliente = get_cliente(cliente_pk)
     if not cliente:
         logger.error(f"create_link — cliente no encontrado id={cliente_pk}")
         return None, ['Cliente no encontrado.']
 
-    # PASO 0: Seguridad débito → siempre 1 cuota
+    # Débito siempre 1 cuota
     if tipo_tarjeta == 'debito' and cuotas != 1:
-        logger.debug(f"create_link — débito detectado, forzando cuotas de {cuotas} a 1")
+        logger.debug(f"create_link — débito detectado, forzando cuotas a 1")
         cuotas = 1
 
     # 1. Configuración financiera
     config = ParametroFinanciero.objects.first()
     if not config:
-        logger.warning("create_link — ParametroFinanciero no encontrado, usando fallback de emergencia")
+        logger.warning("create_link — ParametroFinanciero no encontrado, creando fallback")
         config = ParametroFinanciero.objects.create(
             iva=21, iva_financiacion=10.5,
             comision_pago_tech=4, arancel_plataforma=1.8,
@@ -219,91 +217,89 @@ def create_link(cliente_pk, monto_contado, cuotas=1, tipo_tarjeta='credito', des
         )
 
     try:
-        monto_original = Decimal(str(monto_contado))
-        iva_gen_factor = (Decimal(str(config.iva)) / 100) + 1
-        iva_finan_factor = (Decimal(str(config.iva_financiacion)) / 100) + 1
+        # El monto ingresado ES lo que cobra al cliente (precio bruto)
+        monto_cobrado = Decimal(str(monto_contado))
 
-        logger.debug(
-            f"create_link — factores IVA: gen={iva_gen_factor} finan={iva_finan_factor} "
-            f"monto_original={monto_original}"
-        )
-
-        # 2. Tasas según medio de pago
         if tipo_tarjeta == 'debito':
-            pt_base = config.comision_pago_tech_debito
-            arancel_base = config.arancel_plataforma_debito
-            tasa_finan_iva = Decimal('0')
+            # Débito: siempre usa config global, sin tasa de financiación
+            iva_f   = Decimal(str(config.iva)) / 100
+            pt_eff  = Decimal(str(config.comision_pago_tech_debito)) * (1 + iva_f)
+            ar_eff  = Decimal(str(config.arancel_plataforma_debito)) * (1 + iva_f)
+            tasa_eff = Decimal('0')
             logger.debug(
-                f"create_link — DÉBITO: pt_base={pt_base}% arancel_base={arancel_base}% "
-                f"tasa_finan=0% (sin financiación)"
+                f"create_link — DÉBITO: pt_eff={pt_eff:.4f}% "
+                f"ar_eff={ar_eff:.4f}% tasa=0%"
             )
         else:
-            pt_base = config.comision_pago_tech
-            arancel_base = config.arancel_plataforma
-            tasa_finan_iva = Decimal('0')
-
+            # Crédito: leer plan con sus overrides
             if cuotas > 1:
                 plan = CuotaConfig.objects.filter(numero_cuota=cuotas, activa=True).first()
                 if not plan:
                     logger.error(f"create_link — plan de {cuotas} cuotas no encontrado o inactivo")
                     return None, [f'El plan de {cuotas} cuotas no está habilitado actualmente.']
-                tasa_finan_iva = Decimal(str(plan.tasa_base)) * iva_finan_factor
+
+                # Valores efectivos del plan (override o global)
+                iva_val     = plan.iva_override              if plan.iva_override is not None              else config.iva
+                iva_fin_val = plan.iva_financiacion_override if plan.iva_financiacion_override is not None else config.iva_financiacion
+                com_val     = plan.com_credito_override      if plan.com_credito_override is not None      else config.comision_pago_tech
+                ar_val      = plan.arancel_credito_override  if plan.arancel_credito_override is not None  else config.arancel_plataforma
+
+                iva_f     = Decimal(str(iva_val))     / 100
+                iva_fin_f = Decimal(str(iva_fin_val)) / 100
+
+                # Cada toggle es independiente
+                tasa_eff = Decimal(str(plan.tasa_base)) * (1 + iva_fin_f) if plan.tasa_aplica_iva_fin else Decimal(str(plan.tasa_base))
+                pt_eff   = Decimal(str(com_val))        * (1 + iva_f)     if plan.comision_aplica_iva  else Decimal(str(com_val))
+                ar_eff   = Decimal(str(ar_val))         * (1 + iva_f)     if plan.comision_aplica_iva  else Decimal(str(ar_val))
+
                 logger.debug(
-                    f"create_link — CRÉDITO {cuotas}c: plan='{plan.nombre}' "
-                    f"tasa_base={plan.tasa_base}% tasa_con_iva={tasa_finan_iva:.4f}%"
+                    f"create_link — CRÉDITO {cuotas}c plan='{plan.nombre}' "
+                    f"tasa_base={plan.tasa_base}% iva_factor={iva_f} "
+                    
+                    f"tasa_eff={tasa_eff:.4f}% pt_eff={pt_eff:.4f}% ar_eff={ar_eff:.4f}%"
                 )
             else:
+                # Crédito contado (1 cuota): sin tasa de financiación
+                iva_f   = Decimal(str(config.iva)) / 100
+                pt_eff  = Decimal(str(config.comision_pago_tech)) * (1 + iva_f)
+                ar_eff  = Decimal(str(config.arancel_plataforma)) * (1 + iva_f)
+                tasa_eff = Decimal('0')
                 logger.debug(
-                    f"create_link — CRÉDITO contado: pt_base={pt_base}% arancel_base={arancel_base}%"
+                    f"create_link — CRÉDITO contado: pt_eff={pt_eff:.4f}% ar_eff={ar_eff:.4f}%"
                 )
 
-        # 3. Sumatoria de descuentos
-        desc_pt_iva = Decimal(str(pt_base)) * iva_gen_factor
-        desc_aran_iva = Decimal(str(arancel_base)) * iva_gen_factor
-        total_desc_pct = desc_pt_iva + desc_aran_iva + tasa_finan_iva
-
+        # 2. Total de descuentos y validación
+        total_desc_pct = tasa_eff + pt_eff + ar_eff
         logger.debug(
-            f"create_link — descuentos: pt+iva={desc_pt_iva:.4f}% "
-            f"arancel+iva={desc_aran_iva:.4f}% finan+iva={tasa_finan_iva:.4f}% "
-            f"TOTAL={total_desc_pct:.4f}%"
+            f"create_link — total_desc={total_desc_pct:.4f}% "
+            f"(tasa={tasa_eff:.4f}% + pt={pt_eff:.4f}% + ar={ar_eff:.4f}%)"
         )
 
-        # 4. Coeficiente
-        divisor = 1 - (total_desc_pct / 100)
-        if divisor <= 0:
-            logger.error(
-                f"create_link — divisor <= 0 ({divisor}), tasas superan el 100% — "
-                f"total_desc={total_desc_pct}%"
-            )
-            return None, ["Error crítico: La sumatoria de tasas supera el 100%. Verifique el Admin."]
+        if total_desc_pct >= 100:
+            logger.error(f"create_link — tasas superan el 100%: {total_desc_pct}%")
+            return None, ["Error crítico: La sumatoria de tasas supera el 100%. Verifique la configuración."]
 
-        coeficiente = 1 / divisor
-        logger.debug(f"create_link — divisor={divisor:.6f} coeficiente={coeficiente:.6f}")
-
-        # 5. Monto final
-        monto_final_venta = (monto_original * coeficiente).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
-        commission_amount = (monto_final_venta * (total_desc_pct / 100)).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
-        receiver_amount = (monto_final_venta - commission_amount).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
-
-        logger.debug(
-            f"create_link — montos: neto_esperado={monto_original} "
-            f"bruto={monto_final_venta} comision={commission_amount} neto_real={receiver_amount}"
+        # 3. Cálculo modelo ABSORBE
+        # El vendedor cobra monto_cobrado al cliente
+        # Payway descuenta el porcentaje y le liquida el neto
+        commission_amount = (monto_cobrado * (total_desc_pct / 100)).quantize(
+            Decimal('0.01'), rounding=ROUND_HALF_UP
+        )
+        receiver_amount = (monto_cobrado - commission_amount).quantize(
+            Decimal('0.01'), rounding=ROUND_HALF_UP
         )
 
-        # Alerta si el neto real difiere del esperado por más de 1 centavo
-        diferencia_neto = abs(receiver_amount - monto_original)
-        if diferencia_neto > Decimal('0.02'):
-            logger.warning(
-                f"create_link — diferencia de redondeo mayor a 2 centavos — "
-                f"esperado={monto_original} real={receiver_amount} diff={diferencia_neto}"
-            )
+        logger.debug(
+            f"create_link — ABSORBE: cobrado={monto_cobrado} "
+            f"descuento={commission_amount} neto_vendedor={receiver_amount}"
+        )
 
     except Exception as e:
         logger.exception(f"create_link — error en cálculo financiero — cliente={cliente_pk}: {e}")
         return None, [f'Error en el cálculo financiero: {str(e)}']
 
-    # 6. Payload PayZen
-    amount_in_cents = int(monto_final_venta * 100)
+    # 4. Payload PayZen — el amount es lo que paga el cliente
+    amount_in_cents = int(monto_cobrado * 100)
     order_id = f"PAY-{uuid.uuid4().hex[:10].upper()}"
 
     payload = {
@@ -311,7 +307,11 @@ def create_link(cliente_pk, monto_contado, cuotas=1, tipo_tarjeta='credito', des
         "currency": "ARS",
         "orderId": order_id,
         "channelOptions": {"channelType": "URL"},
-        "merchantComment": f"Vendedor: {cliente.nombre} | Red: {tipo_tarjeta.upper()} | Plan: {cuotas} pag."
+        "merchantComment": (
+            f"Vendedor: {cliente.nombre} | "
+            f"Red: {tipo_tarjeta.upper()} | "
+            f"Plan: {cuotas} pag."
+        )
     }
 
     if tipo_tarjeta == 'credito':
@@ -324,56 +324,56 @@ def create_link(cliente_pk, monto_contado, cuotas=1, tipo_tarjeta='credito', des
 
     logger.debug(
         f"create_link — payload PayZen: order_id={order_id} "
-        f"amount={amount_in_cents} cents ({monto_final_venta} ARS)"
+        f"amount={amount_in_cents} cents ({monto_cobrado} ARS)"
     )
 
-    # 7. Llamada a PayZen
+    # 5. Llamada a PayZen
     try:
         headers = get_payzen_auth_header()
         response = requests.post(settings.PAYZEN_URL, json=payload, headers=headers, timeout=20)
         res_data = response.json()
-
-        logger.debug(f"create_link — respuesta PayZen status={res_data.get('status')} order_id={order_id}")
+        logger.debug(
+            f"create_link — respuesta PayZen status={res_data.get('status')} "
+            f"order_id={order_id}"
+        )
 
         if res_data.get("status") == "SUCCESS":
             payment_url = res_data["answer"]["paymentURL"]
-
             link_obj = LinkPago.objects.create(
                 cliente=cliente,
                 order_id=order_id,
-                monto=monto_final_venta,
+                monto=monto_cobrado,          # lo que paga el cliente
                 cuotas=cuotas,
                 tipo_tarjeta=tipo_tarjeta,
                 descripcion=descripcion or '',
                 commission_percent=total_desc_pct,
                 commission_amount=commission_amount,
-                receiver_amount=receiver_amount,
+                receiver_amount=receiver_amount,  # lo que recibe el vendedor
                 link=payment_url
             )
-
             logger.info(
                 f"create_link — link creado OK — id={link_obj.id} order_id={order_id} "
-                f"cliente={cliente.nombre} bruto={monto_final_venta} neto={receiver_amount} "
-                f"comision={commission_amount} tipo={tipo_tarjeta} cuotas={cuotas}"
+                f"cliente={cliente.nombre} cobrado={monto_cobrado} "
+                f"descuento={commission_amount} neto={receiver_amount} "
+                f"tipo={tipo_tarjeta} cuotas={cuotas}"
             )
             return link_obj, []
 
         else:
-            answer = res_data.get("answer", {})
+            answer    = res_data.get("answer", {})
             error_msg = answer.get("errorMessage", "Respuesta fallida del gateway.")
             logger.error(
-                f"create_link — PayZen rechazó la solicitud — order_id={order_id} "
-                f"error='{error_msg}' respuesta_completa={answer}"
+                f"create_link — PayZen rechazó — order_id={order_id} "
+                f"error='{error_msg}'"
             )
             return None, [f"Pasarela PayZen indica: {error_msg}"]
 
     except requests.exceptions.Timeout:
-        logger.error(f"create_link — Timeout conectando con PayZen — order_id={order_id}")
-        return None, ["La pasarela de pago tardó demasiado en responder. Reintente."]
+        logger.error(f"create_link — Timeout con PayZen — order_id={order_id}")
+        return None, ["La pasarela de pago tardó demasiado. Reintente."]
     except Exception as e:
         logger.exception(f"create_link — falla crítica con PayZen — order_id={order_id}: {e}")
-        return None, [f"Falla crítica en la comunicación con PayZen: {str(e)}"]
-
+        return None, [f"Falla crítica con PayZen: {str(e)}"]
 
 def list_links_for_cliente(cliente_pk: Any):
     qs = LinkPago.objects.filter(cliente_id=cliente_pk).order_by('-created_at')
