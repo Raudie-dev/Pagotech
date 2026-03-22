@@ -293,6 +293,53 @@ def create_link(cliente_pk, monto_contado, cuotas=1, tipo_tarjeta='credito', des
             f"create_link — ABSORBE: cobrado={monto_cobrado} "
             f"descuento={commission_amount} neto_vendedor={receiver_amount}"
         )
+        
+        # ── Desglose proporcional para guardar en DB ───────────────────
+        tasa_pct_val = tasa_eff
+        com_pct_val  = pt_eff
+        ar_pct_val   = ar_eff
+
+        if total_desc_pct > 0:
+            d_ar   = (commission_amount * (ar_pct_val   / total_desc_pct)).quantize(Decimal('0.01'), ROUND_HALF_UP)
+            d_tasa = (commission_amount * (tasa_pct_val / total_desc_pct)).quantize(Decimal('0.01'), ROUND_HALF_UP)
+            d_com  = commission_amount - d_ar - d_tasa
+        else:
+            d_ar   = Decimal('0.00')
+            d_tasa = Decimal('0.00')
+            d_com  = commission_amount
+
+        # IVA desglosado
+        d_iva_21  = Decimal('0.00')
+        d_iva_105 = Decimal('0.00')
+
+        if tipo_tarjeta == 'debito':
+            # Débito siempre IVA 21% sobre todo
+            base_sin_iva = commission_amount / (1 + Decimal(str(config.iva)) / 100)
+            d_iva_21 = (commission_amount - base_sin_iva).quantize(Decimal('0.01'), ROUND_HALF_UP)
+
+        elif cuotas > 1 and plan:
+            iva_fin_val = plan.iva_financiacion_override if plan.iva_financiacion_override is not None else config.iva_financiacion
+            iva_fin_f_local = Decimal(str(iva_fin_val)) / 100
+
+            if plan.comision_aplica_iva and (d_ar + d_com) > 0:
+                base_com_ar = (d_ar + d_com) / (1 + iva_f)
+                d_iva_21 = (d_ar + d_com - base_com_ar).quantize(Decimal('0.01'), ROUND_HALF_UP)
+
+            if plan.tasa_aplica_iva_fin and d_tasa > 0:
+                base_tasa = d_tasa / (1 + iva_fin_f_local)
+                d_iva_105 = (d_tasa - base_tasa).quantize(Decimal('0.01'), ROUND_HALF_UP)
+        else:
+            # Crédito contado 1 cuota
+            if (d_ar + d_com) > 0:
+                base_sin_iva = (d_ar + d_com) / (1 + iva_f)
+                d_iva_21 = (d_ar + d_com - base_sin_iva).quantize(Decimal('0.01'), ROUND_HALF_UP)
+
+        d_cuota_valor = (monto_cobrado / cuotas).quantize(Decimal('0.01'), ROUND_HALF_UP)
+
+        logger.debug(
+            f"create_link — desglose: ar={d_ar} com={d_com} tasa={d_tasa} "
+            f"iva_21={d_iva_21} iva_105={d_iva_105}"
+        )
 
     except Exception as e:
         logger.exception(f"create_link — error en cálculo financiero — cliente={cliente_pk}: {e}")
@@ -349,7 +396,13 @@ def create_link(cliente_pk, monto_contado, cuotas=1, tipo_tarjeta='credito', des
                 commission_percent=total_desc_pct,
                 commission_amount=commission_amount,
                 receiver_amount=receiver_amount,  # lo que recibe el vendedor
-                link=payment_url
+                link=payment_url,
+                desglose_arancel=d_ar,
+                desglose_comision=d_com,
+                desglose_tasa=d_tasa,
+                desglose_iva_21=d_iva_21,
+                desglose_iva_105=d_iva_105,
+                desglose_cuota_valor=d_cuota_valor
             )
             logger.info(
                 f"create_link — link creado OK — id={link_obj.id} order_id={order_id} "

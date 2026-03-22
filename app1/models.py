@@ -46,6 +46,13 @@ class LinkPago(models.Model):
 
     # texto de factura / ticket para descargar
     invoice_text = models.TextField(null=True, blank=True)
+    
+    desglose_arancel    = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    desglose_comision   = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    desglose_tasa       = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    desglose_iva_21     = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    desglose_iva_105    = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    desglose_cuota_valor = models.DecimalField(max_digits=12, decimal_places=2, default=0)
 
     def generate_invoice_text(self):
         """Genera un texto simple de factura/ticket y lo guarda en invoice_text (no reemplaza un PDF)."""

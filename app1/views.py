@@ -297,76 +297,35 @@ def ticket_pdf(request, link_id):
         if not config:
             return HttpResponse("Configuración financiera no encontrada.", status=500)
 
-        monto            = Decimal(str(link.monto))
-        total_commission = Decimal(str(link.commission_amount))
+        monto = Decimal(str(link.monto))
 
-        # ── Parámetros efectivos del plan ──────────────────────────────
-        if link.tipo_tarjeta == 'debito':
-            iva_val          = config.iva
-            iva_fin_val      = config.iva_financiacion
-            com_base         = config.comision_pago_tech_debito
-            ar_base          = config.arancel_plataforma_debito
-            tasa_base        = Decimal('0')
-            aplica_iva_gen   = True
-            aplica_iva_fin   = False   # débito nunca tiene financiación
+        # ── Leer desglose congelado directamente de la DB ──────────────
+        # Si el link fue creado antes de esta migración, los campos
+        # tendrán valor 0 — en ese caso recalculamos como fallback
+        tiene_desglose = link.desglose_arancel + link.desglose_comision + link.desglose_tasa > 0
+
+        if tiene_desglose:
+            ar_monto    = link.desglose_arancel
+            com_monto   = link.desglose_comision
+            tasa_monto  = link.desglose_tasa
+            iva_21      = link.desglose_iva_21
+            iva_105     = link.desglose_iva_105
+            cuota_valor = link.desglose_cuota_valor
+            logger.debug(f"PDF — usando desglose congelado de DB — link_id={link_id}")
         else:
-            plan = CuotaConfig.objects.filter(
-                numero_cuota=link.cuotas_elegidas, activa=True
-            ).first()
-
-            if plan:
-                iva_val        = plan.iva_override              if plan.iva_override is not None              else config.iva
-                iva_fin_val    = plan.iva_financiacion_override if plan.iva_financiacion_override is not None else config.iva_financiacion
-                com_base       = plan.com_credito_override      if plan.com_credito_override is not None      else config.comision_pago_tech
-                ar_base        = plan.arancel_credito_override  if plan.arancel_credito_override is not None  else config.arancel_plataforma
-                tasa_base      = plan.tasa_base if link.cuotas_elegidas > 1 else Decimal('0')
-                aplica_iva_gen = plan.comision_aplica_iva
-                aplica_iva_fin = plan.tasa_aplica_iva_fin and link.cuotas_elegidas > 1
-            else:
-                # Fallback global
-                iva_val        = config.iva
-                iva_fin_val    = config.iva_financiacion
-                com_base       = config.comision_pago_tech
-                ar_base        = config.arancel_plataforma
-                tasa_base      = Decimal('0')
-                aplica_iva_gen = True
-                aplica_iva_fin = False
-
-        iva_f     = Decimal(str(iva_val))     / 100
-        iva_fin_f = Decimal(str(iva_fin_val)) / 100
-
-        # ── Porcentajes efectivos — cada toggle independiente ──────────
-        tasa_pct = Decimal(str(tasa_base)) * (1 + iva_fin_f) if aplica_iva_fin else Decimal(str(tasa_base))
-        com_pct  = Decimal(str(com_base))  * (1 + iva_f)     if aplica_iva_gen else Decimal(str(com_base))
-        ar_pct   = Decimal(str(ar_base))   * (1 + iva_f)     if aplica_iva_gen else Decimal(str(ar_base))
-        total_pct = tasa_pct + com_pct + ar_pct
-
-        # ── Desglose proporcional en $ ─────────────────────────────────
-        if total_pct > 0:
-            ar_monto   = (total_commission * (ar_pct   / total_pct)).quantize(Decimal('0.01'), ROUND_HALF_UP)
-            tasa_monto = (total_commission * (tasa_pct / total_pct)).quantize(Decimal('0.01'), ROUND_HALF_UP)
-            com_monto  = total_commission - ar_monto - tasa_monto
-        else:
-            ar_monto = tasa_monto = Decimal('0.00')
-            com_monto = total_commission
-
-        # ── IVA desglosado por separado ────────────────────────────────
-        iva_21  = Decimal('0.00')
-        iva_105 = Decimal('0.00')
-
-        if aplica_iva_gen and (ar_monto + com_monto) > 0:
-            base_com_ar = (ar_monto + com_monto) / (1 + iva_f)
-            iva_21 = (ar_monto + com_monto - base_com_ar).quantize(Decimal('0.01'), ROUND_HALF_UP)
-
-        if aplica_iva_fin and tasa_monto > 0:
-            base_tasa = tasa_monto / (1 + iva_fin_f)
-            iva_105   = (tasa_monto - base_tasa).quantize(Decimal('0.01'), ROUND_HALF_UP)
-
-        cuota_valor = (monto / link.cuotas_elegidas).quantize(Decimal('0.01'), ROUND_HALF_UP)
+            # Fallback para links anteriores a la migración
+            logger.warning(f"PDF — desglose no guardado, recalculando — link_id={link_id}")
+            total_commission = Decimal(str(link.commission_amount))
+            cuota_valor = (monto / link.cuotas_elegidas).quantize(Decimal('0.01'), ROUND_HALF_UP)
+            ar_monto    = (total_commission / 3).quantize(Decimal('0.01'), ROUND_HALF_UP)
+            tasa_monto  = (total_commission / 3).quantize(Decimal('0.01'), ROUND_HALF_UP)
+            com_monto   = total_commission - ar_monto - tasa_monto
+            iva_21      = Decimal('0.00')
+            iva_105     = Decimal('0.00')
 
         logger.debug(
             f"PDF — ar={ar_monto} com={com_monto} tasa={tasa_monto} "
-            f"iva_21={iva_21} iva_105={iva_105} total={total_commission}"
+            f"iva_21={iva_21} iva_105={iva_105}"
         )
 
         context = {
