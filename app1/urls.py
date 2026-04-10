@@ -1,5 +1,6 @@
 from django.urls import path
 from . import views
+from utils.email_views import enviar_correo_vista
 
 urlpatterns = [
     path('', views.index, name='index'),
@@ -12,4 +13,5 @@ urlpatterns = [
     path('ticket_pdf/<int:link_id>/', views.ticket_pdf, name='ticket_pdf'),
     path('verificar-pago-ajax/<int:link_id>/', views.verificar_estado_pago_ajax, name='verificar_pago_ajax'),
     path('perfil/', views.gestion_perfil, name='perfil'),
+    path('api/enviar-correo/', enviar_correo_vista, name='enviar_correo'),
 ]

@@ -58,7 +58,8 @@ def create_cliente(nombre: str, password: str, email: Optional[str] = None, tele
         except ValidationError:
             errors.append('El formato del correo electrónico no es válido.')
 
-        if Cliente.objects.filter(email=email).exists():
+        # Usar iexact para ignorar mayúsculas/minúsculas
+        if Cliente.objects.filter(email__iexact=email).exists():
             logger.warning(f"create_cliente — email ya registrado: {email}")
             errors.append('Este correo electrónico ya está registrado.')
     else:
@@ -75,12 +76,21 @@ def create_cliente(nombre: str, password: str, email: Optional[str] = None, tele
             email=email,
             telefono=telefono or None,
             aprobado=False,
+            bloqueado=False,  # Agregar valor por defecto
         )
         cliente.save()
         logger.info(f"create_cliente — cliente creado OK — id={cliente.id} nombre={nombre} email={email}")
         return cliente, []
-    except IntegrityError:
-        logger.error(f"create_cliente — IntegrityError — email={email}")
+    except IntegrityError as e:
+        logger.error(f"create_cliente — IntegrityError — email={email} error={str(e)}")
+        
+        # Verificar si el email existe
+        if Cliente.objects.filter(email__iexact=email).exists():
+            return None, ['Este correo electrónico ya está registrado.']
+        # Verificar si el telefono existe
+        if Cliente.objects.filter(telefono=telefono).exists():
+            errors.append('Este número de teléfono ya está registrado.')
+        
         return None, ['Hubo un error de integridad. Es posible que el correo ya esté en uso.']
     except Exception as e:
         logger.exception(f"create_cliente — error inesperado — email={email}: {e}")

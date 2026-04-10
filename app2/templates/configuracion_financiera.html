@@ -5,7 +5,6 @@
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/usuarios-custom.css' %}">
 <style>
-    /* ── Base y utilidades ──────────────────────────────────────────── */
     .input-group-text-custom {
         background: rgba(255,255,255,0.05);
         border-color: rgba(255,255,255,0.1);
@@ -46,8 +45,6 @@
         letter-spacing: 0.5px;
         display: block;
     }
-
-    /* ── Danger modal ──────────────────────────────────────────────── */
     .modal-confirm-danger .modal-content {
         background-color: #1a1d21;
         border: 1px solid #e63946 !important;
@@ -68,8 +65,6 @@
         border: none;
         box-shadow: 0 4px 12px rgba(230,57,70,0.3);
     }
-
-    /* ── Fórmula (usada dentro del modal) ──────────────────────────── */
     .formula-box {
         background: rgba(0,0,0,0.35);
         border: 1px solid rgba(255,255,255,0.07);
@@ -105,8 +100,6 @@
         line-height: 1.5;
     }
     .formula-note span { color: #6c757d; }
-
-    /* ── Modal fórmula ─────────────────────────────────────────────── */
     .modal-formula .modal-content {
         background-color: #1a1d21;
         border: 1px solid rgba(255,200,0,0.2);
@@ -122,8 +115,6 @@
         text-transform: uppercase;
         letter-spacing: 1px;
     }
-
-    /* ── Overrides / Config modal ──────────────────────────────────── */
     .override-badge {
         font-size: 0.58rem;
         font-weight: 800;
@@ -187,10 +178,7 @@
         background: rgba(99,102,241,0.3);
         color: #c7d2fe;
     }
-
-    /* ── Calculadora en vivo ───────────────────────────────────────── */
     .calc-live-box {
-        overflow-x: auto;
         background: rgba(0,0,0,0.4);
         border: 1px solid rgba(86,211,100,0.2);
         border-radius: 10px;
@@ -236,8 +224,6 @@
         width: 120px;
         flex-shrink: 0;
     }
-
-    /* ── Panel lateral ─────────────────────────────────────────────── */
     .global-fallback-note {
         font-size: 0.67rem;
         line-height: 1.5;
@@ -249,182 +235,154 @@
         margin-bottom: 16px;
     }
     .global-fallback-note i { color: #e63946; }
-    .btn-formula-link {
-        background: rgba(227,179,65,0.1);
-        border: 1px solid rgba(227,179,65,0.25);
-        color: #e3b341;
-        font-size: 0.72rem;
-        font-weight: 700;
-        padding: 5px 12px;
+    .custom-dark-table { min-width: 680px; }
+
+    /* ── Lista de usuarios scrolleable ── */
+    .usuarios-list {
+        padding-left: 22px !important;
+        max-height: 280px;
+        overflow-y: auto;
+        background: rgba(0,0,0,0.2);
+        border: 1px solid rgba(255,255,255,0.07);
         border-radius: 6px;
-        transition: background 0.2s;
-        width: 100%;
-        text-align: center;
-        display: block;
-        margin-top: 16px;
-        cursor: pointer;
+        padding: 8px;
+        /* Scrollbar estilizado */
+        scrollbar-width: thin;
+        scrollbar-color: rgba(255,255,255,0.15) transparent;
     }
-    .btn-formula-link:hover {
-        background: rgba(227,179,65,0.2);
-        color: #f0c040;
+    .usuarios-list::-webkit-scrollbar { width: 4px; }
+    .usuarios-list::-webkit-scrollbar-track { background: transparent; }
+    .usuarios-list::-webkit-scrollbar-thumb {
+        background: rgba(255,255,255,0.15);
+        border-radius: 4px;
+    }
+    .usuario-item {
+        padding: 8px 6px;
+        border-radius: 4px;
+        transition: background 0.15s;
+    }
+    .usuario-item:hover { background: rgba(255,255,255,0.04); }
+
+    /* ── Alcance badge en tabla ── */
+    .badge-global {
+        background: rgba(86,211,100,0.1);
+        color: #56d364;
+        border: 1px solid rgba(86,211,100,0.2);
+        padding: 4px 10px;
+        border-radius: 20px;
+        font-size: 0.7rem;
+        font-weight: 700;
+        white-space: nowrap;
+    }
+    .badge-custom {
+        background: rgba(99,102,241,0.15);
+        color: #a5b4fc;
+        border: 1px solid rgba(99,102,241,0.3);
+        padding: 4px 10px;
+        border-radius: 20px;
+        font-size: 0.7rem;
+        font-weight: 700;
+        white-space: nowrap;
     }
 
-    /* ── Tabla y elementos generales responsive ────────────────────── */
-    .custom-dark-table {
-        min-width: 680px;
-    }
-
-    /* ── Media Queries ─────────────────────────────────────────────── */
+    /* ══════════════════════════════════
+       RESPONSIVE
+    ══════════════════════════════════ */
     @media (max-width: 991px) {
-        .modal.modal-plan-config .modal-dialog {
+        .modal-plan-config .modal-dialog {
             max-width: 98vw;
             margin: 0.5rem auto;
         }
-        .modal-plan-config .modal-body {
-            padding: 1rem !important;
-        }
-        .calc-live-box {
-            padding: 12px 14px;
-        }
-        .calc-input-label {
-            width: 85px;
-            font-size: 0.61rem;
-        }
+        .modal-plan-config .modal-body { padding: 1rem !important; }
+        .calc-live-box { padding: 12px 14px; }
+        .calc-input-label { width: 85px; font-size: 0.61rem; }
     }
 
     @media (max-width: 767px) {
+        /* Tabla */
         .custom-dark-table thead th,
         .custom-dark-table tbody td {
             padding: 0.5rem 0.25rem;
             font-size: 0.75rem;
         }
-        .form-control-sm {
-            font-size: 0.7rem;
-            padding: 0.2rem 0.5rem;
-        }
-        .btn-sm {
-            padding: 0.2rem 0.4rem;
-            font-size: 0.7rem;
-        }
-        .override-badge {
-            font-size: 0.5rem;
-            padding: 1px 4px;
-        }
+        .form-control-sm { font-size: 0.7rem; padding: 0.2rem 0.5rem; }
+        .btn-sm { padding: 0.2rem 0.4rem; font-size: 0.7rem; }
+        .override-badge { font-size: 0.5rem; padding: 1px 4px; }
         .table-header {
             flex-direction: column;
             align-items: flex-start !important;
             gap: 12px;
         }
-        .table-header .btn {
-            align-self: flex-end;
-        }
-        .custom-table-container.p-4 {
-            padding: 1rem !important;
-        }
-        .mb-3, .mb-4 {
-            margin-bottom: 0.75rem !important;
-        }
-    }
+        .table-header .btn { align-self: flex-end; }
+        .custom-table-container.p-4 { padding: 1rem !important; }
 
-    @media (max-width: 575px) {
-        .row.g-4.mb-5 > .col-md-3 {
-            flex: 0 0 100%;
-            max-width: 100%;
-        }
-        .card-body {
-            padding: 0.75rem;
-        }
-        .h2.fw-bold.mb-0 {
-            font-size: 1.3rem;
-        }
-        .mini-card-label {
-            font-size: 0.55rem;
-        }
-    }
-
-    /* ================================================================
-       MEJORAS RESPONSIVE PARA EL MODAL DE CONFIGURACIÓN PERSONALIZADA
-       ================================================================ */
-    @media (max-width: 767px) {
-        /* Ocupar casi toda la pantalla */
+        /* Modal config plan — apilar columnas */
         .modal-plan-config .modal-dialog {
             max-width: 100%;
-            margin: 0.5rem;
+            margin: 0.25rem;
         }
         .modal-plan-config .modal-content {
-            max-height: 90vh;
-            overflow-y: auto;
+            max-height: 95vh;
+            display: flex;
+            flex-direction: column;
         }
-        /* Apilar columnas verticalmente */
-        .modal-plan-config .row.g-3 > [class*="col-"] {
-            flex: 0 0 100%;
-            max-width: 100%;
-        }
-        /* Reducir padding interno */
         .modal-plan-config .modal-body {
             padding: 0.75rem !important;
+            overflow-y: auto;
+            flex: 1;
         }
-        /* Ajustar alerta informativa */
-        .modal-plan-config .alert {
-            font-size: 0.7rem;
-            padding: 0.5rem !important;
+        /* En mobile la calculadora va DEBAJO de los formularios */
+        .modal-plan-config .config-columns {
+            flex-direction: column !important;
         }
+        .modal-plan-config .col-formularios,
+        .modal-plan-config .col-calculadora {
+            width: 100% !important;
+            max-width: 100% !important;
+            flex: 0 0 100% !important;
+        }
+        /* La calculadora en mobile no ocupa toda la altura */
+        .modal-plan-config .calc-live-box {
+            height: auto !important;
+        }
+        .modal-plan-config .alert { font-size: 0.7rem; padding: 0.5rem !important; }
+
+        /* Usuarios list más compacta en mobile */
+        .usuarios-list { max-height: 150px; }
     }
 
     @media (max-width: 575px) {
-        /* Tipografía más compacta */
-        .modal-plan-config .config-section-title {
-            font-size: 0.6rem;
-        }
+        .row.g-4.mb-5 > .col-md-3 { flex: 0 0 100%; max-width: 100%; }
+        .card-body { padding: 0.75rem; }
+        .mini-card-label { font-size: 0.55rem; }
+
+        /* Modal — tipografía compacta */
+        .modal-plan-config .config-section-title { font-size: 0.6rem; }
         .modal-plan-config .form-label,
-        .modal-plan-config .calc-input-label {
-            font-size: 0.6rem;
-        }
-        .modal-plan-config .global-hint {
-            font-size: 0.55rem;
-        }
-        .modal-plan-config .calc-live-title {
-            font-size: 0.55rem;
-        }
-        .modal-plan-config .calc-result-label {
-            font-size: 0.55rem;
-        }
-        .modal-plan-config .calc-result-value {
-            font-size: 0.7rem;
-        }
-        /* Inputs de la calculadora en columna */
-        .modal-plan-config .calc-input-row .input-group {
-            flex-wrap: nowrap;
-        }
-        .modal-plan-config .calc-input-row input {
-            min-width: 0;
-        }
-        .modal-plan-config .calc-input-label {
-            width: auto;
-            min-width: 70px;
-        }
-        /* Botones de modo (DIRECTO/INVERSO) */
-        .calc-mode-btn {
-            font-size: 0.55rem !important;
-            padding: 3px 6px !important;
-        }
-        /* Toggles de IVA apilados */
-        .iva-toggle-row {
-            flex-direction: column;
-            align-items: flex-start;
-            gap: 8px;
-        }
-        .iva-toggle-row .form-switch {
-            margin-left: 0 !important;
-            align-self: flex-end;
-        }
+        .modal-plan-config .calc-input-label { font-size: 0.6rem; }
+        .modal-plan-config .global-hint { font-size: 0.55rem; }
+        .modal-plan-config .calc-live-title { font-size: 0.55rem; }
+        .modal-plan-config .calc-result-label { font-size: 0.55rem; }
+        .modal-plan-config .calc-result-value { font-size: 0.7rem; }
+        .calc-mode-btn { font-size: 0.55rem !important; padding: 3px 6px !important; }
+        .iva-toggle-row { flex-direction: column; align-items: flex-start; gap: 8px; }
+        .iva-toggle-row .form-switch { margin-left: 0 !important; align-self: flex-end; }
+        .calc-input-label { width: auto; min-width: 70px; }
+
+        /* Radios de alcance en columna */
+        .modal-plan-config .alcance-radios { flex-direction: column !important; gap: 8px !important; }
+    }
+
+    /* Forzar scroll vertical en el modal de configuración */
+    .modal-plan-config.modal .modal-dialog-scrollable .modal-body {
+        max-height: calc(100vh - 180px) !important; /* Ajusta según header+footer */
+        overflow-y: auto !important;
     }
 </style>
 {% endblock %}
 
 {% block content %}
 
-<!-- Header -->
 <div class="d-flex justify-content-between align-items-end mb-4 text-white">
     <div>
         <h2 class="mb-1"><i class="fas fa-percentage text-danger me-2"></i> Configuración Financiera</h2>
@@ -432,7 +390,7 @@
     </div>
 </div>
 
-<!-- ══════════ TARJETAS DE RESUMEN ══════════ -->
+<!-- ══════════ TARJETAS ══════════ -->
 <div class="row g-4 mb-5">
     <div class="col-md-3">
         <div class="card h-100 hover-lift border-start border-info border-4">
@@ -458,7 +416,7 @@
                     <div class="card-subtitle text-muted mb-1 small fw-bold">
                         COMISIÓN PT (+IVA)
                         <i class="fas fa-question-circle help-icon" data-bs-toggle="tooltip"
-                           title="Valores globales por defecto. Los planes con config personalizada pueden tener sus propios valores."></i>
+                           title="Valores globales por defecto."></i>
                     </div>
                     <div class="row g-0">
                         <div class="col-6">
@@ -497,7 +455,7 @@
                     <div class="card-subtitle text-muted mb-1 small fw-bold">
                         ARANCEL (+IVA)
                         <i class="fas fa-question-circle help-icon" data-bs-toggle="tooltip"
-                           title="Valores globales por defecto (Payway). Los planes con config personalizada pueden tener los suyos."></i>
+                           title="Valores globales por defecto (Payway)."></i>
                     </div>
                     <div class="row g-0">
                         <div class="col-6">
@@ -517,39 +475,33 @@
 
 <div class="row g-4">
 
-    <!-- ══════════ COLUMNA IZQUIERDA ══════════ -->
+    <!-- ══════════ PARÁMETROS GLOBALES ══════════ -->
     <div class="col-lg-3">
         <div class="custom-table-container p-4 shadow-lg animate-slide-up">
-
             <div class="d-flex justify-content-between align-items-center border-bottom border-secondary pb-2 mb-3">
                 <h5 class="text-white mb-0 small fw-bold text-uppercase">
                     <i class="fas fa-sliders-h me-2 text-danger"></i>Parámetros Globales
                 </h5>
-                <!-- Botón que abre el modal de fórmula -->
                 <button type="button" class="btn btn-sm"
                     style="background:rgba(227,179,65,0.1); border:1px solid rgba(227,179,65,0.25); color:#e3b341; font-size:0.68rem; padding:3px 10px;"
-                    data-bs-toggle="modal" data-bs-target="#formulaModal"
-                    title="Ver cómo se calcula el coeficiente">
+                    data-bs-toggle="modal" data-bs-target="#formulaModal">
                     <i class="fas fa-calculator me-1"></i> Fórmula
                 </button>
             </div>
-
             <div class="global-fallback-note">
                 <i class="fas fa-layer-group me-2"></i>
                 Valores <strong class="text-white">predeterminados</strong> para todos los planes y para
                 <strong class="text-white">débito</strong>. Cada plan puede sobreescribir cualquiera desde
                 el botón <span style="color:#a5b4fc;"><i class="fas fa-sliders-h"></i></span> de su fila.
             </div>
-
             <form method="post">
                 {% csrf_token %}
                 <input type="hidden" name="update_general" value="1">
-
                 <div class="mb-3">
                     <label class="form-label text-secondary small fw-bold">
                         IVA GENERAL
                         <i class="fas fa-question-circle help-icon" data-bs-toggle="tooltip"
-                           title="21% — Se aplica sobre Comisión PagoTech y Arancel Payway salvo que el plan lo tenga desactivado."></i>
+                           title="21% — Se aplica sobre Comisión PagoTech y Arancel Payway."></i>
                     </label>
                     <div class="input-group">
                         <input type="number" step="0.01" name="iva" class="form-control form-control-dark" value="{{ config.iva }}">
@@ -567,13 +519,8 @@
                         <span class="input-group-text input-group-text-custom">%</span>
                     </div>
                 </div>
-
                 <div class="pt-1">
-                    <h6 class="text-danger small fw-bold mb-3">
-                        CRÉDITO — VALORES BASE
-                        <i class="fas fa-question-circle help-icon" data-bs-toggle="tooltip"
-                           title="Usados en todos los planes sin override configurado."></i>
-                    </h6>
+                    <h6 class="text-danger small fw-bold mb-3">CRÉDITO — VALORES BASE</h6>
                     <div class="mb-3">
                         <label class="form-label text-muted x-small mb-1 fw-bold text-uppercase">COMISIÓN PAGO TECH</label>
                         <div class="input-group">
@@ -589,13 +536,8 @@
                         </div>
                     </div>
                 </div>
-
                 <div class="border-top border-secondary pt-3 mt-2">
-                    <h6 class="text-success small fw-bold mb-3">
-                        DÉBITO — VALORES FIJOS
-                        <i class="fas fa-question-circle help-icon" data-bs-toggle="tooltip"
-                           title="El débito no usa planes de cuotas. Siempre usa estos valores globales."></i>
-                    </h6>
+                    <h6 class="text-success small fw-bold mb-3">DÉBITO — VALORES FIJOS</h6>
                     <div class="mb-3">
                         <label class="form-label text-muted x-small mb-1 fw-bold text-uppercase">COMISIÓN PAGO TECH</label>
                         <div class="input-group">
@@ -611,7 +553,6 @@
                         </div>
                     </div>
                 </div>
-
                 <button type="submit" class="btn btn-primary w-100 py-2 fw-bold shadow">
                     <i class="fas fa-save me-2"></i> GUARDAR PARÁMETROS
                 </button>
@@ -619,7 +560,7 @@
         </div>
     </div>
 
-    <!-- ══════════ COLUMNA DERECHA — Tabla ══════════ -->
+    <!-- ══════════ TABLA ══════════ -->
     <div class="col-lg-9">
         <div class="custom-table-container shadow-lg animate-slide-up">
             <div class="table-header border-bottom border-strong d-flex justify-content-between align-items-center p-3">
@@ -627,51 +568,47 @@
                     <h6 class="mb-0 text-white fw-bold">Matriz de Coeficientes y Tasas (CRÉDITO)</h6>
                     <small class="user-sub-text">
                         Planes con <span class="override-badge"><i class="fas fa-sliders-h me-1"></i>CUSTOM</span>
-                        usan parámetros propios. El coeficiente y desc. total reflejan siempre los valores efectivos del plan.
+                        usan parámetros propios.
                     </small>
                 </div>
                 <button class="btn btn-sm btn-outline-danger px-3" data-bs-toggle="modal" data-bs-target="#addPlanModal">
                     <i class="fas fa-plus me-1"></i> Nuevo Plan
                 </button>
             </div>
-
             <div class="table-responsive">
                 <table class="table table-hover align-middle mb-0 custom-dark-table">
                     <thead>
                         <tr>
-                            <th class="ps-4" style="width: 22%;">
-                                NOMBRE
-                                <i class="fas fa-info-circle help-icon" data-bs-toggle="tooltip" title="Nombre del plan visible para el comercio titular."></i>
-                            </th>
-                            <th class="text-center">
-                                CUOTAS
-                                <i class="fas fa-info-circle help-icon" data-bs-toggle="tooltip" title="Número de cuotas del plan."></i>
-                            </th>
-                            <th style="width: 150px;">
-                                TASA BASE
-                                <i class="fas fa-info-circle help-icon" data-bs-toggle="tooltip" title="Costo bancario del financiamiento sin IVA (valor base Payway)."></i>
-                            </th>
-                            <th class="text-center">
-                                DESC. TOTAL
-                                <i class="fas fa-info-circle help-icon" data-bs-toggle="tooltip" title="Suma de todos los costos efectivos: tasa_iva + comisión_eff + arancel_eff."></i>
-                            </th>
-                            <th class="text-center">
-                                COEFICIENTE
-                                <i class="fas fa-info-circle help-icon" data-bs-toggle="tooltip" title="Precio Contado × Coeficiente = Precio de Venta al Cliente."></i>
-                            </th>
+                            <th class="ps-4" style="width:22%;">NOMBRE</th>
+                            <th class="text-center">CUOTAS</th>
+                            <th style="width:150px;">TASA BASE</th>
+                            <th class="text-center">DESC. TOTAL</th>
+                            <th class="text-center">COEFICIENTE</th>
                             <th class="text-center">ESTADO</th>
+                            <th class="text-center">
+                                ALCANCE
+                                <i class="fas fa-info-circle help-icon" data-bs-toggle="tooltip"
+                                   title="Global: todos los usuarios. Personalizado: solo asignados."></i>
+                            </th>
                             <th class="text-end pe-4">ACCIONES</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for item in proyecciones %}
                         <tr class="user-row border-bottom border-opacity-10">
+                            {# ── Formulario inline de edición básica ── #}
                             <form method="post">
                                 {% csrf_token %}
-                                <input type="hidden" name="update_cuota" value="1">
-                                <input type="hidden" name="cuota_id" value="{{ item.obj.id }}">
+                                <input type="hidden" name="update_cuota"  value="1">
+                                <input type="hidden" name="cuota_id"      value="{{ item.obj.id }}">
+                                {# ↓ Alcance se sincroniza por JS cuando se guarda desde el modal de config #}
+                                <input type="hidden" name="edit_alcance"  value="{{ item.obj.alcance }}"
+                                       id="row_alcance_{{ item.obj.id }}">
+
                                 <td class="ps-4">
-                                    <input type="text" name="edit_nombre" class="form-control form-control-sm form-control-dark" value="{{ item.obj.nombre }}">
+                                    <input type="text" name="edit_nombre"
+                                           class="form-control form-control-sm form-control-dark"
+                                           value="{{ item.obj.nombre }}">
                                     {% if item.obj.tiene_overrides %}
                                     <span class="override-badge d-inline-block mt-1">
                                         <i class="fas fa-sliders-h me-1"></i>CUSTOM
@@ -680,13 +617,14 @@
                                 </td>
                                 <td class="text-center">
                                     <input type="number" name="edit_numero"
-                                        class="form-control form-control-sm form-control-dark mx-auto text-center"
-                                        style="width:70px;" value="{{ item.obj.numero_cuota }}">
+                                           class="form-control form-control-sm form-control-dark mx-auto text-center"
+                                           style="width:70px;" value="{{ item.obj.numero_cuota }}">
                                 </td>
                                 <td>
                                     <div class="input-group input-group-sm" style="width:130px;">
                                         <input type="number" step="0.0001" name="edit_tasa"
-                                            class="form-control form-control-dark" value="{{ item.obj.tasa_base }}">
+                                               class="form-control form-control-dark"
+                                               value="{{ item.obj.tasa_base }}">
                                         <span class="input-group-text bg-dark border-secondary text-muted small">%</span>
                                     </div>
                                 </td>
@@ -703,23 +641,36 @@
                                 <td class="text-center">
                                     <div class="form-check form-switch d-inline-block">
                                         <input class="form-check-input" type="checkbox"
-                                            name="activa" {% if item.obj.activa %}checked{% endif %}>
+                                               name="activa" {% if item.obj.activa %}checked{% endif %}>
                                     </div>
+                                </td>
+                                <td class="text-center">
+                                    {% if item.obj.es_personalizado %}
+                                        <span class="badge-custom">
+                                            <i class="fas fa-user-tag me-1"></i>
+                                            {{ item.obj.usuarios_asignados.count }}
+                                            usuario{{ item.obj.usuarios_asignados.count|pluralize }}
+                                        </span>
+                                    {% else %}
+                                        <span class="badge-global">
+                                            <i class="fas fa-globe me-1"></i>Global
+                                        </span>
+                                    {% endif %}
                                 </td>
                                 <td class="text-end pe-4">
                                     <div class="d-flex justify-content-end gap-2">
                                         <button type="submit" class="btn btn-sm btn-action-dark text-info"
-                                            title="Guardar nombre / cuotas / tasa / estado">
+                                                title="Guardar cambios básicos">
                                             <i class="fas fa-save"></i>
                                         </button>
                                         <button type="button" class="btn btn-sm btn-config-plan"
-                                            title="Configuración financiera personalizada"
-                                            data-bs-toggle="modal"
-                                            data-bs-target="#configModal_{{ item.obj.id }}">
+                                                title="Configuración personalizada"
+                                                data-bs-toggle="modal"
+                                                data-bs-target="#configModal_{{ item.obj.id }}">
                                             <i class="fas fa-sliders-h"></i>
                                         </button>
                                         <button type="button" class="btn btn-sm btn-action-dark text-danger"
-                                            onclick="openDeleteModal('{{ item.obj.id }}', '{{ item.obj.nombre }}')">
+                                                onclick="openDeleteModal('{{ item.obj.id }}','{{ item.obj.nombre }}')">
                                             <i class="fas fa-trash-alt"></i>
                                         </button>
                                     </div>
@@ -736,7 +687,7 @@
 
 
 <!-- ══════════════════════════════════════════════════════════════
-     MODAL: CÓMO SE CALCULA
+     MODAL FÓRMULA
 ══════════════════════════════════════════════════════════════ -->
 <div class="modal fade modal-formula" id="formulaModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
@@ -748,52 +699,42 @@
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body p-4">
-
                 <p class="text-muted small mb-4">
-                    El coeficiente es el multiplicador que transforma el <strong class="text-white">precio de contado</strong>
-                    en el <strong class="text-white">precio de venta con tarjeta</strong>, absorbiendo todos los costos
-                    del financiamiento y las comisiones de la pasarela. Fórmula estándar <strong class="text-white">Payway / Prisma / Payzen</strong>.
+                    El coeficiente transforma el <strong class="text-white">precio de contado</strong>
+                    en el <strong class="text-white">precio de venta con tarjeta</strong>.
+                    Fórmula estándar <strong class="text-white">Payway / Prisma / Payzen</strong>.
                 </p>
-
                 <div class="row g-3">
                     <div class="col-md-6">
                         <div class="formula-box h-100">
-                            <div class="formula-title"><span style="color:#e3b341;">Paso 1</span> — Tasa de interés con IVA</div>
+                            <div class="formula-title"><span style="color:#e3b341;">Paso 1</span> — Tasa con IVA</div>
                             <div class="formula-line">
                                 <span class="var-blue">tasa_iva</span> = <span class="var-yell">tasa_base</span> × (1 + <span class="var-green">IVA_fin</span> / 100)
                             </div>
-                            <div class="formula-note">
-                                Aplica el IVA de financiación (normalmente 10.5%) sobre la tasa bancaria pura del plan.<br>
-                                Ej: tasa_base <span>5%</span>, IVA_fin <span>10.5%</span> → tasa_iva = <span>5.525%</span>
-                            </div>
+                            <div class="formula-note">Ej: 5% × 1.105 = <span>5.525%</span></div>
                         </div>
                     </div>
                     <div class="col-md-6">
                         <div class="formula-box h-100">
-                            <div class="formula-title"><span style="color:#e3b341;">Paso 2</span> — Multiplicador financiero</div>
+                            <div class="formula-title"><span style="color:#e3b341;">Paso 2</span> — Multiplicador</div>
                             <div class="formula-line">
                                 <span class="var-blue">mult</span> = 1 + (<span class="var-yell">tasa_iva</span> / 100)
                             </div>
-                            <div class="formula-note">
-                                Convierte la tasa en un factor de recargo sobre el precio.<br>
-                                Ej: tasa_iva <span>5.525%</span> → mult = <span>1.05525</span>
-                            </div>
+                            <div class="formula-note">Ej: 1 + 0.05525 = <span>1.05525</span></div>
                         </div>
                     </div>
                     <div class="col-md-12">
                         <div class="formula-box">
-                            <div class="formula-title"><span style="color:#e3b341;">Paso 3</span> — Costos transaccionales (descuentos)</div>
+                            <div class="formula-title"><span style="color:#e3b341;">Paso 3</span> — Costos transaccionales</div>
                             <div class="row g-2">
                                 <div class="col-md-4">
                                     <div class="formula-line">
                                         <span class="var-blue">pt_eff</span> = <span class="var-yell">comisión_PT</span> × (1 + <span class="var-green">IVA_gen</span>)
-                                        <em class="text-muted" style="font-size:0.65rem;"> [si aplica IVA]</em>
                                     </div>
                                 </div>
                                 <div class="col-md-4">
                                     <div class="formula-line">
                                         <span class="var-blue">ar_eff</span> = <span class="var-yell">arancel</span> × (1 + <span class="var-green">IVA_gen</span>)
-                                        <em class="text-muted" style="font-size:0.65rem;"> [si aplica IVA]</em>
                                     </div>
                                 </div>
                                 <div class="col-md-4">
@@ -802,37 +743,25 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="formula-note mt-2">
-                                El toggle <strong class="text-white">IVA SÍ/NO</strong> en la config de cada plan controla si se suma IVA general
-                                a la comisión PT y/o al arancel. Si está desactivado, se usa el valor puro sin IVA.
-                            </div>
                         </div>
                     </div>
                     <div class="col-md-6">
                         <div class="formula-box h-100">
-                            <div class="formula-title"><span style="color:#e3b341;">Paso 4</span> — Coeficiente final</div>
+                            <div class="formula-title"><span style="color:#e3b341;">Paso 4</span> — Coeficiente</div>
                             <div class="formula-line">
                                 <span class="var-green">coeficiente</span> = <span class="var-blue">mult</span> / <span class="var-red">divisor</span>
                             </div>
-                            <div class="formula-note">
-                                División del multiplicador financiero sobre el complemento de los costos transaccionales.
-                            </div>
                         </div>
                     </div>
                     <div class="col-md-6">
                         <div class="formula-box h-100">
-                            <div class="formula-title"><span style="color:#56d364;">Resultado</span> — Precio de venta</div>
+                            <div class="formula-title"><span style="color:#56d364;">Resultado</span></div>
                             <div class="formula-line">
                                 <span class="var-green">precio_venta</span> = <span class="var-yell">precio_contado</span> × <span class="var-green">coeficiente</span>
-                            </div>
-                            <div class="formula-note">
-                                El <strong class="text-white">DESC. TOTAL</strong> de la tabla = pt_eff + ar_eff + tasa_iva.<br>
-                                El <strong class="text-white">COEFICIENTE</strong> es el factor listo para multiplicar.
                             </div>
                         </div>
                     </div>
                 </div>
-
             </div>
             <div class="modal-footer border-0 pb-4">
                 <button type="button" class="btn btn-dark btn-sm px-4" data-bs-dismiss="modal">Cerrar</button>
@@ -846,7 +775,9 @@
      MODALES CONFIGURACIÓN PERSONALIZADA (uno por plan)
 ══════════════════════════════════════════════════════════════ -->
 {% for item in proyecciones %}
-<div class="modal fade modal-plan-config" id="configModal_{{ item.obj.id }}" tabindex="-1" aria-hidden="true"
+<div class="modal fade modal-plan-config"
+     id="configModal_{{ item.obj.id }}"
+     tabindex="-1" aria-hidden="true"
      data-tasa="{{ item.obj.tasa_base }}"
      data-iva="{{ item.obj.iva_override|default:config.iva }}"
      data-iva-fin="{{ item.obj.iva_financiacion_override|default:config.iva_financiacion }}"
@@ -858,7 +789,8 @@
      data-global-iva-fin="{{ config.iva_financiacion }}"
      data-global-com-cred="{{ config.comision_pago_tech }}"
      data-global-ar-cred="{{ config.arancel_plataforma }}"
-data-tasa-iva-fin="{% if item.obj.tasa_aplica_iva_fin %}1{% else %}0{% endif %}">
+     data-tasa-iva-fin="{% if item.obj.tasa_aplica_iva_fin %}1{% else %}0{% endif %}">
+
     <div class="modal-dialog modal-dialog-centered modal-xl modal-dialog-scrollable">
         <div class="modal-content">
             <form method="post">
@@ -866,6 +798,7 @@ data-tasa-iva-fin="{% if item.obj.tasa_aplica_iva_fin %}1{% else %}0{% endif %}"
                 <input type="hidden" name="update_cuota_override" value="1">
                 <input type="hidden" name="cuota_id" value="{{ item.obj.id }}">
 
+                <!-- ── Header ── -->
                 <div class="modal-header py-3">
                     <h5 class="modal-title fw-bold">
                         <i class="fas fa-sliders-h me-2"></i>Config. Personalizada —
@@ -875,127 +808,120 @@ data-tasa-iva-fin="{% if item.obj.tasa_aplica_iva_fin %}1{% else %}0{% endif %}"
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
 
+                <!-- ── Body ── -->
                 <div class="modal-body p-4">
-                    <div class="alert border-secondary small mb-4 py-2 px-3" style="background:rgba(255,255,255,0.04);">
+
+                    <div class="alert border-secondary small mb-3 py-2 px-3"
+                         style="background:rgba(255,255,255,0.04);">
                         <i class="fas fa-info-circle text-info me-2"></i>
                         Deja el campo <strong class="text-white">vacío</strong> para heredar el valor global.
-                        La calculadora de la derecha se actualiza en tiempo real con los valores que ingreses.
+                        La calculadora se actualiza en tiempo real.
                     </div>
 
-                    <div class="row g-3">
+                    {# ── Usamos flex con clase config-columns para poder invertir en mobile ── #}
+                    <div class="row g-3 config-columns">
 
-                        <!-- ── COLUMNA IZQUIERDA: formularios ── -->
-                        <div class="col-lg-7">
+                        <!-- ════ COLUMNA FORMULARIOS ════ -->
+                        <div class="col-lg-7 col-formularios">
                             <div class="row g-3">
 
                                 <!-- IVA -->
-                                <div class="col-md-6">
+                                <div class="col-sm-6">
                                     <div class="config-section h-100">
                                         <div class="config-section-title text-info">
                                             <i class="fas fa-file-invoice-dollar me-2"></i>Control de IVA
                                         </div>
-
                                         <div class="mb-3">
                                             <label class="form-label text-muted x-small fw-bold text-uppercase mb-1">IVA General</label>
                                             <div class="input-group input-group-sm">
                                                 <input type="number" step="0.01" min="0" max="100"
-                                                    name="iva_override"
-                                                    class="form-control form-control-dark calc-trigger-{{ item.obj.id }}"
-                                                    data-calc-field="iva"
-                                                    value="{{ item.obj.iva_override|default:'' }}"
-                                                    placeholder="{{ config.iva }}">
+                                                       name="iva_override"
+                                                       class="form-control form-control-dark calc-trigger-{{ item.obj.id }}"
+                                                       data-calc-field="iva"
+                                                       value="{{ item.obj.iva_override|default:'' }}"
+                                                       placeholder="{{ config.iva }}">
                                                 <span class="input-group-text input-group-text-custom">%</span>
                                             </div>
                                             <div class="global-hint">Global: <span>{{ config.iva }}%</span></div>
                                         </div>
-
                                         <div class="mb-3">
                                             <label class="form-label text-muted x-small fw-bold text-uppercase mb-1">IVA Financiación</label>
                                             <div class="input-group input-group-sm">
                                                 <input type="number" step="0.01" min="0" max="100"
-                                                    name="iva_financiacion_override"
-                                                    class="form-control form-control-dark calc-trigger-{{ item.obj.id }}"
-                                                    data-calc-field="iva_fin"
-                                                    value="{{ item.obj.iva_financiacion_override|default:'' }}"
-                                                    placeholder="{{ config.iva_financiacion }}">
+                                                       name="iva_financiacion_override"
+                                                       class="form-control form-control-dark calc-trigger-{{ item.obj.id }}"
+                                                       data-calc-field="iva_fin"
+                                                       value="{{ item.obj.iva_financiacion_override|default:'' }}"
+                                                       placeholder="{{ config.iva_financiacion }}">
                                                 <span class="input-group-text input-group-text-custom">%</span>
                                             </div>
                                             <div class="global-hint">Global: <span>{{ config.iva_financiacion }}%</span></div>
                                         </div>
-
-                                        <!-- ── Separador visual ── -->
                                         <div class="border-top border-secondary pt-3 mt-1">
                                             <div style="font-size:0.63rem; font-weight:800; text-transform:uppercase;
                                                         letter-spacing:0.5px; color:#6c757d; margin-bottom:10px;">
                                                 <i class="fas fa-toggle-on me-1"></i> ¿Cuáles IVA se cobran?
                                             </div>
-
-                                            <!-- Toggle IVA General 21% — controla Comisión Y Arancel -->
                                             <div class="iva-toggle-row">
                                                 <div>
                                                     <span class="text-white small fw-bold">
-                                                        <i class="fas fa-percentage me-2 text-warning"></i>
-                                                        IVA General
+                                                        <i class="fas fa-percentage me-2 text-warning"></i>IVA General
                                                         <span style="background:rgba(255,193,7,0.15); color:#ffc107;
-                                                                    border:1px solid rgba(255,193,7,0.3);
-                                                                    font-size:0.6rem; padding:1px 6px; border-radius:10px; margin-left:4px;">
+                                                                     border:1px solid rgba(255,193,7,0.3);
+                                                                     font-size:0.6rem; padding:1px 6px; border-radius:10px; margin-left:4px;">
                                                             {{ item.obj.iva_override|default:config.iva }}%
                                                         </span>
                                                     </span>
-                                                    <div class="global-hint mt-0">Aplica sobre Comisión PT y Arancel Payway</div>
+                                                    <div class="global-hint mt-0">Sobre Comisión PT y Arancel</div>
                                                 </div>
                                                 <div class="form-check form-switch mb-0 ms-3">
                                                     <input class="form-check-input calc-trigger-{{ item.obj.id }}"
-                                                        type="checkbox" name="iva_general_aplica"
-                                                        data-calc-field="iva_general"
-                                                        id="iva_general_toggle_{{ item.obj.id }}"
-                                                        {% if item.obj.comision_aplica_iva %}checked{% endif %}
-                                                        onchange="updateToggleLabel(this, 'iva_general_lbl_{{ item.obj.id }}'); recalcPlan('{{ item.obj.id }}')">
+                                                           type="checkbox" name="iva_general_aplica"
+                                                           data-calc-field="iva_general"
+                                                           id="iva_general_toggle_{{ item.obj.id }}"
+                                                           {% if item.obj.comision_aplica_iva %}checked{% endif %}
+                                                           onchange="updateToggleLabel(this,'iva_general_lbl_{{ item.obj.id }}');recalcPlan('{{ item.obj.id }}')">
                                                     <label class="form-check-label small fw-bold"
-                                                        id="iva_general_lbl_{{ item.obj.id }}"
-                                                        for="iva_general_toggle_{{ item.obj.id }}"
-                                                        style="color:{% if item.obj.comision_aplica_iva %}#4ade80{% else %}#f87171{% endif %}">
+                                                           id="iva_general_lbl_{{ item.obj.id }}"
+                                                           for="iva_general_toggle_{{ item.obj.id }}"
+                                                           style="color:{% if item.obj.comision_aplica_iva %}#4ade80{% else %}#f87171{% endif %}">
                                                         {% if item.obj.comision_aplica_iva %}SÍ{% else %}NO{% endif %}
                                                     </label>
                                                 </div>
                                             </div>
-
-                                            <!-- Toggle IVA Financiación 10.5% — controla la tasa -->
                                             <div class="iva-toggle-row mt-2">
                                                 <div>
                                                     <span class="text-white small fw-bold">
-                                                        <i class="fas fa-percentage me-2 text-warning"></i>
-                                                        IVA Financiación
+                                                        <i class="fas fa-percentage me-2 text-warning"></i>IVA Financiación
                                                         <span style="background:rgba(121,192,255,0.15); color:#79c0ff;
-                                                                    border:1px solid rgba(121,192,255,0.3);
-                                                                    font-size:0.6rem; padding:1px 6px; border-radius:10px; margin-left:4px;">
+                                                                     border:1px solid rgba(121,192,255,0.3);
+                                                                     font-size:0.6rem; padding:1px 6px; border-radius:10px; margin-left:4px;">
                                                             {{ item.obj.iva_financiacion_override|default:config.iva_financiacion }}%
                                                         </span>
                                                     </span>
-                                                    <div class="global-hint mt-0">Aplica sobre la tasa bancaria base</div>
+                                                    <div class="global-hint mt-0">Sobre la tasa bancaria base</div>
                                                 </div>
                                                 <div class="form-check form-switch mb-0 ms-3">
                                                     <input class="form-check-input calc-trigger-{{ item.obj.id }}"
-                                                        type="checkbox" name="tasa_aplica_iva_fin"
-                                                        data-calc-field="tasa_iva_fin"
-                                                        id="tasa_iva_fin_toggle_{{ item.obj.id }}"
-                                                        {% if item.obj.tasa_aplica_iva_fin %}checked{% endif %}
-                                                        onchange="updateToggleLabel(this, 'tasa_iva_fin_lbl_{{ item.obj.id }}'); recalcPlan('{{ item.obj.id }}')">
+                                                           type="checkbox" name="tasa_aplica_iva_fin"
+                                                           data-calc-field="tasa_iva_fin"
+                                                           id="tasa_iva_fin_toggle_{{ item.obj.id }}"
+                                                           {% if item.obj.tasa_aplica_iva_fin %}checked{% endif %}
+                                                           onchange="updateToggleLabel(this,'tasa_iva_fin_lbl_{{ item.obj.id }}');recalcPlan('{{ item.obj.id }}')">
                                                     <label class="form-check-label small fw-bold"
-                                                        id="tasa_iva_fin_lbl_{{ item.obj.id }}"
-                                                        for="tasa_iva_fin_toggle_{{ item.obj.id }}"
-                                                        style="color:{% if item.obj.tasa_aplica_iva_fin %}#4ade80{% else %}#f87171{% endif %}">
+                                                           id="tasa_iva_fin_lbl_{{ item.obj.id }}"
+                                                           for="tasa_iva_fin_toggle_{{ item.obj.id }}"
+                                                           style="color:{% if item.obj.tasa_aplica_iva_fin %}#4ade80{% else %}#f87171{% endif %}">
                                                         {% if item.obj.tasa_aplica_iva_fin %}SÍ{% else %}NO{% endif %}
                                                     </label>
                                                 </div>
                                             </div>
-
                                         </div>
                                     </div>
                                 </div>
 
                                 <!-- Comisión PT -->
-                                <div class="col-md-6">
+                                <div class="col-sm-6">
                                     <div class="config-section h-100">
                                         <div class="config-section-title text-success">
                                             <i class="fas fa-hand-holding-usd me-2"></i>Comisión PagoTech
@@ -1004,11 +930,11 @@ data-tasa-iva-fin="{% if item.obj.tasa_aplica_iva_fin %}1{% else %}0{% endif %}"
                                             <label class="form-label text-muted x-small fw-bold text-uppercase mb-1">Crédito</label>
                                             <div class="input-group input-group-sm">
                                                 <input type="number" step="0.01" min="0"
-                                                    name="com_credito_override"
-                                                    class="form-control form-control-dark calc-trigger-{{ item.obj.id }}"
-                                                    data-calc-field="com_cred"
-                                                    value="{{ item.obj.com_credito_override|default:'' }}"
-                                                    placeholder="{{ config.comision_pago_tech }}">
+                                                       name="com_credito_override"
+                                                       class="form-control form-control-dark calc-trigger-{{ item.obj.id }}"
+                                                       data-calc-field="com_cred"
+                                                       value="{{ item.obj.com_credito_override|default:'' }}"
+                                                       placeholder="{{ config.comision_pago_tech }}">
                                                 <span class="input-group-text input-group-text-custom">%</span>
                                             </div>
                                             <div class="global-hint">Global: <span>{{ config.comision_pago_tech }}%</span></div>
@@ -1017,135 +943,215 @@ data-tasa-iva-fin="{% if item.obj.tasa_aplica_iva_fin %}1{% else %}0{% endif %}"
                                             <label class="form-label text-muted x-small fw-bold text-uppercase mb-1">Débito</label>
                                             <div class="input-group input-group-sm">
                                                 <input type="number" step="0.01" min="0"
-                                                    name="com_debito_override"
-                                                    class="form-control form-control-dark"
-                                                    value="{{ item.obj.com_debito_override|default:'' }}"
-                                                    placeholder="{{ config.comision_pago_tech_debito }}">
+                                                       name="com_debito_override"
+                                                       class="form-control form-control-dark"
+                                                       value="{{ item.obj.com_debito_override|default:'' }}"
+                                                       placeholder="{{ config.comision_pago_tech_debito }}">
                                                 <span class="input-group-text input-group-text-custom">%</span>
                                             </div>
                                             <div class="global-hint">Global: <span>{{ config.comision_pago_tech_debito }}%</span></div>
                                         </div>
-                                        <!-- Nota informativa, ya no hay toggle aquí -->
                                         <div class="global-fallback-note mt-3 mb-0" style="font-size:0.65rem;">
                                             <i class="fas fa-info-circle me-1"></i>
-                                            El IVA sobre esta comisión se controla con el toggle
-                                            <strong class="text-white">IVA General</strong> de la columna izquierda.
+                                            El IVA se controla con el toggle <strong class="text-white">IVA General</strong>.
                                         </div>
                                     </div>
                                 </div>
 
                                 <!-- Arancel -->
-                                <div class="col-md-12">
+                                <div class="col-12">
                                     <div class="config-section">
                                         <div class="config-section-title text-danger">
                                             <i class="fas fa-university me-2"></i>Arancel Payway
                                         </div>
                                         <div class="row g-3 mb-1">
-                                            <div class="col-md-6">
+                                            <div class="col-sm-6">
                                                 <label class="form-label text-muted x-small fw-bold text-uppercase mb-1">Crédito</label>
                                                 <div class="input-group input-group-sm">
                                                     <input type="number" step="0.01" min="0"
-                                                        name="arancel_credito_override"
-                                                        class="form-control form-control-dark calc-trigger-{{ item.obj.id }}"
-                                                        data-calc-field="ar_cred"
-                                                        value="{{ item.obj.arancel_credito_override|default:'' }}"
-                                                        placeholder="{{ config.arancel_plataforma }}">
+                                                           name="arancel_credito_override"
+                                                           class="form-control form-control-dark calc-trigger-{{ item.obj.id }}"
+                                                           data-calc-field="ar_cred"
+                                                           value="{{ item.obj.arancel_credito_override|default:'' }}"
+                                                           placeholder="{{ config.arancel_plataforma }}">
                                                     <span class="input-group-text input-group-text-custom">%</span>
                                                 </div>
                                                 <div class="global-hint">Global: <span>{{ config.arancel_plataforma }}%</span></div>
                                             </div>
-                                            <div class="col-md-6">
+                                            <div class="col-sm-6">
                                                 <label class="form-label text-muted x-small fw-bold text-uppercase mb-1">Débito</label>
                                                 <div class="input-group input-group-sm">
                                                     <input type="number" step="0.01" min="0"
-                                                        name="arancel_debito_override"
-                                                        class="form-control form-control-dark"
-                                                        value="{{ item.obj.arancel_debito_override|default:'' }}"
-                                                        placeholder="{{ config.arancel_plataforma_debito }}">
+                                                           name="arancel_debito_override"
+                                                           class="form-control form-control-dark"
+                                                           value="{{ item.obj.arancel_debito_override|default:'' }}"
+                                                           placeholder="{{ config.arancel_plataforma_debito }}">
                                                     <span class="input-group-text input-group-text-custom">%</span>
                                                 </div>
                                                 <div class="global-hint">Global: <span>{{ config.arancel_plataforma_debito }}%</span></div>
                                             </div>
                                         </div>
-                                        <!-- Nota informativa -->
                                         <div class="global-fallback-note mt-2 mb-0" style="font-size:0.65rem;">
                                             <i class="fas fa-info-circle me-1"></i>
-                                            El IVA sobre este arancel se controla con el toggle
-                                            <strong class="text-white">IVA General</strong> de la columna izquierda.
+                                            El IVA se controla con el toggle <strong class="text-white">IVA General</strong>.
                                         </div>
                                     </div>
                                 </div>
 
-                            </div>{# /row formularios #}
-                        </div>{# /col-lg-7 #}
+                                <!-- ══ ALCANCE DEL PLAN — dentro del row g-3, col-12 ══ -->
+                                <div class="col-12">
+                                    <div class="config-section">
+                                        <div class="config-section-title" style="color:#a5b4fc;">
+                                            <i class="fas fa-users me-2"></i>Alcance del Plan
+                                        </div>
 
-                        <!-- ── COLUMNA DERECHA: Calculadora en vivo ── -->
-                        <div class="col-lg-5">
+                                        {# Radios Global / Personalizado #}
+                                        <div class="d-flex alcance-radios gap-3 mb-3">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio"
+                                                       name="alcance_modal_{{ item.obj.id }}"
+                                                       id="alcance_global_{{ item.obj.id }}"
+                                                       value="global"
+                                                       {% if item.obj.alcance == 'global' %}checked{% endif %}
+                                                       onchange="toggleAlcancePanel('{{ item.obj.id }}','global')">
+                                                <label class="form-check-label text-white small fw-bold"
+                                                       for="alcance_global_{{ item.obj.id }}">
+                                                    <i class="fas fa-globe me-1 text-success"></i>Global
+                                                    <span class="global-hint d-block">Visible para todos</span>
+                                                </label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio"
+                                                       name="alcance_modal_{{ item.obj.id }}"
+                                                       id="alcance_usuarios_{{ item.obj.id }}"
+                                                       value="usuarios"
+                                                       {% if item.obj.alcance == 'usuarios' %}checked{% endif %}
+                                                       onchange="toggleAlcancePanel('{{ item.obj.id }}','usuarios')">
+                                                <label class="form-check-label text-white small fw-bold"
+                                                       for="alcance_usuarios_{{ item.obj.id }}">
+                                                    <i class="fas fa-user-tag me-1" style="color:#a5b4fc;"></i>Personalizado
+                                                    <span class="global-hint d-block">Solo seleccionados</span>
+                                                </label>
+                                            </div>
+                                        </div>
+
+                                        {# Panel usuarios — oculto si alcance = global #}
+                                        <div id="panel_usuarios_{{ item.obj.id }}"
+                                             {% if item.obj.alcance != 'usuarios' %}style="display:none;"{% endif %}>
+
+                                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                                <label class="form-label text-muted x-small fw-bold text-uppercase mb-0">
+                                                    Usuarios asignados
+                                                </label>
+                                                <span class="override-badge" id="count_asignados_{{ item.obj.id }}">
+                                                    {{ item.obj.usuarios_asignados.count }}
+                                                    seleccionado{{ item.obj.usuarios_asignados.count|pluralize }}
+                                                </span>
+                                            </div>
+
+                                            <input type="text"
+                                                   class="form-control form-control-dark form-control-sm mb-2"
+                                                   placeholder="Buscar usuario..."
+                                                   oninput="filtrarUsuarios('{{ item.obj.id }}',this.value)">
+
+                                            <div class="usuarios-list" id="lista_usuarios_{{ item.obj.id }}">
+                                                {% for cliente in clientes_todos %}
+                                                <div class="usuario-item form-check user-check-item-{{ item.obj.id }}"
+                                                     data-nombre="{{ cliente.nombre|lower }}">
+                                                    <input class="form-check-input" type="checkbox"
+                                                           name="usuarios_asignados"
+                                                           value="{{ cliente.id }}"
+                                                           id="uc_{{ item.obj.id }}_{{ cliente.id }}"
+                                                           {% if cliente.id in item.asignados_ids %}checked{% endif %}
+                                                           onchange="actualizarContador('{{ item.obj.id }}')">
+                                                    <label class="form-check-label text-white-50 small"
+                                                           for="uc_{{ item.obj.id }}_{{ cliente.id }}">
+                                                        {{ cliente.nombre }}
+                                                        <span class="text-muted" style="font-size:0.65rem;">
+                                                            — {{ cliente.email }}
+                                                        </span>
+                                                    </label>
+                                                </div>
+                                                {% empty %}
+                                                <span class="text-muted small">No hay usuarios aprobados.</span>
+                                                {% endfor %}
+                                            </div>
+
+                                            <div class="global-fallback-note mt-2 mb-0" style="font-size:0.65rem;">
+                                                <i class="fas fa-info-circle me-1"></i>
+                                                Sin usuarios seleccionados, el plan no será visible para nadie.
+                                            </div>
+                                        </div>
+
+                                        {# Campo oculto que recibe el valor del radio para el POST #}
+                                        <input type="hidden" name="alcance"
+                                               id="alcance_hidden_{{ item.obj.id }}"
+                                               value="{{ item.obj.alcance }}">
+                                    </div>
+                                </div>
+
+                            </div>{# /row g-3 formularios #}
+                        </div>{# /col-formularios #}
+
+                        <!-- ════ COLUMNA CALCULADORA ════ -->
+                        <div class="col-lg-5 col-calculadora">
                             <div class="calc-live-box h-100 d-flex flex-column">
                                 <div class="d-flex justify-content-between align-items-center mb-3">
                                     <div class="calc-live-title mb-0">
                                         <i class="fas fa-calculator me-2"></i>Calculadora en Vivo
                                     </div>
-                                    <!-- Toggle Directo / Inverso -->
                                     <div class="d-flex align-items-center gap-1"
-                                        style="background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.08); border-radius:6px; padding:3px;">
-                                        <button type="button"
-                                            class="btn btn-sm calc-mode-btn active"
-                                            id="btn_directo_{{ item.obj.id }}"
-                                            onclick="setCalcMode('{{ item.obj.id }}', 'directo')"
-                                            style="font-size:0.65rem; font-weight:800; padding:3px 10px;
-                                                background:rgba(86,211,100,0.2); border:1px solid rgba(86,211,100,0.35); color:#56d364; border-radius:4px;">
+                                         style="background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.08);
+                                                border-radius:6px; padding:3px;">
+                                        <button type="button" class="btn btn-sm calc-mode-btn"
+                                                id="btn_directo_{{ item.obj.id }}"
+                                                onclick="setCalcMode('{{ item.obj.id }}','directo')"
+                                                style="font-size:0.65rem; font-weight:800; padding:3px 10px;
+                                                       background:rgba(86,211,100,0.2); border:1px solid rgba(86,211,100,0.35);
+                                                       color:#56d364; border-radius:4px;">
                                             <i class="fas fa-arrow-right me-1"></i>DIRECTO
                                         </button>
-                                        <button type="button"
-                                            class="btn btn-sm calc-mode-btn"
-                                            id="btn_inverso_{{ item.obj.id }}"
-                                            onclick="setCalcMode('{{ item.obj.id }}', 'inverso')"
-                                            style="font-size:0.65rem; font-weight:800; padding:3px 10px;
-                                                background:transparent; border:1px solid transparent; color:#6c757d; border-radius:4px;">
+                                        <button type="button" class="btn btn-sm calc-mode-btn"
+                                                id="btn_inverso_{{ item.obj.id }}"
+                                                onclick="setCalcMode('{{ item.obj.id }}','inverso')"
+                                                style="font-size:0.65rem; font-weight:800; padding:3px 10px;
+                                                       background:transparent; border:1px solid transparent;
+                                                       color:#6c757d; border-radius:4px;">
                                             <i class="fas fa-arrow-left me-1"></i>INVERSO
                                         </button>
                                     </div>
                                 </div>
 
-                                <!-- ══ MODO DIRECTO ══ -->
+                                <!-- DIRECTO -->
                                 <div id="calc_directo_{{ item.obj.id }}">
-
-                                    <!-- Input precio contado -->
                                     <div class="calc-input-row mb-3">
                                         <label class="calc-input-label">Precio al cliente</label>
                                         <div class="input-group input-group-sm flex-grow-1">
                                             <span class="input-group-text input-group-text-custom">$</span>
                                             <input type="number" step="0.01" min="0"
-                                                id="calc_monto_{{ item.obj.id }}"
-                                                class="form-control form-control-dark"
-                                                placeholder="100.00"
-                                                oninput="recalcPlan('{{ item.obj.id }}')">
+                                                   id="calc_monto_{{ item.obj.id }}"
+                                                   class="form-control form-control-dark"
+                                                   placeholder="100.00"
+                                                   oninput="recalcPlan('{{ item.obj.id }}')">
                                         </div>
                                     </div>
-
-                                    <!-- Coeficiente siempre visible -->
                                     <div style="background:rgba(86,211,100,0.07); border:1px solid rgba(86,211,100,0.2);
                                                 border-radius:8px; padding:10px 14px; margin-bottom:12px;">
                                         <div class="d-flex justify-content-between align-items-center">
                                             <span style="font-size:0.65rem; font-weight:800; text-transform:uppercase;
-                                                        letter-spacing:0.5px; color:#6c757d;">COEFICIENTE</span>
+                                                         letter-spacing:0.5px; color:#6c757d;">COEFICIENTE</span>
                                             <span class="fw-bold" style="color:#56d364; font-size:1.2rem;"
-                                                id="calc_coef_{{ item.obj.id }}">{{ item.coeficiente }}</span>
+                                                  id="calc_coef_{{ item.obj.id }}">{{ item.coeficiente }}</span>
                                         </div>
                                         <div class="d-flex justify-content-between align-items-center mt-1">
                                             <span style="font-size:0.62rem; color:#495057; text-transform:uppercase; font-weight:700;">
                                                 DESC. TOTAL
                                             </span>
                                             <span style="font-size:0.78rem; color:#ff7b72; font-weight:800;"
-                                                id="calc_desc_pct_{{ item.obj.id }}">{{ item.total_descuentos }}%</span>
+                                                  id="calc_desc_pct_{{ item.obj.id }}">{{ item.total_descuentos }}%</span>
                                         </div>
                                     </div>
-
-                                    <!-- Desglose estilo Excel (visible solo si hay monto) -->
                                     <div id="calc_desglose_{{ item.obj.id }}" style="display:none;">
-
-                                        <!-- Importe de venta -->
                                         <div style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1);
                                                     border-radius:6px; padding:8px 12px; margin-bottom:8px;">
                                             <div class="d-flex justify-content-between align-items-center">
@@ -1153,86 +1159,59 @@ data-tasa-iva-fin="{% if item.obj.tasa_aplica_iva_fin %}1{% else %}0{% endif %}"
                                                     <i class="fas fa-shopping-cart me-1 text-info"></i>Importe de Venta
                                                 </span>
                                                 <span style="font-size:0.92rem; font-weight:800; color:white;"
-                                                    id="calc_venta_{{ item.obj.id }}">—</span>
+                                                      id="calc_venta_{{ item.obj.id }}">—</span>
                                             </div>
-                                            <div style="font-size:0.6rem; color:#495057; margin-top:2px;">
-                                                Lo que paga el cliente
-                                            </div>
+                                            <div style="font-size:0.6rem; color:#495057; margin-top:2px;">Lo que paga el cliente</div>
                                         </div>
-
-                                        <!-- Líneas de descuento — estilo resumen Payway -->
                                         <div style="background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.06);
                                                     border-radius:6px; overflow:hidden; margin-bottom:8px;">
-
-                                            <!-- Arancel -->
                                             <div style="display:flex; justify-content:space-between; align-items:center;
                                                         padding:7px 12px; border-bottom:1px solid rgba(255,255,255,0.05);">
                                                 <div>
-                                                    <span style="font-size:0.66rem; color:#6c757d; font-weight:700; text-transform:uppercase;">
-                                                        Arancel Payway
-                                                    </span>
+                                                    <span style="font-size:0.66rem; color:#6c757d; font-weight:700; text-transform:uppercase;">Arancel Payway</span>
                                                     <span style="font-size:0.6rem; color:#495057; margin-left:6px;"
-                                                        id="calc_ar_pct_{{ item.obj.id }}"></span>
+                                                          id="calc_ar_pct_{{ item.obj.id }}"></span>
                                                 </div>
                                                 <span style="font-size:0.78rem; font-weight:800; color:#e63946;"
-                                                    id="calc_ar_monto_{{ item.obj.id }}">—</span>
+                                                      id="calc_ar_monto_{{ item.obj.id }}">—</span>
                                             </div>
-
-                                            <!-- Costos Financieros (tasa) -->
                                             <div style="display:flex; justify-content:space-between; align-items:center;
                                                         padding:7px 12px; border-bottom:1px solid rgba(255,255,255,0.05);">
                                                 <div>
-                                                    <span style="font-size:0.66rem; color:#6c757d; font-weight:700; text-transform:uppercase;">
-                                                        Costos Financieros
-                                                    </span>
+                                                    <span style="font-size:0.66rem; color:#6c757d; font-weight:700; text-transform:uppercase;">Costos Financieros</span>
                                                     <span style="font-size:0.6rem; color:#495057; margin-left:6px;"
-                                                        id="calc_tasa_pct_{{ item.obj.id }}"></span>
+                                                          id="calc_tasa_pct_{{ item.obj.id }}"></span>
                                                 </div>
                                                 <span style="font-size:0.78rem; font-weight:800; color:#e63946;"
-                                                    id="calc_tasa_monto_{{ item.obj.id }}">—</span>
+                                                      id="calc_tasa_monto_{{ item.obj.id }}">—</span>
                                             </div>
-
-                                            <!-- Comisión PT -->
                                             <div style="display:flex; justify-content:space-between; align-items:center;
                                                         padding:7px 12px; border-bottom:1px solid rgba(255,255,255,0.05);">
                                                 <div>
-                                                    <span style="font-size:0.66rem; color:#6c757d; font-weight:700; text-transform:uppercase;">
-                                                        Comisión PagoTech
-                                                    </span>
+                                                    <span style="font-size:0.66rem; color:#6c757d; font-weight:700; text-transform:uppercase;">Comisión PagoTech</span>
                                                     <span style="font-size:0.6rem; color:#495057; margin-left:6px;"
-                                                        id="calc_pt_pct_{{ item.obj.id }}"></span>
+                                                          id="calc_pt_pct_{{ item.obj.id }}"></span>
                                                 </div>
                                                 <span style="font-size:0.78rem; font-weight:800; color:#e63946;"
-                                                    id="calc_pt_monto_{{ item.obj.id }}">—</span>
+                                                      id="calc_pt_monto_{{ item.obj.id }}">—</span>
                                             </div>
-
-                                            <!-- IVA -->
-                                            <div style="display:flex; justify-content:space-between; align-items:center;
-                                                        padding:7px 12px;">
+                                            <div style="display:flex; justify-content:space-between; align-items:center; padding:7px 12px;">
                                                 <div>
-                                                    <span style="font-size:0.66rem; color:#6c757d; font-weight:700; text-transform:uppercase;">
-                                                        IVA
-                                                    </span>
+                                                    <span style="font-size:0.66rem; color:#6c757d; font-weight:700; text-transform:uppercase;">IVA</span>
                                                     <span style="font-size:0.6rem; color:#495057; margin-left:6px;"
-                                                        id="calc_iva_pct_lbl_{{ item.obj.id }}"></span>
+                                                          id="calc_iva_pct_lbl_{{ item.obj.id }}"></span>
                                                 </div>
                                                 <span style="font-size:0.78rem; font-weight:800; color:#e63946;"
-                                                    id="calc_iva_monto_{{ item.obj.id }}">—</span>
+                                                      id="calc_iva_monto_{{ item.obj.id }}">—</span>
                                             </div>
                                         </div>
-
-                                        <!-- Total Descuento -->
                                         <div style="display:flex; justify-content:space-between; align-items:center;
                                                     padding:7px 12px; background:rgba(230,57,70,0.1);
                                                     border:1px solid rgba(230,57,70,0.2); border-radius:6px; margin-bottom:6px;">
-                                            <span style="font-size:0.68rem; color:#ff7b72; font-weight:800; text-transform:uppercase;">
-                                                Total Descuento
-                                            </span>
+                                            <span style="font-size:0.68rem; color:#ff7b72; font-weight:800; text-transform:uppercase;">Total Descuento</span>
                                             <span style="font-size:0.85rem; font-weight:800; color:#ff7b72;"
-                                                id="calc_desc_monto_{{ item.obj.id }}">—</span>
+                                                  id="calc_desc_monto_{{ item.obj.id }}">—</span>
                                         </div>
-
-                                        <!-- Saldo al comercio -->
                                         <div style="display:flex; justify-content:space-between; align-items:center;
                                                     padding:10px 14px; background:rgba(86,211,100,0.1);
                                                     border:1px solid rgba(86,211,100,0.25); border-radius:6px;">
@@ -1243,36 +1222,30 @@ data-tasa-iva-fin="{% if item.obj.tasa_aplica_iva_fin %}1{% else %}0{% endif %}"
                                                 <div style="font-size:0.6rem; color:#495057;">Precio contado ingresado</div>
                                             </div>
                                             <span style="font-size:1rem; font-weight:800; color:#56d364;"
-                                                id="calc_neto_{{ item.obj.id }}">—</span>
+                                                  id="calc_neto_{{ item.obj.id }}">—</span>
                                         </div>
                                     </div>
-
-                                    <!-- Placeholder cuando no hay monto -->
                                     <div id="calc_placeholder_{{ item.obj.id }}"
-                                        style="text-align:center; padding:20px 0; color:#495057;">
+                                         style="text-align:center; padding:20px 0; color:#495057;">
                                         <i class="fas fa-arrow-up mb-2" style="font-size:1.2rem; display:block;"></i>
                                         <span style="font-size:0.7rem;">Ingresá el precio contado para ver el desglose</span>
                                     </div>
-
                                 </div>
 
-                                <!-- ══ MODO INVERSO ══ -->
+                                <!-- INVERSO -->
                                 <div id="calc_inverso_{{ item.obj.id }}" style="display:none;">
-
                                     <p class="text-muted mb-3" style="font-size:0.68rem; line-height:1.5;">
                                         Ingresá un <strong class="text-white">coeficiente deseado</strong> y la app calculará
-                                        qué <strong class="text-white">tasa base</strong> lo genera con los parámetros actuales del plan.
-                                        Opcionalmente, ingresá el precio contado para ver el precio final.
+                                        qué <strong class="text-white">tasa base</strong> lo genera.
                                     </p>
-
                                     <div class="calc-input-row mb-2">
                                         <label class="calc-input-label">Coeficiente</label>
                                         <div class="input-group input-group-sm flex-grow-1">
                                             <input type="number" step="0.000001" min="0"
-                                                id="inv_coef_{{ item.obj.id }}"
-                                                class="form-control form-control-dark"
-                                                placeholder="1.150000"
-                                                oninput="recalcInverse('{{ item.obj.id }}')">
+                                                   id="inv_coef_{{ item.obj.id }}"
+                                                   class="form-control form-control-dark"
+                                                   placeholder="1.150000"
+                                                   oninput="recalcInverse('{{ item.obj.id }}')">
                                         </div>
                                     </div>
                                     <div class="calc-input-row mb-3">
@@ -1280,79 +1253,74 @@ data-tasa-iva-fin="{% if item.obj.tasa_aplica_iva_fin %}1{% else %}0{% endif %}"
                                         <div class="input-group input-group-sm flex-grow-1">
                                             <span class="input-group-text input-group-text-custom">$</span>
                                             <input type="number" step="0.01" min="0"
-                                                id="inv_monto_{{ item.obj.id }}"
-                                                class="form-control form-control-dark"
-                                                placeholder="100.00"
-                                                oninput="recalcInverse('{{ item.obj.id }}')">
+                                                   id="inv_monto_{{ item.obj.id }}"
+                                                   class="form-control form-control-dark"
+                                                   placeholder="100.00"
+                                                   oninput="recalcInverse('{{ item.obj.id }}')">
                                         </div>
                                     </div>
-
                                     <div class="flex-grow-1">
                                         <div class="calc-result-row">
                                             <span class="calc-result-label">Costos transacc. (eff.)</span>
                                             <span class="calc-result-value" style="color:#56d364;"
-                                                id="inv_costos_{{ item.obj.id }}">—</span>
+                                                  id="inv_costos_{{ item.obj.id }}">—</span>
                                         </div>
                                         <div class="calc-result-row">
                                             <span class="calc-result-label">Tasa IVA resultante</span>
                                             <span class="calc-result-value" style="color:#79c0ff;"
-                                                id="inv_tasa_iva_{{ item.obj.id }}">—</span>
+                                                  id="inv_tasa_iva_{{ item.obj.id }}">—</span>
                                         </div>
                                         <div class="calc-result-row">
                                             <span class="calc-result-label">
                                                 Tasa base implícita
                                                 <i class="fas fa-question-circle help-icon" data-bs-toggle="tooltip"
-                                                title="Es la tasa_base que deberías configurar en el plan para obtener exactamente ese coeficiente."></i>
+                                                   title="Tasa que deberías configurar para obtener ese coeficiente."></i>
                                             </span>
                                             <span class="calc-result-value" style="color:#e3b341; font-size:1rem;"
-                                                id="inv_tasa_base_{{ item.obj.id }}">—</span>
+                                                  id="inv_tasa_base_{{ item.obj.id }}">—</span>
                                         </div>
                                         <div class="calc-result-row">
                                             <span class="calc-result-label">Desc. total implícito</span>
                                             <span class="calc-result-value" style="color:#ff7b72;"
-                                                id="inv_desc_{{ item.obj.id }}">—</span>
+                                                  id="inv_desc_{{ item.obj.id }}">—</span>
                                         </div>
                                     </div>
-
                                     <div class="mt-3 pt-3 border-top border-secondary">
                                         <div class="d-flex justify-content-between align-items-center mb-2">
                                             <span class="calc-result-label" style="font-size:0.7rem;">SALDO COMERCIO</span>
                                             <span class="fw-bold text-white" style="font-size:1.05rem;"
-                                                id="inv_precio_{{ item.obj.id }}">—</span>
+                                                  id="inv_precio_{{ item.obj.id }}">—</span>
                                         </div>
                                         <div class="d-flex justify-content-between align-items-center">
                                             <span class="calc-result-label" style="font-size:0.7rem;">DESCUENTO $</span>
                                             <span class="fw-bold" style="color:#ff7b72; font-size:0.9rem;"
-                                                id="inv_recargo_{{ item.obj.id }}">—</span>
+                                                  id="inv_recargo_{{ item.obj.id }}">—</span>
                                         </div>
                                     </div>
-
-                                    <!-- Sugerencia de aplicar tasa -->
                                     <div id="inv_sugerencia_{{ item.obj.id }}" style="display:none; margin-top:14px;">
                                         <div style="background:rgba(227,179,65,0.08); border:1px solid rgba(227,179,65,0.25);
                                                     border-radius:8px; padding:10px 14px;">
                                             <div style="font-size:0.65rem; color:#e3b341; font-weight:800; text-transform:uppercase; margin-bottom:6px;">
-                                                <i class="fas fa-lightbulb me-1"></i> ¿Aplicar esta tasa al plan?
+                                                <i class="fas fa-lightbulb me-1"></i> ¿Aplicar esta tasa?
                                             </div>
                                             <div style="font-size:0.72rem; color:#adb5bd; margin-bottom:8px;">
-                                                La tasa base resultante es
-                                                <strong class="text-white" id="inv_sugerencia_val_{{ item.obj.id }}">—</strong>.
-                                                Podés copiarla al campo Tasa Base del formulario de edición (fila de la tabla).
+                                                Tasa base resultante:
+                                                <strong class="text-white" id="inv_sugerencia_val_{{ item.obj.id }}">—</strong>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
 
-                            </div>
-                        </div>{# /col-lg-5 #}
+                            </div>{# /calc-live-box #}
+                        </div>{# /col-calculadora #}
 
-                    </div>{# /row #}
+                    </div>{# /row config-columns #}
                 </div>{# /modal-body #}
 
                 <div class="modal-footer border-0 pt-0 pb-4 px-4 gap-2">
                     <button type="button" class="btn btn-dark btn-sm px-3" data-bs-dismiss="modal">Cancelar</button>
                     <button type="submit" class="btn btn-sm px-4 fw-bold"
-                        style="background:rgba(99,102,241,0.75); border:1px solid rgba(99,102,241,0.5); color:white;">
+                            style="background:rgba(99,102,241,0.75); border:1px solid rgba(99,102,241,0.5); color:white;">
                         <i class="fas fa-save me-2"></i>GUARDAR CONFIGURACIÓN
                     </button>
                 </div>
@@ -1362,9 +1330,10 @@ data-tasa-iva-fin="{% if item.obj.tasa_aplica_iva_fin %}1{% else %}0{% endif %}"
 </div>
 {% endfor %}
 
+
 <!-- ══════════════════════════════════════════════════════════════
-    Modal: Confirmar Eliminación 
- ══════════════════════════════════════════════════════════════ -->
+     MODAL ELIMINAR
+══════════════════════════════════════════════════════════════ -->
 <div class="modal fade modal-confirm-danger" id="deletePlanModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-sm">
         <div class="modal-content">
@@ -1375,9 +1344,11 @@ data-tasa-iva-fin="{% if item.obj.tasa_aplica_iva_fin %}1{% else %}0{% endif %}"
             <div class="modal-body text-center py-4">
                 <div class="mb-3"><i class="fas fa-trash-alt text-danger display-6 opacity-75"></i></div>
                 <p class="text-white-50 small mb-1">¿Estás seguro de eliminar el plan?</p>
-                <h6 class="text-white fw-bold" id="deletePlanName">Nombre del Plan</h6>
+                <h6 class="text-white fw-bold" id="deletePlanName">—</h6>
                 <div class="mt-3 p-2 rounded">
-                    <small class="text-danger fw-bold"><i class="fas fa-info-circle me-1"></i> Esta acción no se puede deshacer.</small>
+                    <small class="text-danger fw-bold">
+                        <i class="fas fa-info-circle me-1"></i> Esta acción no se puede deshacer.
+                    </small>
                 </div>
             </div>
             <div class="modal-footer border-0 pt-0 justify-content-center pb-4">
@@ -1393,33 +1364,77 @@ data-tasa-iva-fin="{% if item.obj.tasa_aplica_iva_fin %}1{% else %}0{% endif %}"
     </div>
 </div>
 
-<!-- Modal: Añadir Plan -->
+
+<!-- ══════════════════════════════════════════════════════════════
+     MODAL NUEVO PLAN
+══════════════════════════════════════════════════════════════ -->
 <div class="modal fade" id="addPlanModal" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content bg-dark border-secondary">
             <form method="post">
                 {% csrf_token %}
                 <input type="hidden" name="add_cuota" value="1">
+
                 <div class="modal-header border-secondary">
                     <h5 class="modal-title text-white">Nuevo Plan</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
+
                 <div class="modal-body p-4">
                     <div class="mb-3">
                         <label class="form-label text-muted small fw-bold">NOMBRE IDENTIFICADOR</label>
                         <input type="text" name="new_nombre" class="form-control form-control-dark" required>
                     </div>
-                    <div class="row">
+                    <div class="row g-3 mb-3">
                         <div class="col-6">
                             <label class="form-label text-muted small fw-bold">CANTIDAD CUOTAS</label>
                             <input type="number" name="new_numero" class="form-control form-control-dark" required>
                         </div>
                         <div class="col-6">
                             <label class="form-label text-muted small fw-bold">TASA BANCARIA BASE</label>
-                            <input type="number" step="0.0001" name="new_tasa" class="form-control form-control-dark" required>
+                            <input type="number" step="0.0001" name="new_tasa"
+                                   class="form-control form-control-dark" required>
                         </div>
                     </div>
-                </div>
+
+                    {# ── Alcance ── #}
+                    <div class="mb-3">
+                        <label class="form-label text-muted small fw-bold">ALCANCE</label>
+                        <select name="new_alcance" class="form-control form-control-dark"
+                                onchange="toggleNewPlanUsuarios(this.value)">
+                            <option value="global">Global — visible para todos</option>
+                            <option value="usuarios">Personalizado — solo usuarios asignados</option>
+                        </select>
+                    </div>
+
+                    {# ── Panel usuarios nuevo plan ── #}
+                    <div id="new_plan_usuarios_panel" style="display:none;">
+                        <label class="form-label text-muted small fw-bold mb-2">USUARIOS ASIGNADOS</label>
+                        <input type="text"
+                               class="form-control form-control-dark form-control-sm mb-2"
+                               placeholder="Buscar..."
+                               oninput="filtrarUsuariosNew(this.value)">
+                        <div class="usuarios-list" id="new_plan_lista_usuarios">
+                            {% for cliente in clientes_todos %}
+                            <div class="usuario-item form-check new-user-item"
+                                 data-nombre="{{ cliente.nombre|lower }}">
+                                <input class="form-check-input" type="checkbox"
+                                       name="new_usuarios_asignados"
+                                       value="{{ cliente.id }}"
+                                       id="new_uc_{{ cliente.id }}">
+                                <label class="form-check-label text-white-50 small"
+                                       for="new_uc_{{ cliente.id }}">
+                                    {{ cliente.nombre }}
+                                    <span class="text-muted" style="font-size:0.65rem;">— {{ cliente.email }}</span>
+                                </label>
+                            </div>
+                            {% empty %}
+                            <span class="text-muted small">No hay usuarios aprobados.</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>{# /modal-body #}
+
                 <div class="modal-footer border-secondary">
                     <button type="button" class="btn btn-dark" data-bs-dismiss="modal">Cerrar</button>
                     <button type="submit" class="btn btn-danger px-4">CREAR PLAN</button>
@@ -1431,16 +1446,16 @@ data-tasa-iva-fin="{% if item.obj.tasa_aplica_iva_fin %}1{% else %}0{% endif %}"
 
 {% endblock %}
 
+
 {% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     // Tooltips
-    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-    tooltipTriggerList.map(function (el) {
-        return new bootstrap.Tooltip(el, { delay: { show: 200, hide: 100 } });
+    document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(function(el) {
+        new bootstrap.Tooltip(el, { delay: { show: 200, hide: 100 } });
     });
 
-    // Al abrir cada modal dispara cálculo inicial y escucha cambios
+    // Al abrir modal: dispara cálculo y escucha cambios
     document.querySelectorAll('.modal-plan-config').forEach(function(modalEl) {
         modalEl.addEventListener('shown.bs.modal', function () {
             const planId = modalEl.id.replace('configModal_', '');
@@ -1452,211 +1467,151 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 });
 
+/* ── Eliminar ──────────────────────────────────────────────────── */
 function openDeleteModal(id, nombre) {
     document.getElementById('deletePlanName').innerText = nombre;
     document.getElementById('delete-plan-id').value = id;
     new bootstrap.Modal(document.getElementById('deletePlanModal')).show();
 }
 
+/* ── Toggle label SÍ/NO ───────────────────────────────────────── */
 function updateToggleLabel(checkbox, labelId) {
     const label = document.getElementById(labelId);
-    if (checkbox.checked) {
-        label.textContent = 'SÍ';
-        label.style.color = '#4ade80';
-    } else {
-        label.textContent = 'NO';
-        label.style.color = '#f87171';
-    }
+    if (!label) return;
+    label.textContent = checkbox.checked ? 'SÍ' : 'NO';
+    label.style.color = checkbox.checked ? '#4ade80' : '#f87171';
 }
 
-/* ─── Cambiar modo Directo / Inverso ─────────────────────────── */
+/* ── Modo Directo / Inverso ───────────────────────────────────── */
 function setCalcMode(planId, modo) {
     const directo = document.getElementById('calc_directo_' + planId);
     const inverso = document.getElementById('calc_inverso_' + planId);
     const btnDir  = document.getElementById('btn_directo_'  + planId);
     const btnInv  = document.getElementById('btn_inverso_'  + planId);
-
     if (modo === 'directo') {
         directo.style.display = '';
         inverso.style.display = 'none';
-        // Estilo botón activo
-        btnDir.style.background = 'rgba(86,211,100,0.2)';
-        btnDir.style.border     = '1px solid rgba(86,211,100,0.35)';
-        btnDir.style.color      = '#56d364';
-        btnInv.style.background = 'transparent';
-        btnInv.style.border     = '1px solid transparent';
-        btnInv.style.color      = '#6c757d';
+        btnDir.style.cssText = 'font-size:0.65rem;font-weight:800;padding:3px 10px;background:rgba(86,211,100,0.2);border:1px solid rgba(86,211,100,0.35);color:#56d364;border-radius:4px;';
+        btnInv.style.cssText = 'font-size:0.65rem;font-weight:800;padding:3px 10px;background:transparent;border:1px solid transparent;color:#6c757d;border-radius:4px;';
         recalcPlan(planId);
     } else {
         directo.style.display = 'none';
         inverso.style.display = '';
-        btnInv.style.background = 'rgba(99,102,241,0.25)';
-        btnInv.style.border     = '1px solid rgba(99,102,241,0.4)';
-        btnInv.style.color      = '#a5b4fc';
-        btnDir.style.background = 'transparent';
-        btnDir.style.border     = '1px solid transparent';
-        btnDir.style.color      = '#6c757d';
+        btnInv.style.cssText = 'font-size:0.65rem;font-weight:800;padding:3px 10px;background:rgba(99,102,241,0.25);border:1px solid rgba(99,102,241,0.4);color:#a5b4fc;border-radius:4px;';
+        btnDir.style.cssText = 'font-size:0.65rem;font-weight:800;padding:3px 10px;background:transparent;border:1px solid transparent;color:#6c757d;border-radius:4px;';
         recalcInverse(planId);
     }
 }
 
-/* ─── Leer parámetros efectivos del modal ─────────────────────── */
+/* ── Parámetros efectivos del modal ───────────────────────────── */
 function getEffectiveParams(planId) {
     const modal = document.getElementById('configModal_' + planId);
     if (!modal) return null;
-
-    const globalIva     = parseFloat(modal.dataset.globalIva);
-    const globalIvaFin  = parseFloat(modal.dataset.globalIvaFin);
-    const globalComCred = parseFloat(modal.dataset.globalComCred);
-    const globalArCred  = parseFloat(modal.dataset.globalArCred);
-    const tasaBase      = parseFloat(modal.dataset.tasa);
-
-    const ivaInput       = modal.querySelector('[data-calc-field="iva"]');
-    const ivaFinInput    = modal.querySelector('[data-calc-field="iva_fin"]');
-    const comInput       = modal.querySelector('[data-calc-field="com_cred"]');
-    const arInput        = modal.querySelector('[data-calc-field="ar_cred"]');
-
-    // UN solo toggle para IVA General (aplica a comisión Y arancel)
-    const ivaGenToggle   = modal.querySelector('[data-calc-field="iva_general"]');
-    const tasaIvaToggle  = modal.querySelector('[data-calc-field="tasa_iva_fin"]');
-
-    const iva        = (ivaInput    && ivaInput.value    !== '') ? parseFloat(ivaInput.value)   : globalIva;
-    const ivaFin     = (ivaFinInput && ivaFinInput.value !== '') ? parseFloat(ivaFinInput.value) : globalIvaFin;
-    const comCred    = (comInput    && comInput.value    !== '') ? parseFloat(comInput.value)    : globalComCred;
-    const arCred     = (arInput     && arInput.value     !== '') ? parseFloat(arInput.value)     : globalArCred;
-
-    // El mismo toggle controla comIva y arIva
-    const ivaGeneral = ivaGenToggle  ? ivaGenToggle.checked  : true;
-    const comIva     = ivaGeneral;
-    const arIva      = ivaGeneral;
-    const tasaAplIva = tasaIvaToggle ? tasaIvaToggle.checked : true;
-
-    return { iva, ivaFin, comCred, arCred, comIva, arIva, tasaAplIva, tasaBase };
+    const gIva      = parseFloat(modal.dataset.globalIva);
+    const gIvaFin   = parseFloat(modal.dataset.globalIvaFin);
+    const gComCred  = parseFloat(modal.dataset.globalComCred);
+    const gArCred   = parseFloat(modal.dataset.globalArCred);
+    const tasaBase  = parseFloat(modal.dataset.tasa);
+    const ivaEl     = modal.querySelector('[data-calc-field="iva"]');
+    const ivaFinEl  = modal.querySelector('[data-calc-field="iva_fin"]');
+    const comEl     = modal.querySelector('[data-calc-field="com_cred"]');
+    const arEl      = modal.querySelector('[data-calc-field="ar_cred"]');
+    const ivaGenTog = modal.querySelector('[data-calc-field="iva_general"]');
+    const tasaIvaTog= modal.querySelector('[data-calc-field="tasa_iva_fin"]');
+    const iva       = (ivaEl    && ivaEl.value    !== '') ? parseFloat(ivaEl.value)    : gIva;
+    const ivaFin    = (ivaFinEl && ivaFinEl.value !== '') ? parseFloat(ivaFinEl.value) : gIvaFin;
+    const comCred   = (comEl    && comEl.value    !== '') ? parseFloat(comEl.value)    : gComCred;
+    const arCred    = (arEl     && arEl.value     !== '') ? parseFloat(arEl.value)     : gArCred;
+    const ivaGeneral= ivaGenTog  ? ivaGenTog.checked  : true;
+    const tasaAplIva= tasaIvaTog ? tasaIvaTog.checked : true;
+    return { iva, ivaFin, comCred, arCred, comIva: ivaGeneral, arIva: ivaGeneral, tasaAplIva, tasaBase };
 }
 
-/* ─── MODO DIRECTO — modelo ABSORBE ──────────────────────────── */
+/* ── Recalc Directo ───────────────────────────────────────────── */
 function recalcPlan(planId) {
     const p = getEffectiveParams(planId);
-    if (!p) return;
-    if ([p.iva, p.ivaFin, p.comCred, p.arCred, p.tasaBase].some(isNaN)) return;
-
+    if (!p || [p.iva, p.ivaFin, p.comCred, p.arCred, p.tasaBase].some(isNaN)) return;
     const ivaF    = p.iva    / 100;
     const ivaFinF = p.ivaFin / 100;
-
-    // Cada toggle completamente independiente
     const tasaEff = p.tasaAplIva ? p.tasaBase * (1 + ivaFinF) : p.tasaBase;
     const ptEff   = p.comIva     ? p.comCred  * (1 + ivaF)    : p.comCred;
     const arEff   = p.comIva     ? p.arCred   * (1 + ivaF)    : p.arCred;
-
     const totalDescPct = tasaEff + ptEff + arEff;
-    const divisor      = 1 - (totalDescPct / 100);
+    const divisor      = 1 - totalDescPct / 100;
     const coef         = divisor > 0 ? 1 / divisor : 0;
-
     setText('calc_coef_'     + planId, coef.toFixed(6));
     setText('calc_desc_pct_' + planId, totalDescPct.toFixed(4) + '%');
-    setText('calc_ar_pct_'      + planId, p.arCred.toFixed(2)   + '%');
-    setText('calc_tasa_pct_'    + planId, p.tasaBase.toFixed(4) + '%');
-    setText('calc_pt_pct_'      + planId, p.comCred.toFixed(2)  + '%');
-
-    // Label IVA dinámico según estado de ambos toggles
+    setText('calc_ar_pct_'   + planId, p.arCred.toFixed(2)   + '%');
+    setText('calc_tasa_pct_' + planId, p.tasaBase.toFixed(4) + '%');
+    setText('calc_pt_pct_'   + planId, p.comCred.toFixed(2)  + '%');
     let ivaLabel = 'no aplica';
-    if (p.comIva && p.tasaAplIva) ivaLabel = `21% (com/ar) + ${p.ivaFin.toFixed(1)}% (tasa)`;
+    if (p.comIva && p.tasaAplIva) ivaLabel = `${p.iva.toFixed(0)}% (com/ar) + ${p.ivaFin.toFixed(1)}% (tasa)`;
     else if (p.comIva)             ivaLabel = `${p.iva.toFixed(0)}% sobre com. y arancel`;
     else if (p.tasaAplIva)         ivaLabel = `${p.ivaFin.toFixed(1)}% solo sobre tasa`;
     setText('calc_iva_pct_lbl_' + planId, ivaLabel);
-
-    const montoEl = document.getElementById('calc_monto_' + planId);
-    const monto   = montoEl && montoEl.value !== '' ? parseFloat(montoEl.value) : null;
-    const desglose    = document.getElementById('calc_desglose_'    + planId);
-    const placeholder = document.getElementById('calc_placeholder_' + planId);
-
-    if (monto === null || isNaN(monto) || monto <= 0) {
-        if (desglose)    desglose.style.display    = 'none';
-        if (placeholder) placeholder.style.display = '';
+    const montoEl   = document.getElementById('calc_monto_' + planId);
+    const monto     = montoEl && montoEl.value !== '' ? parseFloat(montoEl.value) : null;
+    const desglose  = document.getElementById('calc_desglose_'    + planId);
+    const holder    = document.getElementById('calc_placeholder_' + planId);
+    if (!monto || isNaN(monto) || monto <= 0) {
+        if (desglose) desglose.style.display = 'none';
+        if (holder)   holder.style.display   = '';
         return;
     }
-    if (desglose)    desglose.style.display    = '';
-    if (placeholder) placeholder.style.display = 'none';
-
-    const pVenta = monto;  // modelo ABSORBE
-
-    // Base sin IVA para cada componente
-    const ar_base_monto   = pVenta * p.arCred   / 100;
-    const tasa_base_monto = pVenta * p.tasaBase  / 100;
-    const pt_base_monto   = pVenta * p.comCred   / 100;
-
-    // IVA por separado según cada toggle
-    const iva_com_ar = p.comIva     ? (ar_base_monto + pt_base_monto) * ivaF    : 0;
-    const iva_tasa   = p.tasaAplIva ? tasa_base_monto * ivaFinF                  : 0;
-    const iva_total  = iva_com_ar + iva_tasa;
-
-    const total_desc_monto = ar_base_monto + tasa_base_monto + pt_base_monto + iva_total;
-    const neto             = pVenta - total_desc_monto;
-
-    const fmt = v => '$ ' + v.toLocaleString('es-AR', {
-        minimumFractionDigits: 2, maximumFractionDigits: 2
-    });
-
-    setText('calc_venta_'      + planId, fmt(pVenta));
-    setText('calc_ar_monto_'   + planId, '- ' + fmt(ar_base_monto));
-    setText('calc_tasa_monto_' + planId, '- ' + fmt(tasa_base_monto));
-    setText('calc_pt_monto_'   + planId, '- ' + fmt(pt_base_monto));
-    setText('calc_iva_monto_'  + planId, (p.comIva || p.tasaAplIva)
-        ? '- ' + fmt(iva_total)
-        : '$ 0,00');
-    setText('calc_desc_monto_' + planId, fmt(total_desc_monto));
-    setText('calc_neto_'       + planId, fmt(neto));
+    if (desglose) desglose.style.display = '';
+    if (holder)   holder.style.display   = 'none';
+    const ar_m   = monto * p.arCred  / 100;
+    const tasa_m = monto * p.tasaBase / 100;
+    const pt_m   = monto * p.comCred  / 100;
+    const iva_ca = p.comIva     ? (ar_m + pt_m) * ivaF  : 0;
+    const iva_t  = p.tasaAplIva ? tasa_m * ivaFinF       : 0;
+    const iva_tot= iva_ca + iva_t;
+    const tot_d  = ar_m + tasa_m + pt_m + iva_tot;
+    const neto   = monto - tot_d;
+    const fmt = v => '$ ' + v.toLocaleString('es-AR', { minimumFractionDigits:2, maximumFractionDigits:2 });
+    setText('calc_venta_'     + planId, fmt(monto));
+    setText('calc_ar_monto_'  + planId, '- ' + fmt(ar_m));
+    setText('calc_tasa_monto_'+ planId, '- ' + fmt(tasa_m));
+    setText('calc_pt_monto_'  + planId, '- ' + fmt(pt_m));
+    setText('calc_iva_monto_' + planId, (p.comIva || p.tasaAplIva) ? '- ' + fmt(iva_tot) : '$ 0,00');
+    setText('calc_desc_monto_'+ planId, fmt(tot_d));
+    setText('calc_neto_'      + planId, fmt(neto));
 }
 
-/* ─── MODO INVERSO — modelo ABSORBE ──────────────────────────── */
+/* ── Recalc Inverso ───────────────────────────────────────────── */
 function recalcInverse(planId) {
     const p = getEffectiveParams(planId);
     if (!p) return;
-
     const coefEl = document.getElementById('inv_coef_' + planId);
     const coef   = coefEl && coefEl.value !== '' ? parseFloat(coefEl.value) : null;
-
-    if (coef === null || isNaN(coef) || coef <= 0) {
-        ['inv_costos_', 'inv_tasa_iva_', 'inv_tasa_base_', 'inv_desc_',
-         'inv_precio_', 'inv_recargo_'].forEach(pre => setText(pre + planId, '—'));
+    if (!coef || isNaN(coef) || coef <= 0) {
+        ['inv_costos_','inv_tasa_iva_','inv_tasa_base_','inv_desc_','inv_precio_','inv_recargo_']
+            .forEach(p => setText(p + planId, '—'));
         const sug = document.getElementById('inv_sugerencia_' + planId);
         if (sug) sug.style.display = 'none';
         return;
     }
-
     const ivaF      = p.iva / 100;
     const ivaFactor = p.comIva ? (1 + ivaF) : 1;
-
     const com_eff   = p.comCred * ivaFactor;
     const ar_eff    = p.arCred  * ivaFactor;
     const total_eff = (1 - 1 / coef) * 100;
     const tasa_eff  = total_eff - com_eff - ar_eff;
     const tasa_base = tasa_eff / ivaFactor;
-
-    setText('inv_costos_'    + planId, (com_eff + ar_eff).toFixed(4) + '%');
-    setText('inv_tasa_iva_'  + planId, tasa_eff.toFixed(4)  + '%');
-    setText('inv_tasa_base_' + planId, tasa_base.toFixed(4) + '%');
-    setText('inv_desc_'      + planId, total_eff.toFixed(4) + '%');
-
-    /*
-     * MODELO ABSORBE en inverso:
-     * monto ingresado = lo que cobra al cliente (bruto)
-     * neto = monto / coef = lo que recibe el comercio
-     * descuento = monto - neto
-     */
+    setText('inv_costos_'   + planId, (com_eff + ar_eff).toFixed(4) + '%');
+    setText('inv_tasa_iva_' + planId, tasa_eff.toFixed(4)  + '%');
+    setText('inv_tasa_base_'+ planId, tasa_base.toFixed(4) + '%');
+    setText('inv_desc_'     + planId, total_eff.toFixed(4) + '%');
     const montoEl = document.getElementById('inv_monto_' + planId);
     const monto   = montoEl && montoEl.value !== '' ? parseFloat(montoEl.value) : null;
-
-    if (monto !== null && !isNaN(monto) && monto > 0) {
-        const neto_vendedor  = monto / coef;
-        const descuento_peso = monto - neto_vendedor;
-        setText('inv_precio_'  + planId, '$ ' + neto_vendedor.toFixed(2));   // saldo comercio
-        setText('inv_recargo_' + planId, '$ ' + descuento_peso.toFixed(2));  // descuento $
+    if (monto && !isNaN(monto) && monto > 0) {
+        const neto = monto / coef;
+        setText('inv_precio_' + planId, '$ ' + neto.toFixed(2));
+        setText('inv_recargo_'+ planId, '$ ' + (monto - neto).toFixed(2));
     } else {
-        setText('inv_precio_'  + planId, '—');
-        setText('inv_recargo_' + planId, '—');
+        setText('inv_precio_' + planId, '—');
+        setText('inv_recargo_'+ planId, '—');
     }
-
     const sug = document.getElementById('inv_sugerencia_' + planId);
     if (sug) {
         if (tasa_base >= 0) {
@@ -1668,9 +1623,45 @@ function recalcInverse(planId) {
     }
 }
 
+/* ── Helpers ──────────────────────────────────────────────────── */
 function setText(id, val) {
     const el = document.getElementById(id);
     if (el) el.textContent = val;
+}
+
+/* ── Alcance ──────────────────────────────────────────────────── */
+function toggleAlcancePanel(planId, valor) {
+    const panel  = document.getElementById('panel_usuarios_' + planId);
+    const hidden = document.getElementById('alcance_hidden_'  + planId);
+    if (panel)  panel.style.display = valor === 'usuarios' ? '' : 'none';
+    if (hidden) hidden.value = valor;
+}
+
+function filtrarUsuarios(planId, texto) {
+    const q = texto.toLowerCase().trim();
+    document.querySelectorAll('.user-check-item-' + planId).forEach(function(el) {
+        el.style.display = (!q || el.dataset.nombre.includes(q)) ? '' : 'none';
+    });
+}
+
+function actualizarContador(planId) {
+    const n = document.querySelectorAll(
+        '#lista_usuarios_' + planId + ' input[type="checkbox"]:checked'
+    ).length;
+    const badge = document.getElementById('count_asignados_' + planId);
+    if (badge) badge.textContent = n + ' seleccionado' + (n !== 1 ? 's' : '');
+}
+
+function toggleNewPlanUsuarios(valor) {
+    const panel = document.getElementById('new_plan_usuarios_panel');
+    if (panel) panel.style.display = valor === 'usuarios' ? '' : 'none';
+}
+
+function filtrarUsuariosNew(texto) {
+    const q = texto.toLowerCase().trim();
+    document.querySelectorAll('.new-user-item').forEach(function(el) {
+        el.style.display = (!q || el.dataset.nombre.includes(q)) ? '' : 'none';
+    });
 }
 </script>
 {% endblock %}

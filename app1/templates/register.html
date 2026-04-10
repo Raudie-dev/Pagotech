@@ -81,12 +81,12 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="telefono">Teléfono (opcional)</label>
+                        <label for="telefono">Teléfono</label>
                         <div class="input-wrapper" id="wrapper-telefono">
                             <i class="fas fa-phone input-icon"></i>
-                            <input type="tel" id="telefono" name="telefono" placeholder="+57 300 000 0000" value="{{ data.telefono|default:'' }}">
+                            <input type="tel" id="telefono" name="telefono" placeholder="+57 300 000 0000" value="{{ data.telefono|default:'' }}" required>
                         </div>
-                        <span class="error-msg" id="msg-telefono">Solo se permiten números.</span>
+                        <span class="error-msg" id="msg-telefono">Debe comenzar con + y solo números (8-15 dígitos).</span>
                     </div>
 
                     <div class="form-group">
@@ -185,6 +185,7 @@
             const regex = {
                 nombre: /^[a-zA-ZÀ-ÿ\s]{3,40}$/,
                 email: /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/,
+                telefono: /^\+(?=[0-9]{8,15}$)[0-9]+$/,  // + seguido de 8 a 15 dígitos
                 password: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_\-+=\[\]{}|:;"'<>,.?/~`])[A-Za-z\d!@#$%^&*()_\-+=\[\]{}|:;"'<>,.?/~`]{8,}$/
             };
 
@@ -192,32 +193,26 @@
                 const val = inputs[field].value.trim();
                 let isValid = true;
 
-                // Lógica de validación por campo
                 if (field === 'nombre') isValid = regex.nombre.test(val);
                 if (field === 'email') isValid = regex.email.test(val);
+                if (field === 'telefono') isValid = regex.telefono.test(val);   // ahora obligatorio
                 if (field === 'password') {
                     isValid = regex.password.test(val);
-                    // Si cambiamos el password principal, re-validamos la confirmación
                     if (inputs.password2.value !== "") validateField('password2');
                 }
                 if (field === 'password2') {
                     isValid = (val === inputs.password.value && val !== "");
                 }
-                if (field === 'telefono') isValid = val === "" || /^[0-9+\s]+$/.test(val);
 
                 const wrapper = document.getElementById(`wrapper-${field}`);
                 const msg = document.getElementById(`msg-${field}`);
 
-                // --- LÓGICA SOLICITADA: Quitar error si cumple requisitos ---
                 if (isValid) {
                     wrapper.classList.remove('invalid');
                     if (msg) msg.style.display = 'none';
                 } else {
-                    // Solo mostramos error si el usuario ya escribió algo
-                    if (val !== "") {
-                        wrapper.classList.add('invalid');
-                        if (msg) msg.style.display = 'block';
-                    }
+                    wrapper.classList.add('invalid');
+                    if (msg) msg.style.display = 'block';
                 }
                 checkForm();
             };
@@ -225,13 +220,13 @@
             const checkForm = () => {
                 const isNombre = regex.nombre.test(inputs.nombre.value.trim());
                 const isEmail = regex.email.test(inputs.email.value.trim());
+                const isTelefono = regex.telefono.test(inputs.telefono.value.trim());
                 const isPass = regex.password.test(inputs.password.value);
                 const isPass2 = (inputs.password.value === inputs.password2.value && inputs.password2.value !== "");
                 
-                btn.disabled = !(isNombre && isEmail && isPass && isPass2);
+                btn.disabled = !(isNombre && isEmail && isTelefono && isPass && isPass2);
             };
 
-            // Escuchar eventos en cada input
             Object.keys(inputs).forEach(key => {
                 inputs[key].addEventListener('input', () => validateField(key));
                 inputs[key].addEventListener('blur', () => validateField(key));

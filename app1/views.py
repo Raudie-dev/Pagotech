@@ -15,6 +15,17 @@ import tempfile
 from app2.models import ParametroFinanciero, CuotaConfig
 import os
 import logging
+from app2 import crud as app2_crud
+from django.core.mail import send_mail
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_http_methods
+import json
+from utils.email_utils import mail
+from django.urls import reverse
+from django.utils import timezone
+import re
+from django.core.validators import validate_email
+from django.core.exceptions import ValidationError
 
 logger = logging.getLogger('app1')
 
@@ -26,21 +37,66 @@ def index(request):
 
 def register(request):
     if request.method == 'POST':
-        nombre = request.POST.get('nombre', '').strip()
+        # --- 1. OBTENER Y SANITIZAR DATOS ---
+        nombre_raw = request.POST.get('nombre', '').strip()
+        # Eliminar espacios múltiples y capitalizar cada palabra
+        nombre = re.sub(r'\s+', ' ', nombre_raw).title()
+        
+        email_raw = request.POST.get('email', '').strip()
+        email = email_raw.lower()
+        
+        telefono_raw = request.POST.get('telefono', '').strip()
+        telefono = re.sub(r'\s+', '', telefono_raw) if telefono_raw else ''
+        
         password = request.POST.get('password', '')
         password2 = request.POST.get('password2', '')
-        email = request.POST.get('email', '').strip()
-        telefono = request.POST.get('telefono', '').strip()
 
         logger.debug(f"Intento de registro — email={email} nombre={nombre}")
 
+        # --- 2. VALIDACIONES ---
+        errors = []
+
+        # Nombre
+        if not nombre:
+            errors.append('El nombre completo es obligatorio.')
+        elif len(nombre) < 3:
+            errors.append('El nombre debe tener al menos 3 caracteres.')
+        elif len(nombre) > 100:
+            errors.append('El nombre no puede exceder 100 caracteres.')
+        elif not re.match(r'^[a-zA-ZÀ-ÿ\s]+$', nombre):
+            errors.append('El nombre solo puede contener letras y espacios.')
+
+        # Email
+        if not email:
+            errors.append('El correo electrónico es obligatorio.')
+        else:
+            try:
+                validate_email(email)
+            except ValidationError:
+                errors.append('Ingresa un correo electrónico válido.')
+
+        # Teléfono (opcional pero con formato)
+        if not telefono:
+            errors.append('El teléfono es obligatorio.')
+        elif not re.match(r'^\+?[0-9]{8,15}$', telefono):
+            errors.append('Debe comenzar con + y solo números (8-15 dígitos).')
+
+        # Contraseña
+        if not password:
+            errors.append('La contraseña es obligatoria.')
+        else:
+            if len(password) < 8:
+                errors.append('La contraseña debe tener al menos 8 caracteres.')
+            if not re.search(r'[A-Z]', password):
+                errors.append('La contraseña debe contener al menos una mayúscula.')
+            if not re.search(r'[!@#$%^&*()_\-+=\[\]{}|:;"\'<>,.?/~`]', password):
+                errors.append('La contraseña debe contener al menos un símbolo.')
+
+        # Confirmación de contraseña
         if password != password2:
-            logger.warning(f"Registro fallido — contraseñas no coinciden — email={email}")
-            messages.error(request, 'Las contraseñas no coinciden.')
-            return render(request, 'register.html', {'data': request.POST})
+            errors.append('Las contraseñas no coinciden.')
 
-        cliente, errors = crud.create_cliente(nombre, password, email, telefono)
-
+        # Si hay errores, mostrar y retornar
         if errors:
             logger.warning(f"Registro rechazado — email={email} — errores={errors}")
             for e in errors:
@@ -50,12 +106,57 @@ def register(request):
                 'errors': errors
             })
 
+        # --- 3. CREAR CLIENTE (CRUD) ---
+        cliente, creation_errors = crud.create_cliente(nombre, password, email, telefono)
+
+        if creation_errors:
+            logger.warning(f"Registro rechazado — email={email} — errores={creation_errors}")
+            for e in creation_errors:
+                messages.error(request, e)
+            return render(request, 'register.html', {
+                'data': request.POST,
+                'errors': creation_errors
+            })
+
+        # --- 4. ENVIAR NOTIFICACIÓN POR CORREO ---
+        try:
+            admin_url = request.build_absolute_uri(reverse('aprobacion'))
+            
+            logger.info(f"Intentando enviar correo de notificación para {email}")
+            
+            # Usar EMAIL_RECEPTORES (lista) o EMAIL_RECEPTOR (string) según tu settings
+            destinatarios = getattr(settings, 'EMAIL_RECEPTORES', None)
+            if not destinatarios:
+                destinatarios = [getattr(settings, 'EMAIL_RECEPTOR', 'pagotechnotificaciones@gmail.com')]
+            
+            resultado = mail(
+                asunto="Nuevo usuario registrado - Pendiente de aprobación",
+                destinatarios=destinatarios,
+                template_html="emails/notificacion_registro.html",
+                contexto={
+                    "nombre": nombre,
+                    "email": email,
+                    "telefono": telefono or "No especificado",
+                    "fecha": timezone.now().strftime("%d/%m/%Y %H:%M"),
+                    "admin_url": admin_url,
+                },
+            )
+            
+            if resultado:
+                logger.info(f"Correo de notificación enviado correctamente para {email}")
+            else:
+                logger.warning(f"Falló el envío del correo de notificación para {email}")
+                
+        except Exception as e:
+            logger.error(f"Error enviando correo de notificación para {email}: {e}")
+
+        # --- 5. REDIRIGIR AL INDEX CON MENSAJE DE ÉXITO ---
         logger.info(f"Registro exitoso — email={email} nombre={nombre} id={cliente.id}")
         return redirect(f"{reverse('index')}?registered=1")
 
+    # --- GET: mostrar formulario vacío ---
     logger.debug("GET register — formulario cargado")
     return render(request, 'register.html')
-
 
 def login_cliente(request):
     if request.method == 'POST':
@@ -131,7 +232,7 @@ def creacion_link(request):
         logger.warning("Creación link — ParametroFinanciero no configurado, usando fallback")
         config = ParametroFinanciero.objects.create()
 
-    planes_activos = CuotaConfig.objects.filter(activa=True).order_by('numero_cuota')
+    planes_activos = app2_crud.list_cuotas_para_usuario(user_id)
     logger.debug(f"Creación link — usuario={cliente.nombre} id={user_id} planes_activos={planes_activos.count()}")
 
     if request.method == 'POST':
@@ -151,7 +252,7 @@ def creacion_link(request):
                     ar_eff   = Decimal(str(config.arancel_plataforma_debito)) * (1 + iva_f)
                     tasa_eff = Decimal('0')
                 else:
-                    plan = CuotaConfig.objects.filter(numero_cuota=cuotas_num, activa=True).first()
+                    plan = app2_crud.list_cuotas_para_usuario(user_id).filter(numero_cuota=cuotas_num).first()
                     if plan and cuotas_num > 1:
                         iva_val     = plan.iva_override              if plan.iva_override is not None              else config.iva
                         iva_fin_val = plan.iva_financiacion_override if plan.iva_financiacion_override is not None else config.iva_financiacion
@@ -284,14 +385,23 @@ def logout_cliente(request):
 
 
 def ticket_pdf(request, link_id):
-    user_id = request.session.get('user_id')
-    if not user_id:
+    user_id       = request.session.get('user_id')
+    user_admin_id = request.session.get('user_admin_id')
+
+    # Permite acceso si es cliente autenticado O si es admin
+    if not user_id and not user_admin_id:
         return redirect('login_cliente')
 
-    logger.info(f"Generando PDF — link_id={link_id} usuario={user_id}")
+    logger.info(f"Generando PDF — link_id={link_id} usuario={user_id} admin={user_admin_id}")
 
     try:
-        link   = LinkPago.objects.get(id=link_id, cliente_id=user_id)
+        # Admin puede ver el PDF de cualquier cliente
+        # Cliente solo puede ver sus propios PDFs
+        if user_admin_id:
+            link = LinkPago.objects.get(id=link_id)
+        else:
+            link = LinkPago.objects.get(id=link_id, cliente_id=user_id)
+            
         config = ParametroFinanciero.objects.first()
 
         if not config:

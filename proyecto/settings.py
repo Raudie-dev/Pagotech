@@ -41,8 +41,9 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'app1', # Control y loging
-    'app2', # Index y llamada a DB
+    'django.contrib.humanize',
+    'app1',
+    'app2',
 ]
 
 MIDDLEWARE = [
@@ -208,3 +209,17 @@ SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 
 # Renueva el tiempo en cada request (si está en False, el tiempo corre desde el login)
 SESSION_SAVE_EVERY_REQUEST = True
+
+
+# Configuración de correo
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'pagotechnotificaciones@gmail.com'
+EMAIL_HOST_PASSWORD = 'izrjwckymmjeoclj'
+
+# Definir el receptor de correos para administradores
+EMAIL_RECEPTORES = [
+    'pagotechnotificaciones@gmail.com',
+]

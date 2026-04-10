@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nuevo registro pendiente — PagoTech</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: #0a0a0b;
+            color: #ffffff;
+            padding: 40px 20px;
+            line-height: 1.6;
+        }
+
+        .wrapper {
+            max-width: 540px;
+            margin: 0 auto;
+        }
+
+        /* ── Logotipo / marca ── */
+        .brand {
+            text-align: center;
+            margin-bottom: 28px;
+        }
+        .brand-name {
+            font-size: 15px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: #e63946;
+        }
+        .brand-divider {
+            width: 32px;
+            height: 2px;
+            background: #e63946;
+            margin: 10px auto 0;
+            border-radius: 9999px;
+        }
+
+        /* ── Contenedor principal ── */
+        .card {
+            background: #111113;
+            border-radius: 20px;
+            border: 1px solid rgba(255,255,255,0.12);
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.6), 0 0 40px rgba(230,57,70,0.08);
+        }
+
+        /* ── Header ── */
+        .card-header {
+            background: linear-gradient(135deg, #1a1a1d 0%, #111113 100%);
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            padding: 32px 32px 28px;
+            position: relative;
+            overflow: hidden;
+        }
+        .card-header::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #e63946 0%, #c1121f 100%);
+        }
+        .card-header::after {
+            content: '';
+            position: absolute;
+            top: -60px; right: -60px;
+            width: 180px; height: 180px;
+            background: radial-gradient(circle, rgba(230,57,70,0.12) 0%, transparent 70%);
+            pointer-events: none;
+        }
+        .header-label {
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: #e63946;
+            margin-bottom: 8px;
+        }
+        .header-title {
+            font-size: 22px;
+            font-weight: 700;
+            color: #ffffff;
+            letter-spacing: -0.4px;
+            line-height: 1.3;
+        }
+        .header-sub {
+            font-size: 13px;
+            color: #71717a;
+            margin-top: 6px;
+        }
+
+        /* ── Body ── */
+        .card-body {
+            padding: 32px;
+        }
+
+        /* ── Banner de alerta ── */
+        .alert-bar {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            background: rgba(230,57,70,0.1);
+            border: 1px solid rgba(230,57,70,0.25);
+            border-radius: 12px;
+            padding: 14px 18px;
+            margin-bottom: 28px;
+        }
+        .alert-bar-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #e63946;
+            flex-shrink: 0;
+            box-shadow: 0 0 8px rgba(230,57,70,0.6);
+        }
+        .alert-bar-text {
+            font-size: 13px;
+            font-weight: 500;
+            color: #fca5a5;
+            line-height: 1.4;
+        }
+
+        /* ── Grid de datos ── */
+        .data-section-title {
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 1.2px;
+            text-transform: uppercase;
+            color: #71717a;
+            margin-bottom: 12px;
+        }
+        .data-grid {
+            background: #1a1a1d;
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 12px;
+            overflow: hidden;
+            margin-bottom: 28px;
+        }
+        .data-row {
+            display: flex;
+            align-items: center;
+            padding: 14px 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            gap: 16px;
+        }
+        .data-row:last-child { border-bottom: none; }
+        .data-key {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            color: #71717a;
+            width: 110px;
+            flex-shrink: 0;
+        }
+        .data-value {
+            font-size: 14px;
+            font-weight: 500;
+            color: #ffffff;
+            word-break: break-word;
+            flex: 1;
+        }
+        .data-value.empty {
+            color: #52525b;
+            font-style: italic;
+            font-weight: 400;
+        }
+        .data-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.15);
+            flex-shrink: 0;
+        }
+
+        /* ── Acción requerida ── */
+        .action-section {
+            background: #1a1a1d;
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 24px;
+        }
+        .action-title {
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: #a1a1aa;
+            margin-bottom: 6px;
+        }
+        .action-desc {
+            font-size: 13px;
+            color: #71717a;
+            line-height: 1.5;
+            margin-bottom: 16px;
+        }
+        .btn-primary {
+            display: inline-block;
+            background: #e63946;
+            color: #ffffff !important;
+            text-decoration: none;
+            padding: 11px 24px;
+            border-radius: 9999px;
+            font-weight: 700;
+            font-size: 13px;
+            letter-spacing: 0.3px;
+            box-shadow: 0 4px 12px rgba(230,57,70,0.35);
+        }
+
+        .btn-primary:visited,
+        .btn-primary:link,
+        .btn-primary:active,
+        .btn-primary:hover {
+            color: #ffffff !important;
+            text-decoration: none;
+        }
+
+        /* ── Nota de estado ── */
+        .status-note {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.07);
+            border-radius: 10px;
+            padding: 14px 16px;
+        }
+        .status-note-bar {
+            width: 3px;
+            border-radius: 9999px;
+            background: #e63946;
+            flex-shrink: 0;
+            align-self: stretch;
+            min-height: 20px;
+        }
+        .status-note-text {
+            font-size: 12px;
+            color: #71717a;
+            line-height: 1.6;
+        }
+        .status-note-text strong {
+            color: #a1a1aa;
+            font-weight: 600;
+        }
+
+        /* ── Footer ── */
+        .card-footer {
+            background: #0d0d0f;
+            border-top: 1px solid rgba(255,255,255,0.06);
+            padding: 20px 32px;
+        }
+        .footer-inner {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .footer-brand {
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: #52525b;
+        }
+        .footer-note {
+            font-size: 11px;
+            color: #3f3f46;
+        }
+
+        /* ── Responsive ── */
+        @media only screen and (max-width: 560px) {
+            body { padding: 20px 12px; }
+            .card-header,
+            .card-body,
+            .card-footer { padding-left: 20px; padding-right: 20px; }
+            .data-key { width: 90px; }
+            .footer-inner { flex-direction: column; align-items: flex-start; gap: 4px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="wrapper">
+
+        <!-- Marca -->
+        <div class="brand">
+            <div class="brand-name">PagoTech</div>
+            <div class="brand-divider"></div>
+        </div>
+
+        <div class="card">
+
+            <!-- Header -->
+            <div class="card-header">
+                <div class="header-label">Accion requerida</div>
+                <div class="header-title">Nuevo registro pendiente</div>
+                <div class="header-sub">Un usuario completó el formulario de registro y aguarda aprobacion.</div>
+            </div>
+
+            <!-- Body -->
+            <div class="card-body">
+
+                <!-- Alerta -->
+                <div class="alert-bar">
+                    <div class="alert-bar-text">
+                        El acceso al sistema permanece bloqueado hasta que un administrador apruebe esta solicitud.
+                    </div>
+                </div>
+
+                <!-- Datos del solicitante -->
+                <div class="data-section-title">Datos del solicitante</div>
+                <div class="data-grid">
+                    <div class="data-row">
+                        <div class="data-key">Nombre</div>
+                        <div class="data-value">{{ nombre|default:"No especificado" }}</div>
+                    </div>
+                    <div class="data-row">
+                        <div class="data-key">Correo</div>
+                        <div class="data-value">{{ email|default:"No especificado" }}</div>
+                    </div>
+                    <div class="data-row">
+                        <div class="data-key">Telefono</div>
+                        <div class="data-value {% if not telefono %}empty{% endif %}">
+                            {{ telefono|default:"No registrado" }}
+                        </div>
+                    </div>
+                    <div class="data-row">
+                        <div class="data-key">Registro</div>
+                        <div class="data-value">{{ fecha|default:"Hoy" }}</div>
+                    </div>
+                </div>
+
+                <!-- Accion -->
+                <div class="action-section">
+                    <div class="action-title">Proximos pasos</div>
+                    <div class="action-desc">
+                        Ingresa al panel de administracion para revisar la solicitud y aprobar o rechazar el acceso del usuario.
+                    </div>
+                    <a href="{{ admin_url|default:'/admin/aprobacion/' }}" class="btn-primary">
+                        Revisar solicitud &rarr;
+                    </a>
+                </div>
+
+            </div>
+
+            <!-- Footer -->
+            <div class="card-footer">
+                <div class="footer-inner">
+                    <div class="footer-brand">PagoTech | Mensaje automatico — no responder a este correo.</div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</body>
+</html>

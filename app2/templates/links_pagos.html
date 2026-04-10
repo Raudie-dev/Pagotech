@@ -1,0 +1,729 @@
+{% extends "base_control.html" %}
+{% load humanize %}
+{% load static %}
+{% block title %}PagoTech | Links de Pagos{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/usuarios-custom.css' %}">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css">
+<style>
+    .form-select {
+        background-color: var(--surface, #1e1e2e) !important;
+        border: 1px solid rgba(255,255,255,0.15) !important;
+        border-radius: 6px !important;
+        color: #fff !important;
+        font-size: 0.875rem !important;
+        height: 38px !important;
+        padding: 0 12px !important;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='rgba(255,255,255,0.4)' d='M6 8L1 3h10z'/%3E%3C/svg%3E") !important;
+        background-repeat: no-repeat !important;
+        background-position: right 10px center !important;
+        appearance: none !important;
+        cursor: pointer;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    .form-select:focus {
+        border-color: rgba(220,53,69,0.5) !important;
+        box-shadow: 0 0 0 3px rgba(220,53,69,0.1) !important;
+        outline: none !important;
+    }
+    .form-select option {
+        background-color: #16161f;
+        color: #ccc;
+        padding: 8px 12px;
+    }
+    .form-select option:hover,
+    .form-select option:checked {
+        background-color: rgba(220,53,69,0.2);
+        color: #fff;
+    }
+
+    /* ── Inputs — asegurar consistencia ─────────────────────────────── */
+    .form-control {
+        background-color: var(--surface, #1e1e2e) !important;
+        border: 1px solid rgba(255,255,255,0.15) !important;
+        border-radius: 6px !important;
+        color: #fff !important;
+        font-size: 0.875rem !important;
+        height: 38px !important;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    .form-control:focus {
+        background-color: var(--surface, #1e1e2e) !important;
+        border-color: rgba(220,53,69,0.5) !important;
+        box-shadow: 0 0 0 3px rgba(220,53,69,0.1) !important;
+        color: #fff !important;
+        outline: none !important;
+    }
+    .form-control::placeholder {
+        color: rgba(255,255,255,0.3) !important;
+    }
+    input[type="date"]::-webkit-calendar-picker-indicator {
+        filter: invert(0.6);
+        cursor: pointer;
+    }
+
+    /* ── Select2 — mismo aspecto que inputs y selects nativos ────────── */
+    .select2-container--default .select2-selection--single {
+        background-color: var(--surface, #1e1e2e) !important;
+        border: 1px solid rgba(255,255,255,0.15) !important;
+        border-radius: 6px !important;
+        height: 38px !important;
+        display: flex;
+        align-items: center;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    .select2-container--default.select2-container--open .select2-selection--single,
+    .select2-container--default.select2-container--focus .select2-selection--single {
+        border-color: rgba(220,53,69,0.5) !important;
+        box-shadow: 0 0 0 3px rgba(220,53,69,0.1) !important;
+    }
+    .select2-container--default .select2-selection--single .select2-selection__rendered {
+        color: #fff !important;
+        line-height: 38px !important;
+        padding-left: 12px !important;
+        padding-right: 30px !important;
+        font-size: 0.875rem !important;
+    }
+    .select2-container--default .select2-selection--single .select2-selection__placeholder {
+        color: rgba(255,255,255,0.3) !important;
+    }
+    .select2-container--default .select2-selection--single .select2-selection__arrow {
+        height: 36px !important;
+        right: 8px !important;
+    }
+    .select2-container--default .select2-selection--single .select2-selection__arrow b {
+        border-color: rgba(255,255,255,0.4) transparent transparent transparent !important;
+    }
+    .select2-container--default.select2-container--open
+        .select2-selection--single .select2-selection__arrow b {
+        border-color: transparent transparent rgba(255,255,255,0.4) transparent !important;
+    }
+
+    /* ── Dropdown Select2 ────────────────────────────────────────────── */
+    .select2-dropdown {
+        background-color: #16161f !important;
+        border: 1px solid rgba(255,255,255,0.12) !important;
+        border-radius: 6px !important;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.4) !important;
+        z-index: 9999 !important;
+        margin-top: 2px;
+    }
+    .select2-container--default .select2-search--dropdown {
+        padding: 8px !important;
+        background-color: #16161f !important;
+        border-bottom: 1px solid rgba(255,255,255,0.08) !important;
+    }
+    .select2-container--default .select2-search--dropdown .select2-search__field {
+        background-color: #1e1e2e !important;
+        border: 1px solid rgba(255,255,255,0.15) !important;
+        border-radius: 4px !important;
+        color: #fff !important;
+        padding: 6px 10px !important;
+        font-size: 0.85rem !important;
+        width: 100% !important;
+    }
+    .select2-container--default .select2-search--dropdown .select2-search__field:focus {
+        outline: none !important;
+        border-color: rgba(220,53,69,0.5) !important;
+    }
+    .select2-results__options {
+        background-color: #16161f !important;
+        max-height: 220px !important;
+        overflow-y: auto !important;
+        scrollbar-width: thin;
+        scrollbar-color: rgba(255,255,255,0.1) transparent;
+    }
+    .select2-results__options::-webkit-scrollbar {
+        width: 4px;
+    }
+    .select2-results__options::-webkit-scrollbar-track {
+        background: transparent;
+    }
+    .select2-results__options::-webkit-scrollbar-thumb {
+        background: rgba(255,255,255,0.1);
+        border-radius: 4px;
+    }
+    .select2-container--default .select2-results__option {
+        color: #aaa !important;
+        padding: 9px 14px !important;
+        font-size: 0.875rem !important;
+        background-color: #16161f !important;
+        transition: background 0.15s ease;
+    }
+    .select2-container--default .select2-results__option--highlighted[aria-selected] {
+        background-color: rgba(220,53,69,0.18) !important;
+        color: #fff !important;
+    }
+    .select2-container--default .select2-results__option[aria-selected="true"] {
+        background-color: rgba(220,53,69,0.1) !important;
+        color: rgba(255,255,255,0.7) !important;
+    }
+    .select2-container--default .select2-results__option--selected {
+        background-color: rgba(220,53,69,0.1) !important;
+    }
+
+    /* Botón limpiar Select2 */
+    .select2-container--default .select2-selection__clear {
+        color: rgba(255,255,255,0.4) !important;
+        margin-right: 20px !important;
+        font-size: 1rem !important;
+        line-height: 38px !important;
+    }
+    .select2-container--default .select2-selection__clear:hover {
+        color: #e63946 !important;
+    }
+
+    .select2-container {
+        width: 100% !important;
+    }
+
+    /* ── Badges / filtros rápidos ────────────────────────────────── */
+    .filtro-rapido {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 14px;
+        border-radius: 20px;
+        font-size: 0.78rem;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.2s ease;
+        white-space: nowrap;
+        line-height: 1.4;
+    }
+    .filtro-rapido:hover {
+        transform: translateY(-1px);
+        filter: brightness(1.15);
+    }
+    .filtro-rapido.success {
+        background: rgba(16,185,129,0.12);
+        color: #10b981;
+        border: 1px solid rgba(16,185,129,0.3);
+    }
+    .filtro-rapido.warning {
+        background: rgba(251,191,36,0.12);
+        color: #fbbf24;
+        border: 1px solid rgba(251,191,36,0.3);
+    }
+    .filtro-rapido.danger {
+        background: rgba(230,57,70,0.12);
+        color: #e63946;
+        border: 1px solid rgba(230,57,70,0.3);
+    }
+    .filtro-rapido.primary {
+        background: rgba(59,130,246,0.12);
+        color: #3b82f6;
+        border: 1px solid rgba(59,130,246,0.3);
+    }
+    .filtro-rapido.active-filter {
+        filter: brightness(1.2);
+        box-shadow: 0 0 10px rgba(255,255,255,0.1);
+    }
+
+    /* ── Inputs fecha ────────────────────────────────────────────── */
+    input[type="date"]::-webkit-calendar-picker-indicator {
+        filter: invert(0.7);
+        cursor: pointer;
+    }
+
+    /* ── Responsive ajustes ──────────────────────────────────────── */
+    @media (max-width: 768px) {
+        .filtros-rapidos-wrap {
+            gap: 6px !important;
+        }
+        .filtro-rapido {
+            font-size: 0.72rem;
+            padding: 5px 10px;
+        }
+        .ordenar-wrap {
+            flex-direction: column;
+            align-items: flex-start !important;
+            gap: 6px !important;
+        }
+        .ordenar-wrap .btn {
+            font-size: 0.75rem;
+        }
+    }
+    .total {
+        white-space: nowrap;
+        display: inline-block;
+        max-width: 100%;
+        font-size: clamp(0.8rem, 4vw, 1.75rem);
+    }
+
+    @media (max-width: 576px) {
+        .icon-box {
+            display: none;
+        }
+    }
+    @media (max-width: 768px) {
+    .ordenar-wrap {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 0.75rem !important;
+        width: 100%;
+    }
+
+    .ordenar-wrap > div.d-flex.ms-2.border-start {
+        border-left: none !important;         /* Elimina la línea blanca */
+        padding-left: 0 !important;           /* Quita el padding izquierdo */
+        margin-left: 0 !important;            /* Resetea margen */
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    .ordenar-wrap .btn-sm,
+    .ordenar-wrap select.form-select-sm {
+        font-size: 0.75rem;
+        padding: 0.4rem 0.75rem;
+    }
+
+    .ordenar-wrap .d-flex.align-items-center.gap-2.ms-2 {
+        margin-left: 0 !important;
+        justify-content: space-between;
+        flex-wrap: wrap;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+
+{# ─── HEADER ─────────────────────────────────────────────────────── #}
+<div class="d-flex justify-content-between align-items-end mb-4">
+    <div>
+        <h2 class="mb-1 text-white">
+            <i class="fas fa-link text-danger me-2"></i> Links de Pagos
+        </h2>
+        <p class="text-muted small mb-0">
+            Visualiza y filtra todos los enlaces de pago generados por los clientes.
+        </p>
+    </div>
+</div>
+
+{# ─── ESTADÍSTICAS ────────────────────────────────────────────────── #}
+<div class="row g-4 mb-5">
+    <div class="col-6 col-md-3">
+        <div class="card h-100 hover-lift border-start border-info border-4">
+            <div class="card-body d-flex align-items-center">
+                <div class="icon-box me-3">
+                    <i class="fas fa-link text-info h4 mb-0"></i>
+                </div>
+                <div class="flex-grow-1 min-w-0">
+                    <div class="card-subtitle text-muted mb-1 small">Links Totales</div>
+                    <div class="h3 fw-bold mb-0 text-white">{{ total_links }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card h-100 hover-lift border-start border-success border-4">
+            <div class="card-body d-flex align-items-center">
+                <div class="icon-box me-3">
+                    <i class="fas fa-check-circle text-success h4 mb-0"></i>
+                </div>
+                <div class="flex-grow-1 min-w-0">
+                    <div class="card-subtitle text-muted mb-1 small">Links Pagados</div>
+                    <div class="h3 fw-bold mb-0 text-white">{{ total_pagados }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card h-100 hover-lift border-start border-warning border-4">
+            <div class="card-body d-flex align-items-center">
+                <div class="icon-box me-3">
+                    <i class="fas fa-clock text-warning h4 mb-0"></i>
+                </div>
+                <div class="flex-grow-1 min-w-0">
+                    <div class="card-subtitle text-muted mb-1 small">Links Pendientes</div>
+                    <div class="h3 fw-bold mb-0 text-white">{{ total_pendientes }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card h-100 hover-lift border-start border-danger border-4">
+            <div class="card-body d-flex align-items-center">
+                <div class="icon-box me-3">
+                    <i class="fas fa-dollar-sign text-danger h4 mb-0"></i>
+                </div>
+                <div class="flex-grow-1 min-w-0">
+                    <div class="card-subtitle text-muted mb-1 small">Monto Cobrado</div>
+                    <div class="h3 fw-bold mb-0 text-white total">${{ monto_total|floatformat:2|intcomma }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{# ─── FILTROS ─────────────────────────────────────────────────────── #}
+<div class="search-container mb-4 p-3">
+    <form method="get" id="filtrosForm">
+        <div class="row g-3 align-items-end">
+
+            {# Búsqueda texto #}
+            <div class="col-12 col-md-6 col-lg-3">
+                <label class="form-label text-muted small fw-bold mb-1">BUSCAR</label>
+                <div class="position-relative">
+                    <i class="fas fa-search position-absolute ms-3 text-muted"
+                       style="top:50%;transform:translateY(-50%);z-index:10;"></i>
+                    <input type="text" name="q" class="form-control ps-5"
+                           placeholder="Nombre, email, orden..."
+                           value="{{ q }}">
+                </div>
+            </div>
+
+            {# Cliente con Select2 #}
+            <div class="col-12 col-md-6 col-lg-3">
+                <label class="form-label text-muted small fw-bold mb-1">CLIENTE</label>
+                <select name="cliente_id" id="selectCliente" class="form-select select2-cliente">
+                    <option value="">Todos los clientes</option>
+                    {% for c in clientes_lista %}
+                    <option value="{{ c.id }}"
+                        {% if cliente_id == c.id|stringformat:"s" %}selected{% endif %}>
+                        {{ c.nombre }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            {# Fechas #}
+            <div class="col-6 col-md-4 col-lg-2">
+                <label class="form-label text-muted small fw-bold mb-1">DESDE</label>
+                <input type="date" name="fecha_desde" class="form-control"
+                       value="{{ fecha_desde }}">
+            </div>
+            <div class="col-6 col-md-4 col-lg-2">
+                <label class="form-label text-muted small fw-bold mb-1">HASTA</label>
+                <input type="date" name="fecha_hasta" class="form-control"
+                       value="{{ fecha_hasta }}">
+            </div>
+
+            {# Estado #}
+            <div class="col-6 col-md-4 col-lg-1">
+                <label class="form-label text-muted small fw-bold mb-1">ESTADO</label>
+                <select name="estado" class="form-select">
+                    <option value="">Todos</option>
+                    <option value="CAPTURED"   {% if estado == "CAPTURED" %}selected{% endif %}>Pagado</option>
+                    <option value="PENDING"    {% if estado == "PENDING" %}selected{% endif %}>Pendiente</option>
+                    <option value="AUTHORISED" {% if estado == "AUTHORISED" %}selected{% endif %}>Autorizado</option>
+                    <option value="REFUSED"    {% if estado == "REFUSED" %}selected{% endif %}>Rechazado</option>
+                    <option value="CANCELLED"  {% if estado == "CANCELLED" %}selected{% endif %}>Cancelado</option>
+                    <option value="EXPIRED"    {% if estado == "EXPIRED" %}selected{% endif %}>Expirado</option>
+                    <option value="ABANDONED"  {% if estado == "ABANDONED" %}selected{% endif %}>Abandonado</option>
+                </select>
+            </div>
+
+            {# Tipo tarjeta #}
+            <div class="col-6 col-md-4 col-lg-1">
+                <label class="form-label text-muted small fw-bold mb-1">TARJETA</label>
+                <select name="tipo_tarjeta" class="form-select">
+                    <option value="">Ambas</option>
+                    <option value="credito" {% if tipo_tarjeta == "credito" %}selected{% endif %}>Crédito</option>
+                    <option value="debito"  {% if tipo_tarjeta == "debito" %}selected{% endif %}>Débito</option>
+                </select>
+            </div>
+
+            {# Botones buscar / limpiar #}
+            <div class="col-12 col-md-4 col-lg-auto d-flex gap-2 align-items-end">
+                <button type="submit" class="btn btn-primary d-flex align-items-center gap-2 flex-grow-1 flex-lg-grow-0">
+                    <i class="fas fa-search"></i>
+                    <span class="d-inline d-lg-none">Buscar</span>
+                </button>
+                <a href="{% url 'links_pagos' %}" class="btn btn-dark d-flex align-items-center gap-2 flex-grow-1 flex-lg-grow-0" title="Limpiar filtros">
+                    <i class="fas fa-redo"></i>
+                    <span class="d-inline d-lg-none">Limpiar</span>
+                </a>
+            </div>
+
+        </div>
+    </form>
+
+    {# Filtros rápidos #}
+    <div class="mt-3 filtros-rapidos-wrap d-flex flex-wrap gap-2">
+        <a href="?pagado=1"
+           class="filtro-rapido success {% if pagado_f == '1' %}active-filter{% endif %}">
+            <i class="fas fa-check-circle"></i> Solo pagados
+        </a>
+        <a href="?pagado=0"
+           class="filtro-rapido warning {% if pagado_f == '0' %}active-filter{% endif %}">
+            <i class="fas fa-clock"></i> Pendientes
+        </a>
+        <a href="?estado=REFUSED"
+           class="filtro-rapido danger {% if estado == 'REFUSED' %}active-filter{% endif %}">
+            <i class="fas fa-times-circle"></i> Rechazados
+        </a>
+        <a href="?orden=-monto"
+           class="filtro-rapido primary {% if orden == '-monto' %}active-filter{% endif %}">
+            <i class="fas fa-sort-amount-down"></i> Mayor monto
+        </a>
+    </div>
+</div>
+
+{# ─── TABLA ───────────────────────────────────────────────────────── #}
+<div class="custom-table-container shadow-lg animate-slide-up">
+
+    {# Cabecera tabla #}
+    <div class="ordenar-wrap d-flex align-items-center gap-2 flex-wrap">
+        <small class="text-muted">Ordenar:</small>
+        <a href="?{{ get_params }}&orden=-created_at"
+        class="btn btn-sm {% if orden == '-created_at' %}btn-primary{% else %}btn-dark{% endif %}">
+            <i class="fas fa-calendar-alt me-1"></i>Recientes
+        </a>
+        <a href="?{{ get_params }}&orden=-monto"
+        class="btn btn-sm {% if orden == '-monto' %}btn-primary{% else %}btn-dark{% endif %}">
+            <i class="fas fa-dollar-sign me-1"></i>Monto
+        </a>
+
+        {# ── Selector de registros por página ── #}
+        <div class="d-flex align-items-center gap-2 ms-2 ps-2">
+            <small class="text-muted text-nowrap">Mostrar:</small>
+            <form method="get" id="perPageForm" class="d-flex gap-1">
+                {# Preservar todos los filtros activos #}
+                {% for key, value in request.GET.items %}
+                    {% if key != 'per_page' and key != 'page' %}
+                    <input type="hidden" name="{{ key }}" value="{{ value }}">
+                    {% endif %}
+                {% endfor %}
+                <select name="per_page"
+                        class="form-select form-select-sm"
+                        style="width:auto;min-width:70px;"
+                        onchange="this.form.submit()">
+                    {% for opt in per_page_options %}
+                    <option value="{{ opt }}" {% if per_page == opt %}selected{% endif %}>
+                        {{ opt }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </form>
+        </div>
+    </div>
+
+    {# Tabla responsive #}
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0 custom-dark-table">
+            <thead>
+                <tr>
+                    <th class="ps-4">CLIENTE</th>
+                    <th>ORDEN / DESCRIPCIÓN</th>
+                    <th class="text-center d-none d-md-table-cell">TIPO</th>
+                    <th class="text-center d-none d-md-table-cell">CANT. CUOTAS</th>
+                    <th class="text-end">MONTO</th>
+                    <th class="text-end d-none d-lg-table-cell">NETO</th>
+                    <th class="text-center">ESTADO</th>
+                    <th class="text-center d-none d-md-table-cell">FECHA</th>
+                    <th class="text-center pe-4">PDF</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for link in links %}
+                <tr class="user-row border-bottom border-opacity-10">
+
+                    {# Cliente #}
+                    <td class="ps-4">
+                        <div class="d-flex align-items-center">
+
+                            <div class="min-w-0">
+                                <div class="user-name-text">
+                                    {{ link.cliente.nombre }}
+                                </div>
+                                <small class="user-sub-text">
+                                    {{ link.cliente.email }}
+                                </small>
+                            </div>
+                        </div>
+                    </td>
+
+                    {# Orden / Descripción #}
+                    <td>
+                        <div class="user-name-text font-monospace small">
+                            {{ link.nro_transaccion|default:"—" }}
+                        </div>
+                        {% if link.descripcion %}
+                        <small class="user-sub-text d-none d-md-block">
+                            {{ link.descripcion|truncatechars:35 }}
+                        </small>
+                        {% endif %}
+                    </td>
+
+                    {# Tipo — oculto en móvil #}
+                    <td class="text-center d-none d-md-table-cell">
+                        {% if link.tipo_tarjeta == 'debito' %}
+                        <span class="badge bg-info bg-opacity-15 text-info border border-info border-opacity-25 px-2 py-1">
+                            <i class="fas fa-credit-card me-1"></i>Débito
+                        </span>
+                        {% else %}
+                        <span class="badge bg-primary bg-opacity-15 text-primary border border-primary border-opacity-25 px-2 py-1">
+                            <i class="fas fa-credit-card me-1"></i>Crédito
+                        </span>
+                        {% endif %}
+                    </td>
+
+                    {# Cuotas — oculto en móvil #}
+                    <td class="text-center d-none d-md-table-cell">
+                        <span class="text-white fw-bold">
+                            {% if link.cuotas_elegidas > 1 %}{{ link.cuotas_elegidas }}
+                            {% else %}Contado{% endif %}
+                        </span>
+                    </td>
+
+                    {# Monto #}
+                    <td class="text-end">
+                        <span class="text-white fw-bold">${{ link.monto|floatformat:2|intcomma }}</span>
+                    </td>
+
+                    {# Neto — oculto en tablet #}
+                    <td class="text-end d-none d-lg-table-cell">
+                        <span class="text-success fw-bold">${{ link.receiver_amount|floatformat:2|intcomma }}</span>
+                        <br>
+                        <small class="user-sub-text">-${{ link.commission_amount|floatformat:2|intcomma }}</small>
+                    </td>
+
+                    {# Estado #}
+                    <td class="text-center">
+                        {% if link.pagado %}
+                            <span class="badge-status status-approved">
+                                <div class="status-dot" style="background:#10b981;box-shadow:0 0 8px #10b981;"></div>
+                                PAGADO
+                            </span>
+                        {% elif link.status_detalle == 'REFUSED' or link.status_detalle == 'CANCELLED' %}
+                            <span class="badge-status status-blocked">
+                                <div class="status-dot" style="background:#e63946;box-shadow:0 0 8px #e63946;"></div>
+                                RECHAZADO
+                            </span>
+                        {% elif link.status_detalle == 'EXPIRED' %}
+                            <span class="badge-status" style="background:rgba(107,114,128,.1);color:#9ca3af;border:1px solid rgba(107,114,128,.25);border-radius:20px;padding:4px 10px;font-size:.7rem;font-weight:700;display:inline-flex;align-items:center;gap:6px;">
+                                <div class="status-dot" style="background:#9ca3af;width:7px;height:7px;border-radius:50%;"></div>
+                                EXPIRADO
+                            </span>
+                        {% elif link.status_detalle == 'AUTHORISED' %}
+                            <span class="badge-status" style="background:rgba(59,130,246,.1);color:#3b82f6;border:1px solid rgba(59,130,246,.25);border-radius:20px;padding:4px 10px;font-size:.7rem;font-weight:700;display:inline-flex;align-items:center;gap:6px;">
+                                <div class="status-dot" style="background:#3b82f6;box-shadow:0 0 8px #3b82f6;width:7px;height:7px;border-radius:50%;"></div>
+                                AUTORIZADO
+                            </span>
+                        {% elif link.status_detalle == 'INITIAL' %}
+                            <span class="badge-status" style="background:rgba(251,191,36,.1);color:#fbbf24;border:1px solid rgba(251,191,36,.25);border-radius:20px;padding:4px 10px;font-size:.7rem;font-weight:700;display:inline-flex;align-items:center;gap:6px;">
+                                <div class="status-dot" style="background:#fbbf24;box-shadow:0 0 8px #fbbf24;width:7px;height:7px;border-radius:50%;"></div>
+                                PENDIENTE
+                            </span>
+                        {% else %}
+                            <span class="badge-status" style="background:rgba(251,191,36,.1);color:#fbbf24;border:1px solid rgba(251,191,36,.25);border-radius:20px;padding:4px 10px;font-size:.7rem;font-weight:700;display:inline-flex;align-items:center;gap:6px;">
+                                <div class="status-dot" style="background:#fbbf24;box-shadow:0 0 8px #fbbf24;width:7px;height:7px;border-radius:50%;"></div>
+                                {{ link.status_detalle|default:"INICIAL" }}
+                            </span>
+                        {% endif %}
+                    </td>
+
+                    {# Fecha — oculto en móvil #}
+                    <td class="text-center d-none d-md-table-cell">
+                        <div class="text-white small">{{ link.created_at|date:"d/m/Y" }}</div>
+                        <small class="user-sub-text">{{ link.created_at|date:"H:i" }}</small>
+                    </td>
+
+                    {# PDF #}
+                    <td class="text-center pe-4">
+                        {% if link.pagado %}
+                        <a href="{% url 'ticket_pdf' link.id %}"
+                           target="_blank"
+                           class="btn btn-sm btn-action-dark"
+                           title="Ver comprobante PDF">
+                            <i class="fas fa-file-pdf text-danger"></i>
+                        </a>
+                        {% else %}
+                        <span class="text-muted small">—</span>
+                        {% endif %}
+                    </td>
+
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="9" class="text-center py-5">
+                        <i class="fas fa-inbox display-4 opacity-25 d-block mb-3 text-muted"></i>
+                        <span class="text-muted">No se encontraron links con los filtros aplicados.</span>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {# Paginación #}
+    <div class="pagination-container d-flex flex-column flex-md-row justify-content-between
+                align-items-center p-4 border-top border-opacity-10 gap-3">
+        <div class="pagination-info text-center text-md-start">
+            Mostrando <span class="text-white fw-bold">{{ links.start_index }}</span> –
+            <span class="text-white fw-bold">{{ links.end_index }}</span> de
+            <span class="text-danger fw-bold">{{ links.paginator.count }}</span> links
+            <span class="text-muted ms-1">({{ per_page }} por página)</span>
+        </div>
+        <nav>
+            <ul class="pagination pagination-sm mb-0 flex-wrap justify-content-center">
+                {% if links.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page=1&{{ get_params }}">
+                        <i class="fas fa-angle-double-left"></i>
+                    </a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ links.previous_page_number }}&{{ get_params }}">
+                        <i class="fas fa-chevron-left me-1"></i> Anterior
+                    </a>
+                </li>
+                {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link"><i class="fas fa-chevron-left"></i></span>
+                </li>
+                {% endif %}
+
+                {% for num in links.paginator.page_range %}
+                    {% if links.number == num %}
+                        <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                    {% elif num > links.number|add:"-3" and num < links.number|add:"3" %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ num }}&{{ get_params }}">{{ num }}</a>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+
+                {% if links.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ links.next_page_number }}&{{ get_params }}">
+                        Siguiente <i class="fas fa-chevron-right ms-1"></i>
+                    </a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ links.paginator.num_pages }}&{{ get_params }}">
+                        <i class="fas fa-angle-double-right"></i>
+                    </a>
+                </li>
+                {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link"><i class="fas fa-chevron-right"></i></span>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script>
+$(document).ready(function () {
+    $('.select2-cliente').select2({
+        placeholder: 'Buscar cliente...',
+        allowClear: true,
+        language: {
+            noResults: function () { return 'No se encontraron clientes'; },
+            searching: function () { return 'Buscando...'; }
+        }
+    });
+});
+</script>
+{% endblock %}

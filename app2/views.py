@@ -6,6 +6,12 @@ from . import crud as admin_crud
 from app1 import models as app1_models
 from django.core.paginator import Paginator
 from decimal import Decimal, ROUND_HALF_UP
+from utils.email_utils import mail
+from django.urls import reverse
+import logging
+from app1.models import Cliente
+
+logger = logging.getLogger(__name__)
 
 def login(request):
     if request.method == 'POST':
@@ -44,7 +50,7 @@ def gestion_usuarios(request):
                 'nombre': request.POST.get('edit_nombre'),
                 'email': request.POST.get('edit_email'),
                 'telefono': request.POST.get('edit_telefono'),
-                'password': request.POST.get('edit_password'), # <--- Agregar esta línea
+                'password': request.POST.get('edit_password'), 
                 'aprobado': request.POST.get('edit_aprobado') == '1',
                 'bloqueado': request.POST.get('edit_bloqueado') == '1',
             }
@@ -104,11 +110,11 @@ def gestion_usuarios(request):
     page_obj = paginator.get_page(page_number)
     context = {
         'user': user_admin,
-        'clientes': page_obj,             # Los que se ven en la tabla
+        'clientes': page_obj,        
         'q': q,
-        'total_users': total_users_aprobados, # Tarjeta 1
-        'activos_count': activos_count,      # Tarjeta 2
-        'blocked_count': blocked_count,      # Tarjeta 3
+        'total_users': total_users_aprobados, 
+        'activos_count': activos_count,      
+        'blocked_count': blocked_count,
     }
     return render(request, 'gestion_usuarios.html', context)
 
@@ -148,6 +154,35 @@ def aprobacion(request):
         if approve_id:
             ok, err = admin_crud.approve_cliente(approve_id)
             if ok:
+                # --- Enviar correo de bienvenida al cliente ---
+                try:
+                    cliente = Cliente.objects.get(id=approve_id)
+                    if cliente.email:
+                        # Construir URL de login
+                        login_url = request.build_absolute_uri(reverse('login_cliente'))
+                        
+                        # Enviar correo usando tu función mail
+                        resultado = mail(
+                            asunto="¡Tu cuenta ha sido aprobada! - PagoTech",
+                            destinatarios=[cliente.email],
+                            template_html="emails/cuenta_aprobada.html",
+                            contexto={
+                                "nombre": cliente.nombre,
+                                "email": cliente.email,
+                                "login_url": login_url,
+                            }
+                        )
+                        if resultado:
+                            logger.info(f"Correo de aprobación enviado a {cliente.email}")
+                        else:
+                            logger.warning(f"No se pudo enviar correo de aprobación a {cliente.email}")
+                    else:
+                        logger.warning(f"Cliente {approve_id} no tiene email, no se envió notificación")
+                except Cliente.DoesNotExist:
+                    logger.error(f"No se encontró cliente con id {approve_id} para enviar correo")
+                except Exception as e:
+                    logger.error(f"Error inesperado al enviar correo de aprobación: {e}")
+
                 messages.success(request, 'Usuario aprobado y movido a la gestión principal.')
             else:
                 messages.error(request, err)
@@ -229,7 +264,122 @@ def gestion_admins(request):
         'admins': admins,
         'q': q
     })
+
+def links_pagos(request):
+    user_id = request.session.get('user_admin_id')
+    if not user_id:
+        return redirect('login')
+
+    user_admin = User_admin.objects.get(id=user_id)
+
+    from app1.models import LinkPago, Cliente
+    from django.db.models import Q, Sum
+    from django.utils.dateparse import parse_date
+
+    # ── Parámetros de filtrado ────────────────────────────────────────
+    q            = request.GET.get('q', '').strip()
+    fecha_desde  = request.GET.get('fecha_desde', '').strip()
+    fecha_hasta  = request.GET.get('fecha_hasta', '').strip()
+    estado       = request.GET.get('estado', '').strip()       # filtra por status_detalle
+    tipo_tarjeta = request.GET.get('tipo_tarjeta', '').strip()
+    cliente_id   = request.GET.get('cliente_id', '').strip()
+    pagado_f     = request.GET.get('pagado', '').strip()       # '1', '0' o ''
+    orden        = request.GET.get('orden', '-created_at')
+
+    # ── QuerySet base ─────────────────────────────────────────────────
+    links_qs = LinkPago.objects.select_related('cliente').all()
+
+    # ── Filtros ───────────────────────────────────────────────────────
+    if q:
+        links_qs = links_qs.filter(
+            Q(cliente__nombre__icontains=q) |
+            Q(cliente__email__icontains=q)  |
+            Q(descripcion__icontains=q)     |
+            Q(order_id__icontains=q)
+        )
+
+    if cliente_id:
+        links_qs = links_qs.filter(cliente_id=cliente_id)
+
+    if fecha_desde:
+        d = parse_date(fecha_desde)
+        if d:
+            links_qs = links_qs.filter(created_at__date__gte=d)
+
+    if fecha_hasta:
+        d = parse_date(fecha_hasta)
+        if d:
+            links_qs = links_qs.filter(created_at__date__lte=d)
+
+    if estado:
+        links_qs = links_qs.filter(status_detalle=estado)   # ← corregido
+
+    if tipo_tarjeta:
+        links_qs = links_qs.filter(tipo_tarjeta=tipo_tarjeta)
+
+    if pagado_f == '1':
+        links_qs = links_qs.filter(pagado=True)
+    elif pagado_f == '0':
+        links_qs = links_qs.filter(pagado=False)
+
+    # ── Ordenamiento (whitelist) ──────────────────────────────────────
+    ORDENES_PERMITIDOS = {
+        '-created_at', 'created_at',
+        '-monto', 'monto',
+        'cliente__nombre', '-cliente__nombre',
+        'status_detalle',                        # ← corregido
+    }
+    if orden not in ORDENES_PERMITIDOS:
+        orden = '-created_at'
+    links_qs = links_qs.order_by(orden)
+
+    # ── Estadísticas ──────────────────────────────────────────────────
+    total_links      = links_qs.count()
+    total_pagados    = links_qs.filter(pagado=True).count()   # ← usa booleano
+    total_pendientes = links_qs.filter(pagado=False).count()
+    monto_total      = links_qs.filter(pagado=True).aggregate(
+                           total=Sum('monto'))['total'] or 0
+
+    clientes_lista = Cliente.objects.filter(
+        aprobado=True
+    ).order_by('nombre').only('id', 'nombre')
+
+    # ── Paginación ────────────────────────────────────────────────────
+    per_page_options = [10, 25, 50, 100, 500]
+    try:
+        per_page = int(request.GET.get('per_page', 15))
+        if per_page not in per_page_options:
+            per_page = 10
+    except (ValueError, TypeError):
+        per_page = 10
+
+    paginator = Paginator(links_qs, per_page)
     
+    page_obj  = paginator.get_page(request.GET.get('page'))
+
+    get_params = request.GET.copy()
+    get_params.pop('page', None)
+
+    return render(request, 'links_pagos.html', {
+        'user':             user_admin,
+        'links':            page_obj,
+        'clientes_lista':   clientes_lista,
+        'q':                q,
+        'fecha_desde':      fecha_desde,
+        'fecha_hasta':      fecha_hasta,
+        'estado':           estado,
+        'tipo_tarjeta':     tipo_tarjeta,
+        'cliente_id':       cliente_id,
+        'pagado_f':         pagado_f,
+        'orden':            orden,
+        'total_links':      total_links,
+        'total_pagados':    total_pagados,
+        'total_pendientes': total_pendientes,
+        'monto_total':      monto_total,
+        'get_params':       get_params.urlencode(),
+        'per_page':         per_page,
+        'per_page_options': per_page_options,
+    })
     
 def configuracion_financiera(request):
     user_id = request.session.get('user_admin_id')
@@ -241,43 +391,50 @@ def configuracion_financiera(request):
     if request.method == 'POST':
 
         if 'update_general' in request.POST:
+            # — sin cambios —
             data = {
-                'iva':                          request.POST.get('iva'),
-                'iva_financiacion':             request.POST.get('iva_financiacion'),
-                'comision_pago_tech':           request.POST.get('comision_pago_tech'),
-                'arancel_plataforma':           request.POST.get('arancel_plataforma'),
-                'comision_pago_tech_debito':    request.POST.get('comision_pago_tech_debito'),
-                'arancel_plataforma_debito':    request.POST.get('arancel_plataforma_debito'),
+                'iva':                       request.POST.get('iva'),
+                'iva_financiacion':          request.POST.get('iva_financiacion'),
+                'comision_pago_tech':        request.POST.get('comision_pago_tech'),
+                'arancel_plataforma':        request.POST.get('arancel_plataforma'),
+                'comision_pago_tech_debito': request.POST.get('comision_pago_tech_debito'),
+                'arancel_plataforma_debito': request.POST.get('arancel_plataforma_debito'),
             }
             admin_crud.update_financiero(data)
             messages.success(request, 'Parámetros base actualizados correctamente.')
 
         elif 'add_cuota' in request.POST:
+            # Recibe lista de IDs (puede estar vacía)
+            usuarios_ids = request.POST.getlist('new_usuarios_asignados')
             data = {
-                'numero_cuota': request.POST.get('new_numero'),
-                'nombre':       request.POST.get('new_nombre'),
-                'tasa_base':    request.POST.get('new_tasa'),
+                'numero_cuota':      request.POST.get('new_numero'),
+                'nombre':            request.POST.get('new_nombre'),
+                'tasa_base':         request.POST.get('new_tasa'),
+                'alcance':           request.POST.get('new_alcance', 'global'),
+                'usuarios_asignados': usuarios_ids,
             }
             admin_crud.create_cuota_plan(data)
-            messages.success(request, 'Nuevo plan de cuotas añadido.')
+            messages.success(request, 'Nuevo plan añadido.')
 
         elif 'update_cuota' in request.POST:
-            cuota_id = request.POST.get('cuota_id')
+            cuota_id     = request.POST.get('cuota_id')
+            
             data = {
-                'nombre':       request.POST.get('edit_nombre'),
-                'numero_cuota': request.POST.get('edit_numero'),
-                'tasa_base':    request.POST.get('edit_tasa'),
-                'activa':       request.POST.get('activa'),
+                'nombre':            request.POST.get('edit_nombre'),
+                'numero_cuota':      request.POST.get('edit_numero'),
+                'tasa_base':         request.POST.get('edit_tasa'),
+                'activa':            request.POST.get('activa'),
+                'alcance':           request.POST.get('edit_alcance', 'global'),
+                
             }
             admin_crud.update_cuota_plan(cuota_id, data)
             messages.success(request, 'Plan actualizado.')
 
         elif 'update_cuota_override' in request.POST:
             cuota_id = request.POST.get('cuota_id')
-            
-            # UN solo checkbox controla AMBOS (comisión y arancel)
             iva_general_aplica = 'iva_general_aplica' in request.POST
-            
+            usuarios_ids = request.POST.getlist('usuarios_asignados')  # ← AGREGAR
+
             data = {
                 'iva_override':              request.POST.get('iva_override', '').strip() or None,
                 'iva_financiacion_override': request.POST.get('iva_financiacion_override', '').strip() or None,
@@ -285,16 +442,17 @@ def configuracion_financiera(request):
                 'com_debito_override':       request.POST.get('com_debito_override', '').strip() or None,
                 'arancel_credito_override':  request.POST.get('arancel_credito_override', '').strip() or None,
                 'arancel_debito_override':   request.POST.get('arancel_debito_override', '').strip() or None,
-                # El toggle único IVA 21% controla ambos campos del modelo
-                'comision_aplica_iva': iva_general_aplica,
-                'arancel_aplica_iva':  iva_general_aplica,
-                'tasa_aplica_iva_fin': 'tasa_aplica_iva_fin' in request.POST,
+                'comision_aplica_iva':       iva_general_aplica,
+                'arancel_aplica_iva':        iva_general_aplica,
+                'tasa_aplica_iva_fin':       'tasa_aplica_iva_fin' in request.POST,
+                'alcance':                   request.POST.get('alcance', 'global'),   # ← AGREGAR
+                'usuarios_asignados':        usuarios_ids,                             # ← AGREGAR
             }
             ok, err = admin_crud.update_cuota_override(cuota_id, data)
             if ok:
-                messages.success(request, 'Configuración personalizada guardada correctamente.')
+                messages.success(request, 'Configuración personalizada guardada.')
             else:
-                messages.error(request, err or 'Error al guardar la configuración.')
+                messages.error(request, err or 'Error al guardar.')
 
         elif 'delete_cuota' in request.POST:
             admin_crud.delete_cuota_plan(request.POST.get('delete_id'))
@@ -302,18 +460,18 @@ def configuracion_financiera(request):
 
         return redirect('configuracion_financiera')
 
-    # ── GET: Carga ─────────────────────────────────────────────────────
-    config = admin_crud.get_or_create_config()
-    cuotas = admin_crud.list_cuotas_config()
+    # ── GET ────────────────────────────────────────────────────────────
+    from app1.models import Cliente
+    config  = admin_crud.get_or_create_config()
+    cuotas  = admin_crud.list_cuotas_config()
+    clientes_todos = Cliente.objects.filter(aprobado=True, bloqueado=False).order_by('nombre')
 
-    # Valores globales para las tarjetas de resumen (usan config global + IVA 21%)
-    iva_global_f = Decimal(str(config.iva)) / 100
-    com_pt_cred_iva  = Decimal(str(config.comision_pago_tech))           * (1 + iva_global_f)
-    arancel_cred_iva = Decimal(str(config.arancel_plataforma))           * (1 + iva_global_f)
-    com_pt_deb_iva   = Decimal(str(config.comision_pago_tech_debito))    * (1 + iva_global_f)
-    arancel_deb_iva  = Decimal(str(config.arancel_plataforma_debito))    * (1 + iva_global_f)
+    iva_global_f     = Decimal(str(config.iva)) / 100
+    com_pt_cred_iva  = Decimal(str(config.comision_pago_tech))        * (1 + iva_global_f)
+    arancel_cred_iva = Decimal(str(config.arancel_plataforma))        * (1 + iva_global_f)
+    com_pt_deb_iva   = Decimal(str(config.comision_pago_tech_debito)) * (1 + iva_global_f)
+    arancel_deb_iva  = Decimal(str(config.arancel_plataforma_debito)) * (1 + iva_global_f)
 
-    # ── Proyecciones con valores efectivos por plan ────────────────────
     proyecciones = []
     for c in cuotas:
         iva_val     = c.iva_override              if c.iva_override is not None              else config.iva
@@ -324,8 +482,7 @@ def configuracion_financiera(request):
         iva_f     = Decimal(str(iva_val))     / 100
         iva_fin_f = Decimal(str(iva_fin_val)) / 100
 
-        # Cada toggle es independiente
-        tasa_eff = Decimal(str(c.tasa_base)) * (1 + iva_fin_f) if c.tasa_aplica_iva_fin  else Decimal(str(c.tasa_base))
+        tasa_eff = Decimal(str(c.tasa_base)) * (1 + iva_fin_f) if c.tasa_aplica_iva_fin else Decimal(str(c.tasa_base))
         com_eff  = Decimal(str(com_cred))    * (1 + iva_f)     if c.comision_aplica_iva  else Decimal(str(com_cred))
         ar_eff   = Decimal(str(ar_cred))     * (1 + iva_f)     if c.comision_aplica_iva  else Decimal(str(ar_cred))
 
@@ -337,16 +494,21 @@ def configuracion_financiera(request):
         except Exception:
             coeficiente = Decimal('0')
 
+        # IDs ya asignados (para pre-marcar checkboxes en el template)
+        asignados_ids = list(c.usuarios_asignados.values_list('id', flat=True))
+
         proyecciones.append({
             'obj':              c,
             'total_descuentos': total_descuentos.quantize(Decimal('0.0001'), rounding=ROUND_HALF_UP),
             'coeficiente':      coeficiente.quantize(Decimal('0.000000'),    rounding=ROUND_HALF_UP),
+            'asignados_ids':    asignados_ids,
         })
 
     context = {
         'user':             user_admin,
         'config':           config,
         'proyecciones':     proyecciones,
+        'clientes_todos':   clientes_todos,
         'com_pt_cred_iva':  com_pt_cred_iva,
         'arancel_cred_iva': arancel_cred_iva,
         'com_pt_deb_iva':   com_pt_deb_iva,

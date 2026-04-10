@@ -20,6 +20,26 @@ class ParametroFinanciero(models.Model):
         verbose_name = "Parámetros Financieros"
 
 class CuotaConfig(models.Model):
+
+    # ── Alcance del plan ────────────────────────────────────────────────
+    ALCANCE_GLOBAL   = 'global'
+    ALCANCE_USUARIOS = 'usuarios'
+    ALCANCE_CHOICES  = [
+        (ALCANCE_GLOBAL,   'Global — visible para todos'),
+        (ALCANCE_USUARIOS, 'Personalizado — solo usuarios asignados'),
+    ]
+    alcance = models.CharField(
+        max_length=20,
+        choices=ALCANCE_CHOICES,
+        default=ALCANCE_GLOBAL,
+    )
+    # Relación M2M: usuarios que pueden ver este plan (solo si alcance='usuarios')
+    usuarios_asignados = models.ManyToManyField(
+        'app1.Cliente',
+        blank=True,
+        related_name='planes_personalizados',
+    )
+
     numero_cuota = models.IntegerField()
     nombre = models.CharField(max_length=100, default="Cuotas")
     tasa_base = models.DecimalField(max_digits=7, decimal_places=4)
@@ -33,10 +53,10 @@ class CuotaConfig(models.Model):
     arancel_credito_override  = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
     arancel_debito_override   = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
 
-    # ── Toggles IVA (aplican sobre Comisión PT y Arancel Payway) ────────
+    # ── Toggles IVA ─────────────────────────────────────────────────────
     comision_aplica_iva = models.BooleanField(default=True)
     arancel_aplica_iva  = models.BooleanField(default=True)
-    tasa_aplica_iva_fin     = models.BooleanField(default=True)
+    tasa_aplica_iva_fin = models.BooleanField(default=True)
 
     @property
     def tiene_overrides(self):
@@ -51,6 +71,10 @@ class CuotaConfig(models.Model):
             not self.arancel_aplica_iva,
             not self.tasa_aplica_iva_fin,
         ])
+
+    @property
+    def es_personalizado(self):
+        return self.alcance == self.ALCANCE_USUARIOS
 
     class Meta:
         ordering = ['numero_cuota']

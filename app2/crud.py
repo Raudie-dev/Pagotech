@@ -150,6 +150,19 @@ def get_or_create_config():
 def list_cuotas_config():
     return CuotaConfig.objects.all()
 
+def list_cuotas_para_usuario(cliente_id):
+    """
+    Planes visibles para un cliente específico:
+    - Todos los globales activos
+    - Más los personalizados activos donde el cliente está asignado
+    """
+    from app2.models import CuotaConfig
+    from django.db.models import Q
+    return CuotaConfig.objects.filter(activa=True).filter(
+        Q(alcance='global') |
+        Q(alcance='usuarios', usuarios_asignados__id=cliente_id)
+    ).distinct().order_by('numero_cuota')
+
 def update_financiero(data):
     config = get_or_create_config()
     config.iva = data.get('iva', config.iva)
@@ -179,23 +192,32 @@ def update_cuota_tasa(cuota_id, tasa, activa):
 def create_cuota_plan(data):
     try:
         nueva = CuotaConfig.objects.create(
-            numero_cuota=data['numero_cuota'],
-            nombre=data['nombre'],
-            tasa_base=data['tasa_base'],
-            activa=True
+            numero_cuota = data['numero_cuota'],
+            nombre       = data['nombre'],
+            tasa_base    = data['tasa_base'],
+            activa       = True,
+            alcance      = data.get('alcance', 'global'),
         )
-        return True, None
+        if data.get('usuarios_asignados'):
+            nueva.usuarios_asignados.set(data['usuarios_asignados'])
+        return nueva, None
     except Exception as e:
-        return False, str(e)
+        return None, str(e)
 
 def update_cuota_plan(cuota_id, data):
     try:
         cuota = CuotaConfig.objects.get(id=cuota_id)
-        cuota.nombre = data.get('nombre', cuota.nombre)
+        cuota.nombre       = data.get('nombre', cuota.nombre)
         cuota.numero_cuota = data.get('numero_cuota', cuota.numero_cuota)
-        cuota.tasa_base = data.get('tasa_base', cuota.tasa_base)
-        cuota.activa = data.get('activa') == 'on'
+        cuota.tasa_base    = data.get('tasa_base', cuota.tasa_base)
+        cuota.activa       = data.get('activa') == 'on'
+        # Nuevo campo
+        if 'alcance' in data:
+            cuota.alcance = data['alcance']
         cuota.save()
+        # Gestión de usuarios asignados (reemplaza la lista completa)
+        if 'usuarios_asignados' in data:
+            cuota.usuarios_asignados.set(data['usuarios_asignados'])
         return True, None
     except Exception as e:
         return False, str(e)
@@ -231,9 +253,21 @@ def update_cuota_override(cuota_id, data):
         cuota.comision_aplica_iva       = bool(data.get('comision_aplica_iva', False))
         cuota.arancel_aplica_iva        = bool(data.get('arancel_aplica_iva', False))
         cuota.tasa_aplica_iva_fin       = bool(data.get('tasa_aplica_iva_fin', False))
+        if 'alcance' in data:
+            cuota.alcance = data['alcance']
         cuota.save()
+        if 'usuarios_asignados' in data:
+            cuota.usuarios_asignados.set(data.get('usuarios_asignados') or [])
         return True, None
     except CuotaConfig.DoesNotExist:
         return False, "Plan no encontrado."
     except Exception as e:
         return False, str(e)
+    
+def get_usuarios_asignados_a_plan(cuota_id):
+    """IDs de clientes asignados a un plan personalizado."""
+    try:
+        cuota = CuotaConfig.objects.get(id=cuota_id)
+        return list(cuota.usuarios_asignados.values_list('id', flat=True))
+    except CuotaConfig.DoesNotExist:
+        return []
