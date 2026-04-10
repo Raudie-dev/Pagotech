@@ -285,7 +285,48 @@
         justify-content: space-between;
         flex-wrap: wrap;
     }
+
 }
+    .email-login-link {
+        color: rgba(255,255,255,0.4);
+        text-decoration: none;
+        font-size: 0.78rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        transition: color 0.2s ease;
+        cursor: pointer;
+        /* Reset completo del botón */
+        background: transparent !important;
+        background-color: transparent !important;
+        border: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        box-shadow: none !important;
+        outline: none !important;
+        line-height: 1.4;
+        font-family: inherit;
+    }
+    
+    .email-login-link:hover,
+    .email-login-link:focus,
+    .email-login-link:active {
+        color: #3b82f6 !important;
+        background: transparent !important;
+        background-color: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        outline: none !important;
+    }
+    .email-login-link:hover .icon-login,
+    .email-login-link:focus .icon-login {
+        opacity: 1;
+    }
+    .icon-login {
+        font-size: 0.65rem;
+        opacity: 0;
+        transition: opacity 0.2s ease;
+    }
 </style>
 {% endblock %}
 
@@ -522,20 +563,27 @@
                 {% for link in links %}
                 <tr class="user-row border-bottom border-opacity-10">
 
-                    {# Cliente #}
-                    <td class="ps-4">
-                        <div class="d-flex align-items-center">
-
-                            <div class="min-w-0">
-                                <div class="user-name-text">
-                                    {{ link.cliente.nombre }}
-                                </div>
-                                <small class="user-sub-text">
-                                    {{ link.cliente.email }}
-                                </small>
+                {# Cliente #}
+                <td class="ps-4">
+                    <div class="d-flex align-items-center">
+                        <div class="min-w-0">
+                            <div class="user-name-text">
+                                {{ link.cliente.nombre }}
                             </div>
+                            <button type="button"
+                                    class="email-login-link"
+                                    title="Ingresar como este cliente"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#modalLoginAsCliente"
+                                    data-cliente-id="{{ link.cliente.id }}"
+                                    data-cliente-nombre="{{ link.cliente.nombre }}"
+                                    data-cliente-email="{{ link.cliente.email }}">
+                                <i class="fas fa-sign-in-alt icon-login"></i>
+                                {{ link.cliente.email }}
+                            </button>
                         </div>
-                    </td>
+                    </div>
+                </td>
 
                     {# Orden / Descripción #}
                     <td>
@@ -708,7 +756,58 @@
         </nav>
     </div>
 </div>
+{# ── Modal: ingresar como cliente ───────────────────────────────── #}
+<div class="modal fade" id="modalLoginAsCliente" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content shadow-lg">
 
+            <div class="modal-header border-bottom border-opacity-10">
+                <h6 class="modal-title text-white fw-bold">
+                    <i class="fas fa-user-secret text-warning me-2"></i>
+                    Ingresar como cliente
+                </h6>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body py-4">
+                <div class="text-center mb-3">
+                    <div class="user-avatar mx-auto mb-3" id="modal-cliente-avatar"
+                         style="width:48px;height:48px;font-size:1.2rem;">
+                    </div>
+                    <div class="text-white fw-bold mb-1" id="modal-cliente-nombre"></div>
+                    <small class="text-muted" id="modal-cliente-email"></small>
+                </div>
+
+                <div class="p-3 rounded-3 mb-1"
+                     style="background:rgba(251,191,36,0.08);border:1px solid rgba(251,191,36,0.2);">
+                    <div class="d-flex gap-2 align-items-start">
+                        <i class="fas fa-exclamation-triangle text-warning mt-1 flex-shrink-0"
+                           style="font-size:0.8rem;"></i>
+                        <small class="text-warning" style="font-size:0.75rem;line-height:1.5;">
+                            Vas a navegar el sistema con la sesión de este cliente.
+                            Los cambios que realices serán reales.
+                        </small>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer border-top border-opacity-10 gap-2">
+                <button type="button"
+                        class="btn btn-dark flex-grow-1"
+                        data-bs-dismiss="modal">
+                    Cancelar
+                </button>
+                <button type="button"
+                        id="btn-confirmar-login-as"
+                        class="btn btn-warning flex-grow-1 d-flex align-items-center justify-content-center gap-2">
+                    <i class="fas fa-sign-in-alt"></i>
+                    Ingresar
+                </button>
+            </div>
+
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block extra_js %}
@@ -725,5 +824,28 @@ $(document).ready(function () {
         }
     });
 });
+
+// ── Modal login as cliente ────────────────────────────────────────
+document.getElementById('modalLoginAsCliente')
+    .addEventListener('show.bs.modal', function (e) {
+        const btn    = e.relatedTarget;
+        const id     = btn.getAttribute('data-cliente-id');
+        const nombre = btn.getAttribute('data-cliente-nombre');
+        const email  = btn.getAttribute('data-cliente-email');
+
+        document.getElementById('modal-cliente-nombre').textContent = nombre;
+        document.getElementById('modal-cliente-email').textContent  = email;
+        document.getElementById('modal-cliente-avatar').textContent = nombre.charAt(0).toUpperCase();
+
+        // Guardamos la URL en el dataset del botón, no en href
+        document.getElementById('btn-confirmar-login-as').dataset.url = `/app2/login-as/${id}/`;
+    });
+
+// Click separado para navegar
+document.getElementById('btn-confirmar-login-as')
+    .addEventListener('click', function () {
+        const url = this.dataset.url;
+        if (url) window.location.href = url;
+    });
 </script>
 {% endblock %}

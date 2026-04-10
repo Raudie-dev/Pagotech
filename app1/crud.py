@@ -508,7 +508,36 @@ def verificar_estado_pago(link_id):
             error_code = answer.get("errorCode")
 
             if error_code == "PSP_010":
-                logger.debug(f"verificar_estado_pago — PSP_010: link aún no abierto por el cliente — order_id={link.order_id}")
+                from django.utils import timezone
+                from datetime import timedelta
+
+                # PayZen no retorna EXPIRED si el link nunca fue abierto.
+                # Lo determinamos localmente comparando la fecha de creación.
+                HORAS_EXPIRACION = 24  # ajustá según tu config en PayZen
+
+                ya_expiro = timezone.now() > link.created_at + timedelta(hours=HORAS_EXPIRACION)
+
+                if ya_expiro:
+                    if link.status_detalle != 'EXPIRED':
+                        link.status_detalle = 'EXPIRED'
+                        link.save(update_fields=['status_detalle'])
+
+                    logger.info(
+                        f"verificar_estado_pago — PSP_010 + tiempo excedido = EXPIRED local "
+                        f"— order_id={link.order_id} created_at={link.created_at}"
+                    )
+                    return {
+                        'status': 'EXPIRED',
+                        'pagado': False,
+                        'anulado': True,   # para que el JS lo trate como finalizado
+                        'cuotas': link.cuotas,
+                    }
+
+                # Si no expiró, sigue esperando normalmente
+                logger.debug(
+                    f"verificar_estado_pago — PSP_010: link aún no abierto — "
+                    f"order_id={link.order_id}"
+                )
                 return {
                     'status': 'Esperando Pago...',
                     'pagado': False,

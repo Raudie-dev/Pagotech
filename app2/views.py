@@ -515,3 +515,37 @@ def configuracion_financiera(request):
         'arancel_deb_iva':  arancel_deb_iva,
     }
     return render(request, 'configuracion_financiera.html', context)
+
+def login_as_cliente(request, cliente_id):
+    user_admin_id = request.session.get('user_admin_id')
+    if not user_admin_id:
+        return redirect('login')
+
+    from app1.models import Cliente
+    try:
+        cliente = Cliente.objects.get(id=cliente_id, aprobado=True, bloqueado=False)
+    except Cliente.DoesNotExist:
+        messages.error(request, 'Cliente no encontrado o no disponible.')
+        return redirect('links_pagos')
+
+    # Guardamos el admin_id para poder volver después
+    request.session['user_id'] = cliente.id
+    request.session['impersonando'] = True
+    request.session['admin_origen_id'] = user_admin_id
+
+    logger.info(f"Admin id={user_admin_id} ingresó como cliente id={cliente.id} nombre={cliente.nombre}")
+    messages.success(request, f'Estás viendo el sistema como {cliente.nombre}')
+    return redirect('dashboard')
+
+def volver_a_admin(request):
+    admin_id = request.session.get('admin_origen_id')
+    if not admin_id:
+        return redirect('login')
+
+    # Limpiamos la sesión de cliente y restauramos la de admin
+    request.session.flush()
+    request.session['user_admin_id'] = admin_id
+    request.session['impersonando'] = False
+
+    messages.success(request, 'Volviste al panel de administración.')
+    return redirect('links_pagos')
