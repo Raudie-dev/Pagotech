@@ -1,0 +1,539 @@
+{% extends "base_control.html" %}
+{% load static %}
+{% block title %}PagoTech | Mensajes{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/usuarios-custom.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-end mb-4">
+    <div>
+        <h2 class="mb-1 text-white">
+            <i class="fas fa-comments text-danger me-2"></i> Mensajes
+        </h2>
+        <p class="text-muted small mb-0">
+            Mensajes de comercios.
+            {% if total_no_leidos > 0 %}
+            <span class="badge bg-danger ms-1" id="badge-noleidos">{{ total_no_leidos }} sin leer</span>
+            {% else %}
+            <span class="badge bg-danger ms-1 d-none" id="badge-noleidos"></span>
+            {% endif %}
+        </p>
+    </div>
+</div>
+
+<div class="row g-4">
+
+    <!-- Lista de comercios -->
+    <div class="col-lg-4">
+        <div class="custom-table-container">
+            <div class="p-3 border-bottom border-opacity-10">
+                <h6 class="text-white fw-bold mb-0">Comercios</h6>
+            </div>
+            <div style="max-height:600px;overflow-y:auto;">
+                {% for comercio in comercios %}
+                <a href="{% url 'mensajes_admin_cliente' comercio.id %}"
+                   class="comercio-item d-flex align-items-center gap-3 p-3 text-decoration-none border-bottom border-opacity-10"
+                   style="transition:background .2s;background:{% if cliente_sel and cliente_sel.id == comercio.id %}rgba(230,57,70,0.08){% else %}transparent{% endif %};">
+                    <div style="width:38px;height:38px;border-radius:50%;background:#1a1a1d;border:1px solid rgba(255,255,255,0.1);display:flex;align-items:center;justify-content:center;font-size:.85rem;font-weight:700;color:#fff;flex-shrink:0;">
+                        {{ comercio.nombre|slice:":1"|upper }}
+                    </div>
+                    <div class="flex-grow-1 min-w-0">
+                        <div class="user-name-text" style="font-size:.875rem;">{{ comercio.nombre }}</div>
+                        <small class="user-sub-text">{{ comercio.total_mensajes }} mensaje{{ comercio.total_mensajes|pluralize }}</small>
+                    </div>
+                    {% if comercio.no_leidos > 0 %}
+                    <span class="badge rounded-pill bg-danger" style="font-size:.68rem;">{{ comercio.no_leidos }}</span>
+                    {% endif %}
+                </a>
+                {% empty %}
+                <div class="text-center py-5">
+                    <i class="fas fa-inbox fa-2x text-muted d-block mb-2 opacity-25"></i>
+                    <small class="text-muted">Sin mensajes aun</small>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Hilo de conversacion -->
+    <div class="col-lg-8">
+        {% if cliente_sel %}
+        <div class="custom-table-container" style="display:flex;flex-direction:column;overflow:hidden;">
+
+            <!-- Header del chat -->
+            <div class="p-3 border-bottom border-opacity-10 d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center gap-3">
+                    <div style="width:36px;height:36px;border-radius:50%;background:#e63946;display:flex;align-items:center;justify-content:center;font-size:.85rem;font-weight:700;color:#fff;flex-shrink:0;">
+                        {{ cliente_sel.nombre|slice:":1"|upper }}
+                    </div>
+                    <div>
+                        <div class="user-name-text">{{ cliente_sel.nombre }}</div>
+                        <small class="user-sub-text">{{ cliente_sel.email }}</small>
+                    </div>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <div id="polling-dot-admin"
+                         style="width:7px;height:7px;border-radius:50%;background:#10b981;
+                                box-shadow:0 0 6px #10b981;
+                                animation:pulse-dot 2s ease-in-out infinite;"></div>
+                    <small class="text-muted" style="font-size:.7rem;">En vivo</small>
+                    <button type="button" id="btn-finalizar-admin"
+                            class="btn btn-sm btn-dark border border-secondary d-flex align-items-center gap-2">
+                        <i class="fas fa-check-circle text-success"></i>
+                        <span class="d-none d-sm-inline">Finalizar</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Burbujas -->
+            <div id="chat-scroll"
+                 style="height:420px;overflow-y:auto;padding:1.25rem;
+                        display:flex;flex-direction:column;gap:1rem;scroll-behavior:smooth;">
+                {% for m in mensajes %}
+                    {% if m.es_admin %}
+                    <div class="burbuja-adm d-flex gap-3 align-items-start flex-row-reverse" data-id="{{ m.id }}">
+                        <div class="avatar-pt-adm">PT</div>
+                        <div style="max-width:75%;">
+                            <div class="bubble-adm-sent">
+                                <p class="bubble-txt">{{ m.texto }}</p>
+                            </div>
+                            <small class="bubble-meta-adm" style="text-align:right;display:block;">
+                                Pago Tech &nbsp;·&nbsp; {{ m.fecha|date:"d/m/Y H:i" }}
+                            </small>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="burbuja-adm d-flex gap-3 align-items-start" data-id="{{ m.id }}">
+                        <div class="avatar-comercio-adm">{{ cliente_sel.nombre|slice:":1"|upper }}</div>
+                        <div style="max-width:75%;">
+                            <div class="bubble-adm-recv">
+                                <p class="bubble-txt">{{ m.texto }}</p>
+                                {% if m.link_pago %}
+                                <a href="{% url 'ticket_pdf' m.link_pago.id %}"
+                                   target="_blank"
+                                   class="bubble-order-link-adm">
+                                    <i class="fas fa-link me-1"></i>{{ m.link_pago.order_id }}
+                                    <i class="fas fa-external-link-alt ms-1" style="font-size:.62rem;opacity:.7;"></i>
+                                </a>
+                                {% endif %}
+                            </div>
+                            <small class="bubble-meta-adm">
+                                {{ m.fecha|date:"d/m/Y H:i" }}
+                                {% if not m.leido %}<span style="color:#f59e0b;"> · Sin leer</span>{% endif %}
+                            </small>
+                        </div>
+                    </div>
+                    {% endif %}
+                {% empty %}
+                <div class="text-center py-5" id="empty-adm">
+                    <i class="fas fa-comments fa-2x text-muted d-block mb-2 opacity-25"></i>
+                    <small class="text-muted">Sin mensajes en esta conversacion</small>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Formulario respuesta -->
+            <div style="border-top:1px solid rgba(255,255,255,0.07);padding:1rem 1.25rem;background:#0f1117;">
+                <form id="form-admin-msg"
+                      method="post"
+                      action="{% url 'responder_mensaje_admin' cliente_sel.id %}">
+                    {% csrf_token %}
+                    <div class="d-flex gap-2 align-items-end">
+                        <textarea name="texto"
+                                  id="textarea-admin"
+                                  rows="1"
+                                  required
+                                  placeholder="Escribi tu respuesta..."
+                                  class="chat-input-adm"></textarea>
+                        <button type="submit" id="btn-adm-send" class="btn-send-adm">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+        </div>
+        {% else %}
+        <div class="custom-table-container d-flex align-items-center justify-content-center"
+             style="min-height:300px;">
+            <div class="text-center">
+                <i class="fas fa-hand-point-left fa-2x text-muted d-block mb-3 opacity-25"></i>
+                <p class="text-muted small">Selecciona un comercio para ver la conversacion</p>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+</div>
+
+<!-- Modal Finalizar Chat -->
+<div class="modal fade" id="modalFinalizarChat" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content" style="background:#111113;border:1px solid rgba(16,185,129,0.25);border-radius:16px;overflow:hidden;">
+            <div class="modal-header py-3 px-4"
+                 style="background:linear-gradient(90deg,rgba(16,185,129,0.12) 0%,transparent 100%);
+                        border-bottom:1px solid rgba(16,185,129,0.15);">
+                <h6 class="modal-title fw-bold text-white mb-0">
+                    <i class="fas fa-check-circle text-success me-2"></i>Finalizar conversacion
+                </h6>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body px-4 py-3 text-center">
+                <div style="width:52px;height:52px;border-radius:50%;background:rgba(16,185,129,0.1);
+                            border:1px solid rgba(16,185,129,0.25);
+                            display:flex;align-items:center;justify-content:center;
+                            margin:0 auto 16px;">
+                    <i class="fas fa-paper-plane" style="color:#10b981;font-size:1.2rem;"></i>
+                </div>
+                <p class="text-white fw-bold mb-1" style="font-size:.95rem;">
+                    Enviar resumen por email
+                </p>
+                <p class="text-muted mb-0" style="font-size:.8rem;line-height:1.5;">
+                    Se generara un PDF con el historial de esta sesion y se enviara a ambas partes.
+                    El chat quedara archivado.
+                </p>
+            </div>
+            <div class="modal-footer border-0 px-4 pb-4 pt-2 gap-2 justify-content-center">
+                <button type="button" class="btn btn-sm btn-dark px-4"
+                        data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-sm px-4 fw-bold" id="btn-confirmar-finalizar"
+                        style="background:#10b981;border:none;color:#fff;border-radius:8px;">
+                    <i class="fas fa-check me-1"></i>Finalizar y enviar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<style>
+.avatar-pt-adm {
+    width:34px;height:34px;border-radius:50%;background:#e63946;
+    display:flex;align-items:center;justify-content:center;
+    font-size:.75rem;font-weight:700;color:#fff;flex-shrink:0;
+}
+.avatar-comercio-adm {
+    width:34px;height:34px;border-radius:50%;background:#1a1a1d;
+    border:1px solid rgba(255,255,255,0.1);
+    display:flex;align-items:center;justify-content:center;
+    font-size:.75rem;font-weight:700;color:#fff;flex-shrink:0;
+}
+.bubble-adm-sent {
+    background:rgba(230,57,70,0.1);
+    border:1px solid rgba(230,57,70,0.2);
+    border-radius:16px 4px 16px 16px;
+    padding:.7rem .95rem;
+}
+.bubble-adm-recv {
+    background:#1a1a1d;
+    border:1px solid rgba(255,255,255,0.07);
+    border-radius:4px 16px 16px 16px;
+    padding:.7rem .95rem;
+}
+.bubble-txt {
+    color:#e2e8f0;font-size:.85rem;margin:0;line-height:1.6;
+    white-space:pre-wrap;word-break:break-word;
+}
+.bubble-meta-adm {
+    color:#71717a;font-size:.7rem;margin-top:.25rem;display:block;
+}
+.bubble-order-link-adm {
+    display:inline-flex;align-items:center;
+    color:#3b82f6;font-size:.72rem;margin-top:.4rem;
+    text-decoration:none;font-weight:600;
+    background:rgba(59,130,246,0.1);
+    border:1px solid rgba(59,130,246,0.2);
+    border-radius:20px;padding:3px 10px;
+    transition:all .2s ease;
+}
+.bubble-order-link-adm:hover {
+    background:rgba(59,130,246,0.2);color:#3b82f6;
+}
+.chat-input-adm {
+    flex:1;background:#161618;
+    border:1px solid rgba(255,255,255,0.1);
+    color:#fff;border-radius:12px;
+    padding:.7rem 1rem;font-size:.875rem;
+    resize:none;outline:none;
+    transition:border-color .2s;
+    font-family:inherit;
+    min-height:42px;max-height:120px;overflow-y:auto;line-height:1.5;
+}
+.chat-input-adm:focus { border-color:#e63946; }
+.chat-input-adm::placeholder { color:rgba(255,255,255,0.3); }
+.btn-send-adm {
+    width:42px;height:42px;background:#e63946;
+    border:none;border-radius:12px;
+    color:#fff;font-size:.9rem;
+    display:flex;align-items:center;justify-content:center;
+    cursor:pointer;flex-shrink:0;
+    transition:all .2s ease;
+}
+.btn-send-adm:hover { background:#c1121f;transform:translateY(-1px); }
+.btn-send-adm:disabled { opacity:.5;cursor:not-allowed;transform:none; }
+.comercio-item:hover { background:rgba(255,255,255,0.03) !important; }
+@keyframes fadeInUp {
+    from { opacity:0;transform:translateY(8px); }
+    to   { opacity:1;transform:translateY(0); }
+}
+@keyframes pulse-dot {
+    0%,100% { opacity:1;transform:scale(1); }
+    50%      { opacity:.6;transform:scale(1.3); }
+}
+.burbuja-adm { animation:fadeInUp .25s ease-out; }
+</style>
+
+<script>
+const chatScroll = document.getElementById('chat-scroll');
+if (chatScroll) chatScroll.scrollTop = chatScroll.scrollHeight;
+
+{% if cliente_sel %}
+const formAdm     = document.getElementById('form-admin-msg');
+const textareaAdm = document.getElementById('textarea-admin');
+const btnAdm      = document.getElementById('btn-adm-send');
+const inicialCom  = '{{ cliente_sel.nombre|slice:":1"|upper }}';
+
+function scrollFondo() { chatScroll.scrollTop = chatScroll.scrollHeight; }
+
+function quitarVacio() {
+    const e = document.getElementById('empty-adm');
+    if (e) e.remove();
+}
+
+function construirBurbujaAdmin(msg) {
+    const div = document.createElement('div');
+    div.className = 'burbuja-adm d-flex gap-3 align-items-start flex-row-reverse';
+    div.dataset.id = msg.id || '';
+    div.innerHTML = `
+        <div class="avatar-pt-adm">PT</div>
+        <div style="max-width:75%;">
+            <div class="bubble-adm-sent">
+                <p class="bubble-txt">${linkificar(msg.texto)}</p>
+            </div>
+            <small class="bubble-meta-adm" style="text-align:right;display:block;">
+                Pago Tech &nbsp;·&nbsp; ${msg.fecha}
+            </small>
+        </div>`;
+    return div;
+}
+
+function construirBurbujaComercio(msg) {
+    const div = document.createElement('div');
+    div.className = 'burbuja-adm d-flex gap-3 align-items-start';
+    div.dataset.id = msg.id || '';
+    div.innerHTML = `
+        <div class="avatar-comercio-adm">${inicialCom}</div>
+        <div style="max-width:75%;">
+            <div class="bubble-adm-recv">
+                <p class="bubble-txt">${linkificar(msg.texto)}</p>
+                ${msg.order_id && msg.link_id ? `
+                <a href="/ticket_pdf/${msg.link_id}/" target="_blank" class="bubble-order-link-adm">
+                    <i class="fas fa-link me-1"></i>${msg.order_id}
+                    <i class="fas fa-external-link-alt ms-1" style="font-size:.62rem;opacity:.7;"></i>
+                </a>` : ''}
+            </div>
+            <small class="bubble-meta-adm">${msg.fecha}</small>
+        </div>`;
+    return div;
+}
+
+// Envio AJAX
+formAdm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const texto = textareaAdm.value.trim();
+    if (!texto) return;
+
+    const original = btnAdm.innerHTML;
+    btnAdm.disabled = true;
+    btnAdm.innerHTML = '<span class="spinner-border spinner-border-sm" style="width:14px;height:14px;"></span>';
+
+    try {
+        const res  = await fetch(formAdm.action, {
+            method:  'POST',
+            body:    new FormData(formAdm),
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+        });
+        const data = await res.json();
+
+        if (data.ok) {
+            quitarVacio();
+            chatScroll.appendChild(construirBurbujaAdmin(data.msg));
+            scrollFondo();
+            ultimoId = Math.max(ultimoId, data.msg.id);
+            textareaAdm.value = '';
+            textareaAdm.style.height = 'auto';
+        } else {
+            alert(data.error || 'Error al enviar.');
+        }
+    } catch {
+        alert('Error de conexion.');
+    } finally {
+        btnAdm.disabled = false;
+        btnAdm.innerHTML = original;
+    }
+});
+
+// Enter envia, Shift+Enter nueva linea
+textareaAdm.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        formAdm.dispatchEvent(new Event('submit', { cancelable: true }));
+    }
+});
+
+// Autoexpand
+textareaAdm.addEventListener('input', () => {
+    textareaAdm.style.height = 'auto';
+    textareaAdm.style.height = Math.min(textareaAdm.scrollHeight, 120) + 'px';
+});
+
+// Polling mensajes nuevos del comercio
+let ultimoId = {{ ultimo_id_admin }};
+
+async function pollAdmin() {
+    try {
+        const res  = await fetch(`/app2/mensajes/{{ cliente_sel.id }}/poll/?ultimo_id=${ultimoId}`, {
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+
+        if (data.mensajes && data.mensajes.length > 0) {
+            quitarVacio();
+            data.mensajes.forEach(m => {
+                if (document.querySelector(`.burbuja-adm[data-id="${m.id}"]`)) return;
+                const b = m.es_admin
+                    ? construirBurbujaAdmin(m)
+                    : construirBurbujaComercio(m);
+                chatScroll.appendChild(b);
+                ultimoId = Math.max(ultimoId, m.id);
+            });
+            scrollFondo();
+        }
+
+        // Badge total no leidos en el header
+        const badge = document.getElementById('badge-noleidos');
+        if (badge) {
+            if (data.total_no_leidos > 0) {
+                badge.textContent = `${data.total_no_leidos} sin leer`;
+                badge.classList.remove('d-none');
+            } else {
+                badge.classList.add('d-none');
+            }
+        }
+    } catch { /* silencioso */ }
+}
+
+// Boton abre el modal en lugar del confirm
+document.getElementById('btn-finalizar-admin').addEventListener('click', () => {
+    new bootstrap.Modal(document.getElementById('modalFinalizarChat')).show();
+});
+
+// Confirmar desde el modal
+document.getElementById('btn-confirmar-finalizar').addEventListener('click', async () => {
+    const modalInst = bootstrap.Modal.getInstance(document.getElementById('modalFinalizarChat'));
+    modalInst.hide();
+
+    const btn = document.getElementById('btn-finalizar-admin');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm" style="width:12px;height:12px;"></span>';
+
+    try {
+        const fd = new FormData();
+        fd.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+        const res  = await fetch('{% url "finalizar_chat_admin" cliente_sel.id %}', {
+            method: 'POST', body: fd,
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        });
+        const data = await res.json();
+        if (data.ok) {
+            btn.innerHTML = '<i class="fas fa-check text-success"></i><span class="d-none d-sm-inline">Finalizado</span>';
+
+            const burbujaFin = document.createElement('div');
+            burbujaFin.style.cssText = 'text-align:center;padding:.5rem 0;animation:fadeInUp .25s ease-out;';
+            burbujaFin.innerHTML = `
+                <span style="display:inline-flex;align-items:center;gap:.5rem;
+                             background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.2);
+                             border-radius:20px;padding:6px 16px;font-size:.75rem;color:#10b981;">
+                    <i class="fas fa-check-circle"></i>
+                    Chat finalizado · ${data.fecha_cierre}
+                </span>`;
+            chatScroll.appendChild(burbujaFin);
+            scrollFondo();
+
+            clearInterval(pollingAdmin);
+
+            setTimeout(() => {
+                window.location.href = '/app2/mensajes/';
+            }, 2000);
+        } else {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-check-circle text-success"></i><span class="d-none d-sm-inline">Finalizar</span>';
+            // Mostrar error en el modal en lugar de alert
+            const modalBody = document.querySelector('#modalFinalizarChat .modal-body');
+            if (modalBody) {
+                const errDiv = document.createElement('div');
+                errDiv.style.cssText = 'margin-top:12px;padding:8px 12px;background:rgba(230,57,70,0.1);border:1px solid rgba(230,57,70,0.2);border-radius:8px;font-size:.8rem;color:#e63946;text-align:center;';
+                errDiv.textContent = data.error || 'Error al finalizar.';
+                modalBody.appendChild(errDiv);
+                new bootstrap.Modal(document.getElementById('modalFinalizarChat')).show();
+            }
+        }
+    } catch {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-check-circle text-success"></i><span class="d-none d-sm-inline">Finalizar</span>';
+    }
+});
+
+let pollingAdmin = setInterval(pollAdmin, 10000);
+
+document.addEventListener('visibilitychange', () => {
+    clearInterval(pollingAdmin);
+    pollingAdmin = setInterval(pollAdmin, document.hidden ? 60000 : 10000);
+});
+
+// Ping de actividad admin
+async function pingActividadAdmin() {
+    try {
+        const fd = new FormData();
+        fd.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+        await fetch('{% url "ping_mensajes_admin" %}', {
+            method: 'POST', body: fd,
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        });
+    } catch { /* silencioso */ }
+}
+
+pingActividadAdmin();
+setInterval(pingActividadAdmin, 30000);
+
+function linkificar(texto) {
+    const urlRegex = /https?:\/\/[^\s<>"']+/g;
+    return texto
+        .replace(/</g, '&lt;')
+        .replace(/\n/g, '<br>')
+        .replace(urlRegex, url => {
+            const urlEscapada = url.replace(/&lt;/g, '<');
+            return `<a href="${urlEscapada}" target="_blank" rel="noopener noreferrer"
+                       style="color:#3b82f6;text-decoration:underline;text-underline-offset:2px;
+                              word-break:break-all;font-size:inherit;"
+                       onclick="event.stopPropagation()">${urlEscapada}</a>`;
+        });
+}
+
+document.querySelectorAll('.bubble-text, .bubble-txt').forEach(el => {
+    if (el.querySelector('a')) return; // ya tiene links, no procesar
+    const urlRegex = /https?:\/\/[^\s<>"']+/g;
+    el.innerHTML = el.innerHTML.replace(urlRegex, url => {
+        return `<a href="${url}" target="_blank" rel="noopener noreferrer"
+                   style="color:#3b82f6;text-decoration:underline;text-underline-offset:2px;
+                          word-break:break-all;font-size:inherit;"
+                   onclick="event.stopPropagation()">${url}</a>`;
+    });
+});
+{% endif %}
+</script>
+{% endblock %}

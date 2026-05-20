@@ -40,3 +40,31 @@ def mail(asunto, destinatarios, mensaje_plano=None, template_html=None, contexto
     except Exception as e:
         logger.error(f"mail — excepción: {e}")
         return False
+    
+def mail_con_pdf(asunto, destinatarios, template_html, contexto, pdf_bytes, pdf_nombre):
+    """
+    Envia email con PDF adjunto usando EmailMessage.
+    """
+    from django.core.mail import EmailMessage
+    from django.template.loader import render_to_string
+    from django.conf import settings
+    import logging
+
+    logger = logging.getLogger(__name__)
+
+    try:
+        mensaje_html = render_to_string(template_html, contexto)
+        email = EmailMessage(
+            subject=asunto,
+            body=mensaje_html,
+            from_email=settings.EMAIL_HOST_USER,
+            to=destinatarios,
+        )
+        email.content_subtype = 'html'
+        email.attach(pdf_nombre, pdf_bytes, 'application/pdf')
+        email.send(fail_silently=False)
+        logger.info(f"Email con PDF enviado a {', '.join(destinatarios)}")
+        return True
+    except Exception as e:
+        logger.error(f"Error enviando email con PDF: {e}")
+        return False

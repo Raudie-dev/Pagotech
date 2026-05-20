@@ -69,6 +69,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'utils.context_processors.whatsapp',
             ],
         },
     },
@@ -222,4 +223,8 @@ EMAIL_HOST_PASSWORD = 'izrjwckymmjeoclj'
 # Definir el receptor de correos para administradores
 EMAIL_RECEPTORES = [
     'pagotechnotificaciones@gmail.com',
+    
 ]
+
+WHATSAPP_NUMBER = os.getenv('WHATSAPP_NUMBER', '5491100000000')
+WHATSAPP_MESSAGE = os.getenv('WHATSAPP_MESSAGE', 'Hola, necesito ayuda con Pago Tech.')

@@ -26,6 +26,7 @@ from django.utils import timezone
 import re
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
+from app2.models import TarjetaCustom
 
 logger = logging.getLogger('app1')
 
@@ -192,6 +193,39 @@ def login_cliente(request):
 
     return render(request, 'login.html')
 
+TYC_VERSION_ACTUAL = "1.0"  # Cambiar esto fuerza re-aceptación a todos
+
+def _get_tyc_version_actual():
+    try:
+        from app2.models import TerminosCondiciones
+        tyc = TerminosCondiciones.objects.filter(activa=True).first()
+        return tyc.version if tyc else "1.0"
+    except Exception:
+        return "1.0"
+    
+def tyc(request):
+    user_id = request.session.get('user_id')
+    if not user_id:
+        return redirect('login_cliente')
+
+    from app2.models import TerminosCondiciones
+
+    tyc_obj = TerminosCondiciones.objects.filter(activa=True).first()
+    version_actual = tyc_obj.version if tyc_obj else TYC_VERSION_ACTUAL
+
+    if request.method == 'POST':
+        cliente = crud.get_cliente(user_id)
+        cliente.acepto_tyc    = True
+        cliente.fecha_acepto_tyc = timezone.now()
+        cliente.version_tyc   = version_actual
+        cliente.save()
+        logger.info(f"TyC aceptados — usuario={user_id} version={version_actual}")
+        return redirect('dashboard')
+
+    return render(request, 'tyc.html', {
+        'version':  version_actual,
+        'tyc_obj':  tyc_obj,
+    })
 
 def dashboard(request):
     user_id = request.session.get('user_id')
@@ -203,6 +237,10 @@ def dashboard(request):
     if not cliente:
         logger.warning(f"Dashboard — cliente id={user_id} no encontrado en DB, redirigiendo")
         return redirect('login_cliente')
+    
+    # ── Guard TyC ──────────────────────────────────────────────
+    if not cliente.acepto_tyc or cliente.version_tyc != _get_tyc_version_actual():
+        return redirect('tyc')
 
     stats = crud.get_dashboard_stats(user_id)
     logger.debug(
@@ -252,7 +290,17 @@ def creacion_link(request):
                     ar_eff   = Decimal(str(config.arancel_plataforma_debito)) * (1 + iva_f)
                     tasa_eff = Decimal('0')
                 else:
-                    plan = app2_crud.list_cuotas_para_usuario(user_id).filter(numero_cuota=cuotas_num).first()
+                    # Buscar plan según tipo de tarjeta
+                    if tipo.startswith('custom_'):
+                        slug = tipo.replace('custom_', '')
+                        plan = app2_crud.list_cuotas_para_tarjeta_custom(
+                            user_id, slug
+                        ).filter(numero_cuota=cuotas_num).first()
+                    else:
+                        plan = app2_crud.list_cuotas_para_usuario(user_id).filter(
+                            numero_cuota=cuotas_num
+                        ).first()
+
                     if plan and cuotas_num > 1:
                         iva_val     = plan.iva_override              if plan.iva_override is not None              else config.iva
                         iva_fin_val = plan.iva_financiacion_override if plan.iva_financiacion_override is not None else config.iva_financiacion
@@ -322,15 +370,35 @@ def creacion_link(request):
     paginator = Paginator(all_links, 10)
     page_obj = paginator.get_page(request.GET.get('page'))
     link_creado = request.session.pop('link_recien_creado', None)
+    tarjetas_custom = TarjetaCustom.objects.filter(activa=True).order_by('orden', 'nombre')
 
     logger.debug(f"Creación link GET — usuario={user_id} total_links={all_links.count()}")
+    
+    from app2 import crud as admin_crud
+    import json
+    planes_credito = admin_crud.list_cuotas_para_usuario(cliente.id)
 
+    tarjetas_custom = TarjetaCustom.objects.filter(activa=True).order_by('orden', 'nombre')
+
+    planes_por_tarjeta = {}
+    for tc in tarjetas_custom:
+        if tc.acepta_cuotas:
+            planes = admin_crud.list_cuotas_para_tarjeta_custom(cliente.id, tc.slug)
+            planes_por_tarjeta[tc.slug] = [
+                {'numero_cuota': p.numero_cuota, 'nombre': p.nombre}
+                for p in planes
+            ]
+            
     return render(request, 'creacion_link.html', {
         'user': cliente,
         'links': page_obj,
         'planes': planes_activos,
         'link_creado': link_creado,
-        'config': config
+        'tarjetas_custom': tarjetas_custom,
+        'config': config,
+        'planes':            planes_credito,       # compatibilidad con el template actual
+        'planes_por_tarjeta': json.dumps(planes_por_tarjeta),
+        'tarjetas_custom':   tarjetas_custom
     })
 
 
@@ -508,7 +576,8 @@ def gestion_perfil(request):
             'nombre': request.POST.get('nombre'),
             'email': request.POST.get('email'),
             'telefono': request.POST.get('telefono'),
-            'password': request.POST.get('password') if request.POST.get('password') else None
+            'password': request.POST.get('password') if request.POST.get('password') else None,
+            'recibir_liquidacion_email': 'recibir_liquidacion_email' in request.POST,
         }
 
         logger.debug(f"Actualización de perfil — usuario={user_id} campos={[k for k, v in data.items() if v]}")
@@ -529,3 +598,315 @@ def gestion_perfil(request):
                     messages.error(request, error)
 
     return render(request, 'perfil.html', {'user': cliente})
+
+def mensajes_cliente(request):
+    user_id = request.session.get('user_id')
+    if not user_id:
+        return redirect('login_cliente')
+
+    cliente = crud.get_cliente(user_id)
+    if not cliente:
+        return redirect('login_cliente')
+
+    if not cliente.acepto_tyc or cliente.version_tyc != _get_tyc_version_actual():
+        return redirect('tyc')
+
+    from .models import MensajeInterno, LinkPago as LP
+    from django.utils import timezone
+
+    # Marcar como leidos los mensajes del admin
+    MensajeInterno.objects.filter(
+        cliente=cliente, es_admin=True, leido=False
+    ).update(leido=True)
+    
+    from .models import SesionChat
+
+    sesion_activa = SesionChat.objects.filter(cliente=cliente, cerrada=False).first()
+
+    if sesion_activa:
+        mensajes = MensajeInterno.objects.filter(
+            sesion=sesion_activa
+        ).select_related('link_pago').order_by('fecha')
+        chat_cerrado = False
+    else:
+        # Mostrar la ultima sesion cerrada como referencia historica
+        ultima_sesion = SesionChat.objects.filter(cliente=cliente, cerrada=True).first()
+        mensajes = MensajeInterno.objects.filter(
+            sesion=ultima_sesion
+        ).select_related('link_pago').order_by('fecha') if ultima_sesion else MensajeInterno.objects.none()
+        chat_cerrado = True
+
+    links     = LP.objects.filter(cliente=cliente).order_by('-created_at')[:50]
+    no_leidos = mensajes.filter(es_admin=True, leido=False).count() if not chat_cerrado else 0
+    ultimo_id = mensajes.last().id if mensajes.exists() else 0
+
+    return render(request, 'mensajes_cliente.html', {
+        'user':      cliente,
+        'mensajes':  mensajes,
+        'links':     links,
+        'no_leidos': no_leidos,
+        'ultimo_id': ultimo_id,
+        'chat_cerrado': chat_cerrado,
+    })
+
+
+def enviar_mensaje_cliente(request):
+    user_id = request.session.get('user_id')
+    if not user_id or request.method != 'POST':
+        return JsonResponse({'ok': False, 'error': 'No autorizado'}, status=401)
+
+    cliente = crud.get_cliente(user_id)
+    if not cliente:
+        return JsonResponse({'ok': False, 'error': 'Cliente no encontrado'}, status=404)
+
+    from .models import MensajeInterno, LinkPago as LP
+    from django.conf import settings
+    import threading
+    from .models import MensajeInterno as MI
+    
+    MI.objects.filter(cliente=cliente, conversacion_cerrada=True).update(conversacion_cerrada=False)
+
+    texto   = request.POST.get('texto', '').strip()
+    link_id = request.POST.get('link_pago', '').strip()
+
+    if not texto:
+        return JsonResponse({'ok': False, 'error': 'El mensaje no puede estar vacio.'})
+
+    link_obj = None
+    if link_id:
+        try:
+            link_obj = LP.objects.get(id=link_id, cliente=cliente)
+        except LP.DoesNotExist:
+            pass
+
+    sesion = _get_or_create_sesion_activa(cliente)
+
+    msg = MensajeInterno.objects.create(
+        cliente   = cliente,
+        texto     = texto,
+        es_admin  = False,
+        leido     = False,
+        link_pago = link_obj,
+        sesion    = sesion,
+    )
+    logger.info(f"Mensaje enviado por cliente={cliente.id} msg_id={msg.id}")
+
+    # Email en background — no bloquea la respuesta
+    def enviar_email_con_delay():
+        import time
+        from django.utils import timezone
+        from datetime import timedelta
+
+        # Esperar 5 minutos
+        time.sleep(300)
+
+        # Verificar si el admin estuvo activo en los ultimos 5 minutos
+        try:
+            from app2.models import User_admin
+            UMBRAL = timezone.now() - timedelta(minutes=5)
+            admin_activo = User_admin.objects.filter(
+                ultima_actividad_mensajes__gte=UMBRAL
+            ).exists()
+
+            if admin_activo:
+                logger.info(f"Email nuevo mensaje omitido — admin activo en pagina — msg_id={msg.id}")
+                return
+        except Exception:
+            pass
+
+        try:
+            from utils.email_utils import mail
+            destinatarios = getattr(settings, 'EMAIL_RECEPTORES', None)
+            if not destinatarios:
+                destinatarios = [getattr(settings, 'EMAIL_RECEPTOR', 'pagotechnotificaciones@gmail.com')]
+
+            mail(
+                asunto=f"Nuevo mensaje de {cliente.nombre} — Pago Tech",
+                destinatarios=destinatarios,
+                template_html='emails/nuevo_mensaje.html',
+                contexto={
+                    'cliente_nombre': cliente.nombre.title(),
+                    'cliente_email':  cliente.email,
+                    'texto':          texto,
+                    'link_pago':      link_obj,
+                    'fecha':          msg.fecha.strftime('%d/%m/%Y %H:%M'),
+                    'admin_url':      f'{settings.SITE_URL}/app2/mensajes/{cliente.id}/' if hasattr(settings, 'SITE_URL') else '/app2/mensajes/',
+                },
+            )
+        except Exception as e:
+            logger.error(f"Error enviando email nuevo mensaje: {e}")
+
+    threading.Thread(target=enviar_email_con_delay, daemon=True).start()
+
+    return JsonResponse({
+        'ok': True,
+        'msg': {
+            'id':       msg.id,        # ← asegurarse que está
+            'texto':    texto,
+            'fecha':    msg.fecha.strftime('%d/%m/%Y %H:%M'),
+            'order_id': link_obj.order_id if link_obj else None,
+            'link_id':  link_obj.id if link_obj else None,
+        }
+    })
+    
+def poll_mensajes(request):
+    user_id = request.session.get('user_id')
+    if not user_id:
+        return JsonResponse({'mensajes': []})
+
+    cliente = crud.get_cliente(user_id)
+    if not cliente:
+        return JsonResponse({'mensajes': []})
+
+    from .models import MensajeInterno
+
+    ultimo_id = int(request.GET.get('ultimo_id', 0))
+
+    nuevos = MensajeInterno.objects.filter(
+        cliente=cliente,
+        id__gt=ultimo_id
+    ).select_related('link_pago').order_by('id')
+
+    # Marcar admin como leidos
+    nuevos.filter(es_admin=True, leido=False).update(leido=True)
+
+    no_leidos = MensajeInterno.objects.filter(
+        cliente=cliente, es_admin=True, leido=False
+    ).count()
+
+    return JsonResponse({
+        'mensajes': [
+            {
+                'id':       m.id,
+                'texto':    m.texto,
+                'fecha':    m.fecha.strftime('%d/%m/%Y %H:%M'),
+                'es_admin': m.es_admin,
+                'order_id': m.link_pago.order_id if m.link_pago else None,
+                'link_id':  m.link_pago.id if m.link_pago else None,
+            }
+            for m in nuevos
+        ],
+        'no_leidos': no_leidos,
+    })
+    
+def finalizar_chat_cliente(request):
+    user_id = request.session.get('user_id')
+    if not user_id or request.method != 'POST':
+        return JsonResponse({'ok': False}, status=400)
+
+    cliente = crud.get_cliente(user_id)
+    if not cliente:
+        return JsonResponse({'ok': False}, status=404)
+
+    from .models import MensajeInterno
+    from django.conf import settings
+    from django.utils import timezone
+    import threading
+
+    from .models import SesionChat
+
+    sesion = SesionChat.objects.filter(cliente=cliente, cerrada=False).first()
+    if not sesion:
+        return JsonResponse({'ok': False, 'error': 'No hay conversacion activa para finalizar.'})
+
+    # Solo mensajes de esta sesion
+    mensajes_qs = MensajeInterno.objects.filter(sesion=sesion).order_by('fecha')
+    if not mensajes_qs.exists():
+        return JsonResponse({'ok': False, 'error': 'La sesion no tiene mensajes.'})
+
+    # Cerrar la sesion
+    from django.utils import timezone as tz
+    sesion.cerrada      = True
+    sesion.fecha_cierre = tz.now()
+    sesion.save()
+
+    # Evaluar antes del thread
+    mensajes_lista = [
+        {
+            'texto':    m.texto,
+            'fecha':    m.fecha.strftime('%d/%m/%Y %H:%M'),
+            'es_admin': m.es_admin,
+        }
+        for m in mensajes_qs
+    ]
+    total          = len(mensajes_lista)
+    fecha_cierre   = timezone.now().strftime('%d/%m/%Y %H:%M')
+    cliente_nombre = cliente.nombre.title()
+    cliente_email  = cliente.email
+    cliente_id_val = cliente.id
+
+    def enviar_resumenes():
+        try:
+            from utils.email_utils import mail_con_pdf
+            from django.template.loader import render_to_string
+            from weasyprint import HTML
+
+            # Generar PDF
+            html_pdf = render_to_string('emails/resumen_chat_pdf.html', {
+                'cliente_nombre': cliente_nombre,
+                'fecha_cierre':   fecha_cierre,
+                'total_mensajes': total,
+                'mensajes':       mensajes_lista,
+            })
+            pdf_bytes = HTML(string=html_pdf).write_pdf()
+            pdf_nombre = f"resumen_chat_{cliente_nombre.replace(' ', '_')}_{fecha_cierre[:10].replace('/', '-')}.pdf"
+
+            # Contexto para el email
+            ctx_cliente = {
+                'cliente_nombre': cliente_nombre,
+                'fecha_cierre':   fecha_cierre,
+                'total_mensajes': total,
+                'es_admin':       False,
+            }
+            ctx_admin = {
+                'cliente_nombre': cliente_nombre,
+                'fecha_cierre':   fecha_cierre,
+                'total_mensajes': total,
+                'es_admin':       True,
+            }
+
+            # Email al comercio
+            if cliente_email:
+                mail_con_pdf(
+                    asunto=f"Resumen de tu conversacion con Pago Tech — {fecha_cierre[:10]}",
+                    destinatarios=[cliente_email],
+                    template_html='emails/resumen_chat_email.html',
+                    contexto=ctx_cliente,
+                    pdf_bytes=pdf_bytes,
+                    pdf_nombre=pdf_nombre,
+                )
+
+            # Email al admin
+            from django.conf import settings
+            destinatarios_admin = getattr(settings, 'EMAIL_RECEPTORES', None)
+            if not destinatarios_admin:
+                destinatarios_admin = [getattr(settings, 'EMAIL_RECEPTOR', 'pagotechnotificaciones@gmail.com')]
+
+            mail_con_pdf(
+                asunto=f"Chat finalizado con {cliente_nombre} — {fecha_cierre[:10]}",
+                destinatarios=destinatarios_admin,
+                template_html='emails/resumen_chat_email.html',
+                contexto=ctx_admin,
+                pdf_bytes=pdf_bytes,
+                pdf_nombre=pdf_nombre,
+            )
+
+        except Exception as e:
+            logger.error(f"Error enviando resumen con PDF: {e}")
+
+def ping_mensajes(request):
+    user_id = request.session.get('user_id')
+    if not user_id or request.method != 'POST':
+        return JsonResponse({'ok': False})
+    from django.utils import timezone
+    Cliente.objects.filter(id=user_id).update(
+        ultima_actividad_mensajes=timezone.now()
+    )
+    return JsonResponse({'ok': True})
+
+def _get_or_create_sesion_activa(cliente):
+    from .models import SesionChat
+    sesion = SesionChat.objects.filter(cliente=cliente, cerrada=False).first()
+    if not sesion:
+        sesion = SesionChat.objects.create(cliente=cliente)
+    return sesion

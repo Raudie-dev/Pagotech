@@ -230,6 +230,11 @@
                                         </button>
                                     </li>
                                     {% endcomment %}
+                                    <li>
+                                        <a class="dropdown-item" href="{% url 'iniciar_chat_admin' cliente.id %}">
+                                            <i class="fas fa-comments me-2 text-info"></i>Iniciar chat
+                                        </a>
+                                    </li>
                                 </ul>
                             </div>
                         </div>
@@ -239,7 +244,7 @@
             </tbody>
         </table>
     </div>
-<!-- Controles de Paginación Mejorados -->
+<!-- Controles de Paginación -->
 <div class="pagination-container d-flex flex-column flex-md-row justify-content-between align-items-center p-4 border-top border-opacity-10">
     
     <div class="pagination-info mb-3 mb-md-0">

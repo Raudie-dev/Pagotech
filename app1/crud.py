@@ -144,6 +144,8 @@ def update_cliente(pk: Any, data: Dict[str, Any]) -> List[str]:
         cliente.aprobado = bool(data['aprobado'])
 
     try:
+        if 'recibir_liquidacion_email' in data:
+            cliente.recibir_liquidacion_email = bool(data['recibir_liquidacion_email'])
         cliente.save()
         logger.info(f"update_cliente — actualizado OK — id={pk} nombre={cliente.nombre} email={cliente.email}")
         return []
@@ -240,10 +242,60 @@ def create_link(cliente_pk, monto_contado, cuotas=1, tipo_tarjeta='credito', des
                 f"create_link — DÉBITO: pt_eff={pt_eff:.4f}% "
                 f"ar_eff={ar_eff:.4f}% tasa=0%"
             )
+        # Tarjeta custom (no bancaria)
+        elif tipo_tarjeta.startswith('custom_'):
+            from app2.models import TarjetaCustom
+            slug = tipo_tarjeta.replace('custom_', '')
+            try:
+                tc = TarjetaCustom.objects.get(slug=slug, activa=True)
+            except TarjetaCustom.DoesNotExist:
+                return None, [f'La tarjeta seleccionada no esta disponible.']
+
+            if tc.acepta_cuotas and cuotas > 1:
+                # Tiene cuotas — buscar plan específico para esta tarjeta
+                # Cae al bloque else de abajo para reutilizar la lógica de CuotaConfig
+                # Usamos los parámetros base de la tarjeta custom para contado
+                # y los overrides del plan para cuotas
+                from django.db.models import Q
+                plan = CuotaConfig.objects.filter(
+                    numero_cuota=cuotas,
+                    activa=True,
+                    tarjeta_custom__slug=slug
+                ).first()
+
+                if not plan:
+                    return None, [f'No hay plan de {cuotas} cuotas configurado para {tc.nombre}.']
+
+                iva_val     = plan.iva_override              if plan.iva_override is not None              else tc.iva
+                iva_fin_val = plan.iva_financiacion_override if plan.iva_financiacion_override is not None else tc.iva
+                com_val     = plan.com_credito_override      if plan.com_credito_override is not None      else tc.comision
+                ar_val      = plan.arancel_credito_override  if plan.arancel_credito_override is not None  else tc.arancel
+
+                iva_f     = Decimal(str(iva_val))     / 100
+                iva_fin_f = Decimal(str(iva_fin_val)) / 100
+
+                tasa_eff = Decimal(str(plan.tasa_base)) * (1 + iva_fin_f) if plan.tasa_aplica_iva_fin else Decimal(str(plan.tasa_base))
+                pt_eff   = Decimal(str(com_val))        * (1 + iva_f)     if plan.comision_aplica_iva  else Decimal(str(com_val))
+                ar_eff   = Decimal(str(ar_val))         * (1 + iva_f)     if plan.comision_aplica_iva  else Decimal(str(ar_val))
+
+            else:
+                # Contado sin cuotas
+                cuotas = 1
+                iva_f    = Decimal(str(tc.iva)) / 100
+                pt_eff   = Decimal(str(tc.comision)) * (1 + iva_f) if tc.aplica_iva else Decimal(str(tc.comision))
+                ar_eff   = Decimal(str(tc.arancel))  * (1 + iva_f) if tc.aplica_iva else Decimal(str(tc.arancel))
+                tasa_eff = Decimal('0')
+                plan     = None
         else:
-            # Crédito: leer plan con sus overrides
+            # Crédito genérico
             if cuotas > 1:
-                plan = CuotaConfig.objects.filter(numero_cuota=cuotas, activa=True).first()
+                # Crédito genérico — plan sin tarjeta custom asignada
+                plan = CuotaConfig.objects.filter(
+                    numero_cuota=cuotas,
+                    activa=True,
+                    tarjeta_custom__isnull=True
+                ).first()
+
                 if not plan:
                     logger.error(f"create_link — plan de {cuotas} cuotas no encontrado o inactivo")
                     return None, [f'El plan de {cuotas} cuotas no está habilitado actualmente.']
@@ -378,6 +430,23 @@ def create_link(cliente_pk, monto_contado, cuotas=1, tipo_tarjeta='credito', des
                 "installmentOptionsEditability": "FORBIDDEN"
             }
         }
+    elif tipo_tarjeta.startswith('custom_'):
+        from app2.models import TarjetaCustom
+        slug_tc = tipo_tarjeta.replace('custom_', '')
+        try:
+            tc_obj = TarjetaCustom.objects.get(slug=slug_tc, activa=True)
+            if tc_obj.payzen_code:
+                payload["paymentCards"] = tc_obj.payzen_code
+                # Si acepta cuotas, agregar installmentNumber
+                if tc_obj.acepta_cuotas and cuotas > 1:
+                    payload["transactionOptions"] = {
+                        "cardOptions": {
+                            "installmentNumber": int(cuotas),
+                            "installmentOptionsEditability": "FORBIDDEN"
+                        }
+                    }
+        except TarjetaCustom.DoesNotExist:
+            pass
 
     logger.debug(
         f"create_link — payload PayZen: order_id={order_id} "
@@ -592,12 +661,45 @@ def verificar_estado_pago(link_id):
                 link.cuotas_elegidas = int(cuotas_api) if cuotas_api else 1
                 link.pagado = True
                 link.save()
-
                 logger.info(
                     f"verificar_estado_pago — PAGO EXITOSO — order_id={link.order_id} "
                     f"auth_code={link.auth_code} lote={link.lote_number} "
                     f"cuotas={link.cuotas_elegidas} nro_tx={link.nro_transaccion}"
                 )
+
+                # ── Email de liquidacion ──────────────────────────────────────
+                try:
+                    if link.cliente.recibir_liquidacion_email and link.cliente.email:
+                        from utils.email_utils import mail
+                        from django.utils import timezone
+
+                        total_costos = link.desglose_arancel + link.desglose_comision + link.desglose_tasa + link.desglose_iva_21 + link.desglose_iva_105
+
+                        mail(
+                            asunto=f"Liquidacion de pago - Orden {link.order_id}",
+                            destinatarios=[link.cliente.email],
+                            template_html="emails/liquidacion.html",
+                            contexto={
+                                "cliente_nombre": link.cliente.nombre.title(),
+                                "monto_bruto":    f"{link.monto:,.2f}".replace(',', '.'),
+                                "monto_neto":     f"{link.receiver_amount:,.2f}".replace(',', '.'),
+                                "arancel":        f"{link.desglose_arancel:,.2f}".replace(',', '.'),
+                                "comision":       f"{link.desglose_comision:,.2f}".replace(',', '.'),
+                                "tasa":           f"{link.desglose_tasa:,.2f}".replace(',', '.'),
+                                "iva_21":         f"{link.desglose_iva_21:,.2f}".replace(',', '.'),
+                                "iva_105":        f"{link.desglose_iva_105:,.2f}".replace(',', '.'),
+                                "total_costos":   f"{total_costos:,.2f}".replace(',', '.'),
+                                "cuotas":         link.cuotas_elegidas,
+                                "tipo_tarjeta":   link.tipo_tarjeta,
+                                "order_id":       link.order_id,
+                                "auth_code":      link.auth_code or "",
+                                "descripcion":    link.descripcion or "",
+                                "fecha":          timezone.now().strftime("%d/%m/%Y %H:%M"),
+                            },
+                        )
+                        logger.info(f"verificar_estado_pago — email liquidacion enviado — order_id={link.order_id}")
+                except Exception as e:
+                    logger.error(f"verificar_estado_pago — error enviando email liquidacion — order_id={link.order_id}: {e}")
 
                 return {
                     'status': detailed_status,

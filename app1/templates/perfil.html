@@ -103,6 +103,31 @@
                         </div>
                     </div>
 
+                    <!-- SECCION: NOTIFICACIONES -->
+                    <div class="section-title mb-4 mt-2">
+                        <h6 class="text-danger text-uppercase fw-bold ls-1"><i class="fas fa-bell me-2"></i>Notificaciones</h6>
+                    </div>
+
+                    <div class="bg-dark-lighter p-4 rounded-4 border border-secondary mb-4">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div>
+                                <div class="text-white fw-semibold mb-1" style="font-size:.9rem">Recibir liquidaciones por email</div>
+                                <small class="text-muted">Se enviara un resumen detallado al confirmar cada pago recibido.</small>
+                            </div>
+                            <div class="form-check form-switch mb-0 ms-4">
+                                <input class="form-check-input" 
+                                       type="checkbox" 
+                                       name="recibir_liquidacion_email" 
+                                       id="toggle-liquidacion"
+                                       role="switch"
+                                       {% if user.recibir_liquidacion_email %}checked{% endif %}>
+                                <label class="form-check-label visually-hidden" for="toggle-liquidacion">
+                                    Recibir liquidaciones por email
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-5">
                         <button type="reset" class="btn btn-outline-secondary px-4 py-2 rounded-3 fw-bold">Descartar</button>
                         <button type="submit" id="btnGuardar" class="btn btn-danger px-5 py-2 rounded-3 fw-bold shadow">
@@ -145,6 +170,22 @@
     @keyframes fadeIn {
         from { opacity: 0; transform: translateY(15px); }
         to { opacity: 1; transform: translateY(0); }
+    }
+    .form-check-input[type="checkbox"][role="switch"] {
+        width: 2.6em;
+        height: 1.4em;
+        cursor: pointer;
+        background-color: #2d2d30;
+        border-color: #3f3f46;
+        transition: background-color .2s ease, border-color .2s ease;
+    }
+    .form-check-input[type="checkbox"][role="switch"]:checked {
+        background-color: #e63946;
+        border-color: #e63946;
+    }
+    .form-check-input[type="checkbox"][role="switch"]:focus {
+        box-shadow: 0 0 0 3px rgba(230, 57, 70, 0.2);
+        border-color: #e63946;
     }
 </style>
 

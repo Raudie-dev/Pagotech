@@ -1,0 +1,277 @@
+{% extends "base_control.html" %}
+{% load static %}
+{% block title %}PagoTech | Términos y Condiciones{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/usuarios-custom.css' %}">
+<style>
+.editor-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    height: 520px;
+}
+@media (max-width: 991px) {
+    .editor-grid { grid-template-columns: 1fr; height: auto; }
+}
+.editor-textarea {
+    width: 100%;
+    height: 100%;
+    min-height: 440px;
+    background: #0d0d0f;
+    border: 1px solid rgba(255,255,255,0.1);
+    color: #e2e8f0;
+    border-radius: 10px;
+    padding: 1rem;
+    font-family: 'Courier New', monospace;
+    font-size: .85rem;
+    line-height: 1.7;
+    resize: none;
+    outline: none;
+    transition: border-color .2s;
+}
+.editor-textarea:focus { border-color: #e63946; }
+.preview-box {
+    background: #0d0d0f;
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 10px;
+    padding: 1rem 1.25rem;
+    overflow-y: auto;
+    height: 100%;
+    min-height: 440px;
+}
+/* Estilos del preview que coinciden con tyc.html */
+.preview-box h2 {
+    font-size: 1rem; font-weight: 700; color: #fff;
+    margin: 1.2rem 0 .4rem;
+}
+.preview-box h3 {
+    font-size: .85rem; font-weight: 700; color: #fff;
+    margin: 1rem 0 .4rem;
+}
+.preview-box p {
+    font-size: .78rem; color: #a1a1aa; line-height: 1.7; margin: 0 0 .45rem;
+}
+.preview-box strong { color: #fff; }
+.preview-box em { color: #e63946; font-style: normal; }
+.preview-box ul {
+    margin: .45rem 0; padding: 0; list-style: none;
+}
+.preview-box ul li {
+    font-size: .78rem; color: #a1a1aa; line-height: 1.65;
+    padding: .18rem 0 .18rem 1rem; position: relative;
+}
+.preview-box ul li::before {
+    content: ''; position: absolute; left: 0; top: .6rem;
+    width: 4px; height: 4px; border-radius: 50%;
+    background: #e63946; opacity: .65;
+}
+.preview-box code {
+    font-size: .72rem; color: #06d6a0;
+    background: rgba(6,214,160,.08);
+    padding: .1em .4em; border-radius: 4px;
+}
+.preview-empty {
+    color: #3f3f46; font-size: .8rem;
+    text-align: center; padding-top: 3rem;
+}
+.tyc-historial-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: .7rem 1rem;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.tyc-historial-row:last-child { border-bottom: none; }
+.badge-activo {
+    background: rgba(16,185,129,0.1); color: #10b981;
+    border: 1px solid rgba(16,185,129,0.2);
+    padding: 3px 10px; border-radius: 20px; font-size: .7rem; font-weight: 700;
+}
+.badge-inactivo {
+    background: rgba(255,255,255,0.05); color: #71717a;
+    border: 1px solid rgba(255,255,255,0.08);
+    padding: 3px 10px; border-radius: 20px; font-size: .7rem; font-weight: 700;
+}
+.md-hint {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 8px; padding: .6rem 1rem;
+    font-size: .72rem; color: #71717a; line-height: 1.7;
+}
+.md-hint code { background: rgba(255,255,255,0.07); color: #a5b4fc; padding: 1px 5px; border-radius: 3px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-end mb-4">
+    <div>
+        <h2 class="mb-1 text-white">
+            <i class="fas fa-file-contract text-danger me-2"></i>Términos y Condiciones
+        </h2>
+        <p class="text-muted small mb-0">
+            Editá el contenido que verán los comercios al registrarse.
+            {% if tyc_activo %}
+            <span class="badge-activo ms-2">Versión activa: {{ tyc_activo.version }}</span>
+            {% endif %}
+        </p>
+    </div>
+</div>
+
+<div class="row g-4">
+
+    <!-- Editor -->
+    <div class="col-lg-8">
+        <div class="custom-table-container p-4 shadow-lg">
+
+            <form method="post" id="form-tyc">
+                {% csrf_token %}
+                <input type="hidden" name="accion" value="guardar">
+
+                <div class="md-hint mb-3">
+                    <strong class="text-white">Sintaxis Markdown:</strong>
+                    &nbsp;<code>## Título</code> sección &nbsp;·&nbsp;
+                    <code>**negrita**</code> &nbsp;·&nbsp;
+                    <code>*cursiva*</code> &nbsp;·&nbsp;
+                    <code>- item</code> lista &nbsp;·&nbsp;
+                    <code>`código`</code> &nbsp;·&nbsp;
+                    línea en blanco = nuevo párrafo
+                </div>
+
+                <div class="editor-grid">
+                    <div style="display:flex;flex-direction:column;gap:.4rem;">
+                        <small class="text-muted fw-bold" style="font-size:.7rem;letter-spacing:.5px;">
+                            <i class="fas fa-pen me-1"></i>EDITOR
+                        </small>
+                        <textarea name="contenido" id="md-editor"
+                                  class="editor-textarea"
+                                  placeholder="## 01. Título de sección&#10;&#10;Escribí el contenido aquí...&#10;&#10;**Texto en negrita**, *cursiva*&#10;&#10;- Item de lista&#10;- Otro item">{% if tyc_activo %}{{ tyc_activo.contenido }}{% endif %}</textarea>
+                    </div>
+                    <div style="display:flex;flex-direction:column;gap:.4rem;">
+                        <small class="text-muted fw-bold" style="font-size:.7rem;letter-spacing:.5px;">
+                            <i class="fas fa-eye me-1"></i>PREVIEW EN VIVO
+                        </small>
+                        <div class="preview-box" id="md-preview">
+                            <div class="preview-empty" id="preview-empty">
+                                <i class="fas fa-eye-slash d-block mb-2" style="font-size:1.5rem;"></i>
+                                Empezá a escribir para ver el preview
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </form>
+        </div>
+    </div>
+
+    <!-- Historial + info -->
+    <div class="col-lg-4">
+
+        <!-- Boton guardar sticky -->
+        <div class="custom-table-container p-4 mb-4">
+            <button type="submit" form="form-tyc" class="btn btn-danger w-100 fw-bold">
+                <i class="fas fa-save me-2"></i>Guardar y Activar
+            </button>
+            <div class="mt-2 d-flex align-items-center gap-2">
+                <label class="form-label text-muted small fw-bold mb-0">VERSIÓN</label>
+                <input type="text" name="version" form="form-tyc"
+                       id="input-version-side"
+                       class="form-control form-control-sm"
+                       style="background:#0d0d0f;border:1px solid rgba(255,255,255,0.1);
+                              color:#fff;border-radius:8px;max-width:90px;"
+                       placeholder="1.0">
+            </div>
+        </div>
+        <!-- Aviso -->
+        <div class="custom-table-container p-4 mb-4"
+             style="background:rgba(230,57,70,0.05);border-color:rgba(230,57,70,0.2);">
+            <h6 class="text-white fw-bold mb-2">
+                <i class="fas fa-exclamation-triangle text-danger me-2"></i>Importante
+            </h6>
+            <p class="text-muted small mb-0" style="line-height:1.7;">
+                Al guardar una versión nueva, <strong class="text-white">todos los comercios</strong>
+                deberán volver a aceptar los T&C al iniciar sesión. La versión anterior queda
+                disponible en el historial.
+            </p>
+        </div>
+
+        <!-- Historial -->
+        <div class="custom-table-container">
+            <div class="p-3 border-bottom border-opacity-10">
+                <h6 class="text-white fw-bold mb-0">
+                    <i class="fas fa-history text-muted me-2"></i>Historial de versiones
+                </h6>
+            </div>
+            {% for tyc in historial %}
+            <div class="tyc-historial-row">
+                <div>
+                    <div class="user-name-text">Versión {{ tyc.version }}</div>
+                    <small class="user-sub-text">{{ tyc.creado_en|date:"d/m/Y H:i" }}</small>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    {% if tyc.activa %}
+                    <span class="badge-activo">ACTIVA</span>
+                    {% else %}
+                    <span class="badge-inactivo">inactiva</span>
+                    <form method="post" style="display:inline;">
+                        {% csrf_token %}
+                        <input type="hidden" name="accion" value="activar">
+                        <input type="hidden" name="tyc_id" value="{{ tyc.id }}">
+                        <button type="submit" class="btn btn-sm btn-action-dark text-info"
+                                title="Activar esta versión">
+                            <i class="fas fa-check"></i>
+                        </button>
+                    </form>
+                    {% endif %}
+                </div>
+            </div>
+            {% empty %}
+            <div class="text-center py-4">
+                <small class="text-muted">Sin versiones guardadas aún.</small>
+            </div>
+            {% endfor %}
+        </div>
+
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script>
+const editor  = document.getElementById('md-editor');
+const preview = document.getElementById('md-preview');
+const empty   = document.getElementById('preview-empty');
+
+marked.setOptions({
+    breaks: true,
+    gfm:    true,
+});
+
+function renderPreview() {
+    const md = editor.value.trim();
+    if (!md) {
+        preview.innerHTML = '';
+        preview.appendChild(empty);
+        return;
+    }
+    empty.remove();
+    preview.innerHTML = marked.parse(md);
+}
+
+editor.addEventListener('input', renderPreview);
+
+// Render inicial si hay contenido
+if (editor.value.trim()) renderPreview();
+
+// Tab en el editor inserta 2 espacios en lugar de cambiar foco
+editor.addEventListener('keydown', e => {
+    if (e.key === 'Tab') {
+        e.preventDefault();
+        const s = editor.selectionStart;
+        editor.value = editor.value.substring(0, s) + '  ' + editor.value.substring(editor.selectionEnd);
+        editor.selectionStart = editor.selectionEnd = s + 2;
+    }
+});
+const versionSide = document.getElementById('input-version-side');
+if (versionSide) versionSide.value = '{{ nueva_v }}';
+</script>
+{% endblock %}

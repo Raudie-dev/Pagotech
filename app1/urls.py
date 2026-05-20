@@ -14,4 +14,10 @@ urlpatterns = [
     path('verificar-pago-ajax/<int:link_id>/', views.verificar_estado_pago_ajax, name='verificar_pago_ajax'),
     path('perfil/', views.gestion_perfil, name='perfil'),
     path('api/enviar-correo/', enviar_correo_vista, name='enviar_correo'),
+    path('tyc/', views.tyc, name='tyc'),
+    path('mensajes/', views.mensajes_cliente, name='mensajes_cliente'),
+    path('mensajes/enviar/', views.enviar_mensaje_cliente, name='enviar_mensaje_cliente'),
+    path('mensajes/poll/', views.poll_mensajes, name='poll_mensajes'),
+    path('mensajes/finalizar/', views.finalizar_chat_cliente, name='finalizar_chat_cliente'),
+    path('mensajes/ping/', views.ping_mensajes, name='ping_mensajes'),
 ]

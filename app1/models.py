@@ -9,6 +9,12 @@ class Cliente(models.Model):
     email = models.EmailField(max_length=150, unique=True, null=True, blank=True)
     telefono = models.CharField(max_length=20, null=True, blank=True, unique=True)
     aprobado = models.BooleanField(default=False)
+    acepto_tyc = models.BooleanField(default=False)
+    fecha_acepto_tyc = models.DateTimeField(null=True, blank=True)
+    version_tyc = models.CharField(max_length=20, null=True, blank=True)
+    recibir_liquidacion_email = models.BooleanField(default=True)
+    ultima_actividad_mensajes = models.DateTimeField(null=True, blank=True)
+    
 
     def __str__(self):
         return self.nombre
@@ -71,3 +77,38 @@ class LinkPago(models.Model):
         lines.append(f"Estado del pago: {self.status_detalle}")
         self.invoice_text = "\n".join(lines)
         return self.invoice_text
+
+class MensajeInterno(models.Model):
+    cliente    = models.ForeignKey(Cliente, on_delete=models.CASCADE, related_name='mensajes')
+    admin      = models.ForeignKey('app2.User_admin', on_delete=models.SET_NULL, null=True, blank=True, related_name='mensajes')
+    texto      = models.TextField()
+    fecha      = models.DateTimeField(auto_now_add=True)
+    link_pago  = models.ForeignKey(LinkPago, on_delete=models.SET_NULL, null=True, blank=True, related_name='mensajes')
+    leido      = models.BooleanField(default=False)
+    es_admin   = models.BooleanField(default=False)  # True = mensaje del admin, False = del comercio
+    conversacion_cerrada = models.BooleanField(default=False)
+    sesion = models.ForeignKey(
+        'SesionChat',
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name='mensajes'
+    )
+
+    class Meta:
+        ordering = ['fecha']
+
+    def __str__(self):
+        origen = 'Admin' if self.es_admin else self.cliente.nombre
+        return f"{origen} — {self.fecha.strftime('%d/%m/%Y %H:%M')}"
+    
+class SesionChat(models.Model):
+    cliente      = models.ForeignKey('Cliente', on_delete=models.CASCADE, related_name='sesiones_chat')
+    fecha_inicio = models.DateTimeField(auto_now_add=True)
+    fecha_cierre = models.DateTimeField(null=True, blank=True)
+    cerrada      = models.BooleanField(default=False)
+
+    class Meta:
+        ordering = ['-fecha_inicio']
+
+    def __str__(self):
+        return f"Sesion {self.id} — {self.cliente.nombre} ({'cerrada' if self.cerrada else 'activa'})"

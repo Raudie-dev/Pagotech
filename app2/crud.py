@@ -151,14 +151,24 @@ def list_cuotas_config():
     return CuotaConfig.objects.all()
 
 def list_cuotas_para_usuario(cliente_id):
-    """
-    Planes visibles para un cliente específico:
-    - Todos los globales activos
-    - Más los personalizados activos donde el cliente está asignado
-    """
-    from app2.models import CuotaConfig
+    """Planes de crédito genérico visibles para un cliente (sin tarjeta custom asignada)."""
     from django.db.models import Q
-    return CuotaConfig.objects.filter(activa=True).filter(
+    return CuotaConfig.objects.filter(
+        activa=True,
+        tarjeta_custom__isnull=True
+    ).filter(
+        Q(alcance='global') |
+        Q(alcance='usuarios', usuarios_asignados__id=cliente_id)
+    ).distinct().order_by('numero_cuota')
+
+
+def list_cuotas_para_tarjeta_custom(cliente_id, slug):
+    """Planes de cuotas para una tarjeta custom específica."""
+    from django.db.models import Q
+    return CuotaConfig.objects.filter(
+        activa=True,
+        tarjeta_custom__slug=slug
+    ).filter(
         Q(alcance='global') |
         Q(alcance='usuarios', usuarios_asignados__id=cliente_id)
     ).distinct().order_by('numero_cuota')
@@ -191,12 +201,17 @@ def update_cuota_tasa(cuota_id, tasa, activa):
     
 def create_cuota_plan(data):
     try:
+        from .models import TarjetaCustom as TC
+        tc = TC.objects.filter(id=data['tarjeta_custom_id']).first() \
+             if data.get('tarjeta_custom_id') else None
+
         nueva = CuotaConfig.objects.create(
-            numero_cuota = data['numero_cuota'],
-            nombre       = data['nombre'],
-            tasa_base    = data['tasa_base'],
-            activa       = True,
-            alcance      = data.get('alcance', 'global'),
+            numero_cuota   = data['numero_cuota'],
+            nombre         = data['nombre'],
+            tasa_base      = data['tasa_base'],
+            activa         = True,
+            alcance        = data.get('alcance', 'global'),
+            tarjeta_custom = tc,
         )
         if data.get('usuarios_asignados'):
             nueva.usuarios_asignados.set(data['usuarios_asignados'])
@@ -271,3 +286,67 @@ def get_usuarios_asignados_a_plan(cuota_id):
         return list(cuota.usuarios_asignados.values_list('id', flat=True))
     except CuotaConfig.DoesNotExist:
         return []
+    
+def list_tarjetas_custom(solo_activas=False):
+    from .models import TarjetaCustom
+    qs = TarjetaCustom.objects.all()
+    if solo_activas:
+        qs = qs.filter(activa=True)
+    return qs
+
+def create_tarjeta_custom(data):
+    from .models import TarjetaCustom
+    from django.utils.text import slugify
+    try:
+        slug = data.get('slug') or slugify(data['nombre'])
+        # Asegurar slug unico
+        base = slug
+        i = 1
+        while TarjetaCustom.objects.filter(slug=slug).exists():
+            slug = f"{base}_{i}"
+            i += 1
+        tc = TarjetaCustom.objects.create(
+            nombre        = data['nombre'],
+            slug          = slug,
+            payzen_code   = data.get('payzen_code', '').strip().upper(),
+            comision      = data.get('comision', 0),
+            arancel       = data.get('arancel', 0),
+            iva           = data.get('iva', 21),
+            aplica_iva    = data.get('aplica_iva', True),
+            acepta_cuotas = data.get('acepta_cuotas', False),
+            activa        = data.get('activa', True),
+            icono         = data.get('icono', 'fas fa-credit-card'),
+            orden         = data.get('orden', 0),
+        )
+        return tc, None
+    except Exception as e:
+        return None, str(e)
+
+def update_tarjeta_custom(pk, data):
+    from .models import TarjetaCustom
+    try:
+        tc = TarjetaCustom.objects.get(id=pk)
+        tc.nombre        = data.get('nombre', tc.nombre)
+        tc.payzen_code = data.get('payzen_code', tc.payzen_code).strip().upper()
+        tc.comision      = data.get('comision', tc.comision)
+        tc.arancel       = data.get('arancel', tc.arancel)
+        tc.iva           = data.get('iva', tc.iva)
+        tc.aplica_iva    = data.get('aplica_iva', tc.aplica_iva)
+        tc.acepta_cuotas = data.get('acepta_cuotas', tc.acepta_cuotas)
+        tc.activa        = data.get('activa', tc.activa)
+        tc.icono         = data.get('icono', tc.icono)
+        tc.orden         = data.get('orden', tc.orden)
+        tc.save()
+        return True, None
+    except TarjetaCustom.DoesNotExist:
+        return False, 'Tarjeta no encontrada.'
+    except Exception as e:
+        return False, str(e)
+
+def delete_tarjeta_custom(pk):
+    from .models import TarjetaCustom
+    try:
+        TarjetaCustom.objects.get(id=pk).delete()
+        return True, None
+    except:
+        return False, 'Error al eliminar.'

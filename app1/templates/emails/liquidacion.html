@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Liquidacion de Pago</title>
+    <style>
+        body { margin: 0; padding: 0; background: #f4f4f5; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+        .wrapper { max-width: 580px; margin: 32px auto; background: #ffffff; border-radius: 12px; overflow: hidden; border: 1px solid #e4e4e7; }
+        .header { background: #0a0a0b; padding: 32px 40px; text-align: center; }
+        .header-logo { font-size: 22px; font-weight: 800; color: #ffffff; letter-spacing: -0.5px; }
+        .header-logo span { color: #e63946; }
+        .body { padding: 36px 40px; }
+        .title { font-size: 20px; font-weight: 700; color: #111113; margin: 0 0 6px; }
+        .subtitle { font-size: 14px; color: #71717a; margin: 0 0 28px; }
+        .amount-box { background: #f4f4f5; border-radius: 10px; padding: 20px 24px; margin-bottom: 24px; text-align: center; border: 1px solid #e4e4e7; }
+        .amount-label { font-size: 12px; font-weight: 600; color: #71717a; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
+        .amount-value { font-size: 36px; font-weight: 800; color: #111113; line-height: 1; }
+        .amount-sub { font-size: 13px; color: #71717a; margin-top: 4px; }
+        .section-title { font-size: 11px; font-weight: 700; color: #71717a; text-transform: uppercase; letter-spacing: 1px; margin: 0 0 12px; padding-bottom: 8px; border-bottom: 1px solid #e4e4e7; }
+        .row { display: flex; justify-content: space-between; align-items: center; padding: 9px 0; border-bottom: 1px solid #f4f4f5; }
+        .row:last-child { border-bottom: none; }
+        .row-label { font-size: 13px; color: #71717a; }
+        .row-value { font-size: 13px; font-weight: 600; color: #111113; }
+        .row-value.red { color: #e63946; }
+        .row-value.green { color: #10b981; font-size: 15px; font-weight: 700; }
+        .divider { height: 1px; background: #e4e4e7; margin: 20px 0; }
+        .neto-box { background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 10px; padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; margin-top: 8px; }
+        .neto-label { font-size: 14px; font-weight: 600; color: #065f46; }
+        .neto-value { font-size: 20px; font-weight: 800; color: #059669; }
+        .meta-box { background: #f9f9fa; border-radius: 8px; padding: 14px 18px; margin-top: 24px; }
+        .meta-row { display: flex; justify-content: space-between; padding: 4px 0; }
+        .meta-label { font-size: 12px; color: #a1a1aa; }
+        .meta-value { font-size: 12px; color: #71717a; font-family: monospace; }
+        .footer { background: #f9f9fa; padding: 20px 40px; text-align: center; border-top: 1px solid #e4e4e7; }
+        .footer p { font-size: 12px; color: #a1a1aa; margin: 0; line-height: 1.6; }
+    </style>
+</head>
+<body>
+<div class="wrapper">
+
+    <div class="header">
+        <div class="header-logo">PAGO<span>TECH</span></div>
+    </div>
+
+    <div class="body">
+        <p class="title">Liquidacion de pago recibida</p>
+        <p class="subtitle">Hola {{ cliente_nombre }}, tu cobro fue procesado correctamente.</p>
+
+        <div class="amount-box">
+            <div class="amount-label">Monto cobrado al cliente</div>
+            <div class="amount-value">${{ monto_bruto }}</div>
+            <div class="amount-sub">{{ cuotas }} cuota{{ cuotas|pluralize }} &middot; {{ tipo_tarjeta|title }}</div>
+        </div>
+
+        <p class="section-title">Desglose de costos</p>
+
+        <div class="row">
+            <span class="row-label">Arancel de plataforma</span>
+            <span class="row-value red">-${{ arancel }}</span>
+        </div>
+        <div class="row">
+            <span class="row-label">Comision Pago Tech</span>
+            <span class="row-value red">-${{ comision }}</span>
+        </div>
+        {% if tasa != "0.00" %}
+        <div class="row">
+            <span class="row-label">Tasa financiera</span>
+            <span class="row-value red">-${{ tasa }}</span>
+        </div>
+        {% endif %}
+        {% if iva_21 != "0.00" %}
+        <div class="row">
+            <span class="row-label">IVA 21%</span>
+            <span class="row-value red">-${{ iva_21 }}</span>
+        </div>
+        {% endif %}
+        {% if iva_105 != "0.00" %}
+        <div class="row">
+            <span class="row-label">IVA 10.5%</span>
+            <span class="row-value red">-${{ iva_105 }}</span>
+        </div>
+        {% endif %}
+        <div class="row">
+            <span class="row-label">Total costos</span>
+            <span class="row-value red">-${{ total_costos }}</span>
+        </div>
+
+        <div class="neto-box">
+            <span class="neto-label">Monto neto a recibir</span>
+            <span class="neto-value">${{ monto_neto }}</span>
+        </div>
+
+        <div class="meta-box">
+            <div class="meta-row">
+                <span class="meta-label">Orden</span>
+                <span class="meta-value">{{ order_id }}</span>
+            </div>
+            {% if auth_code %}
+            <div class="meta-row">
+                <span class="meta-label">Cod. autorizacion</span>
+                <span class="meta-value">{{ auth_code }}</span>
+            </div>
+            {% endif %}
+            {% if descripcion %}
+            <div class="meta-row">
+                <span class="meta-label">Concepto</span>
+                <span class="meta-value">{{ descripcion }}</span>
+            </div>
+            {% endif %}
+            <div class="meta-row">
+                <span class="meta-label">Fecha</span>
+                <span class="meta-value">{{ fecha }}</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">
+        <p>Este correo es una notificacion automatica de Pago Tech.<br>No responder a este mensaje.</p>
+    </div>
+
+</div>
+</body>
+</html>

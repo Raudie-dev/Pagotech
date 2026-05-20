@@ -1,0 +1,534 @@
+{% extends 'base_usuario.html' %}
+{% load static %}
+{% block title %}PagoTech | Mensajes{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <div class="mb-4 d-flex align-items-center justify-content-between">
+        <div>
+            <h2 class="text-white fw-bold mb-1 animate-slide-up">Mensajes</h2>
+            <p class="text-muted mb-0">Comunicate directamente con el equipo de Pago Tech.</p>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+
+    <div class="col-lg-8">
+        <div class="card-glass" style="opacity:1;transform:none;border-radius:16px;overflow:hidden;">
+
+            <!-- Burbujas -->
+            <div id="chat-scroll"
+                 style="height:460px;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;gap:1rem;scroll-behavior:smooth;">
+                {% for m in mensajes %}
+                    {% if m.es_admin %}
+                    <div class="burbuja d-flex gap-3 align-items-start" data-id="{{ m.id }}">
+                        <div class="avatar-pt">PT</div>
+                        <div style="max-width:75%;">
+                            <div class="bubble-admin">
+                                <p class="bubble-text">{{ m.texto }}</p>
+                            </div>
+                            <small class="bubble-meta">Pago Tech &nbsp;·&nbsp; {{ m.fecha|date:"d/m/Y H:i" }}</small>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="burbuja d-flex gap-3 align-items-start flex-row-reverse" data-id="{{ m.id }}">
+                        <div class="avatar-user">{{ user.nombre|slice:":1"|upper }}</div>
+                        <div style="max-width:75%;">
+                            <div class="bubble-user">
+                                <p class="bubble-text">{{ m.texto }}</p>
+                                {% if m.link_pago %}
+                                <a href="{% url 'ticket_pdf' m.link_pago.id %}"
+                                   target="_blank"
+                                   class="bubble-order-link">
+                                    <i class="fas fa-link me-1"></i>{{ m.link_pago.order_id }}
+                                    <i class="fas fa-external-link-alt ms-1" style="font-size:.65rem;opacity:.7;"></i>
+                                </a>
+                                {% endif %}
+                            </div>
+                            <small class="bubble-meta" style="text-align:right;display:block;">{{ m.fecha|date:"d/m/Y H:i" }}</small>
+                        </div>
+                    </div>
+                    {% endif %}
+                {% empty %}
+                <div class="text-center py-5" id="empty-state">
+                    <i class="fas fa-comments fa-3x text-muted mb-3 d-block opacity-25"></i>
+                    <p class="text-muted small">Aun no hay mensajes. Envianos tu consulta.</p>
+                </div>
+                {% endfor %}
+            {% if chat_cerrado %}
+                <div style="text-align:center;padding:.5rem 0;">
+                    <span style="display:inline-flex;align-items:center;gap:.5rem;
+                                 background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.2);
+                                 border-radius:20px;padding:6px 16px;font-size:.75rem;color:#10b981;">
+                        <i class="fas fa-check-circle"></i>
+                        Chat finalizado — podes seguir escribiendo para reabrirlo
+                    </span>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Formulario -->
+            <div style="border-top:1px solid rgba(255,255,255,0.07);padding:1rem 1.25rem;background:#0f1117;">
+                <form id="form-mensaje" method="post" action="{% url 'enviar_mensaje_cliente' %}">
+                    {% csrf_token %}
+
+                    {% if links %}
+                    <div class="mb-2">
+                        <select name="link_pago" id="select-orden" class="form-select-enhanced" style="padding-left:12px;">
+                            <option value="">Referenciar una orden (opcional)</option>
+                            {% for l in links %}
+                            <option value="{{ l.id }}">{{ l.order_id }} — ${{ l.monto|floatformat:0 }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    {% endif %}
+
+                    <div class="d-flex gap-2 align-items-end">
+                        <textarea name="texto"
+                                  id="chat-textarea"
+                                  rows="1"
+                                  required
+                                  placeholder="Escribe tu mensaje..."
+                                  class="chat-input"></textarea>
+                        <button type="submit" id="btn-enviar" class="btn-send">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </div>
+
+                </form>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Panel lateral -->
+    <div class="col-lg-4">
+        <div class="card-glass" style="opacity:1;transform:none;">
+            <div class="card-body p-4">
+                <h6 class="text-white fw-bold mb-3">
+                    <i class="fas fa-info-circle text-danger me-2"></i>Informacion
+                </h6>
+                <p class="text-muted small mb-3" style="line-height:1.7;">
+                    Usa este canal para consultas sobre tus cobros, liquidaciones o cualquier duda operativa.
+                    El equipo de Pago Tech responde en horario comercial.
+                </p>
+                <div style="background:#111113;border:1px solid rgba(255,255,255,0.06);border-radius:10px;padding:1rem;">
+                    <div class="d-flex justify-content-between mb-2">
+                        <small class="text-muted">Mensajes enviados</small>
+                        <small class="text-white fw-bold" id="counter-total">{{ mensajes|length }}</small>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <small class="text-muted">Respuestas sin leer</small>
+                        <small class="fw-bold" id="counter-noleidos"
+                               style="color:{% if no_leidos > 0 %}#e63946{% else %}#10b981{% endif %}">
+                            {{ no_leidos }}
+                        </small>
+                    </div>
+                    <div class="d-flex align-items-center gap-2 mt-3 pt-3"
+                         style="border-top:1px solid rgba(255,255,255,0.06);">
+                        <div id="polling-dot"
+                             style="width:7px;height:7px;border-radius:50%;background:#10b981;
+                                    box-shadow:0 0 6px #10b981;flex-shrink:0;
+                                    animation:pulse-dot 2s ease-in-out infinite;"></div>
+                        <small class="text-muted" style="font-size:.72rem;">Actualizacion automatica activa</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css">
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+<style>
+/* ── Avatares ──────────────────────────────── */
+.avatar-pt {
+    width:36px;height:36px;border-radius:50%;
+    background:#e63946;
+    display:flex;align-items:center;justify-content:center;
+    font-size:.78rem;font-weight:700;color:#fff;flex-shrink:0;
+}
+.avatar-user {
+    width:36px;height:36px;border-radius:50%;
+    background:#2d2d30;border:1px solid rgba(255,255,255,0.1);
+    display:flex;align-items:center;justify-content:center;
+    font-size:.78rem;font-weight:700;color:#fff;flex-shrink:0;
+}
+
+/* ── Burbujas ──────────────────────────────── */
+.bubble-admin {
+    background:#1a1a1d;
+    border:1px solid rgba(255,255,255,0.08);
+    border-radius:4px 16px 16px 16px;
+    padding:.75rem 1rem;
+}
+.bubble-user {
+    background:rgba(230,57,70,0.12);
+    border:1px solid rgba(230,57,70,0.25);
+    border-radius:16px 4px 16px 16px;
+    padding:.75rem 1rem;
+}
+.bubble-text {
+    color:#e2e8f0;font-size:.875rem;margin:0;line-height:1.6;
+    white-space:pre-wrap;word-break:break-word;
+}
+.bubble-meta {
+    color:#71717a;font-size:.7rem;margin-top:.3rem;display:block;
+}
+.bubble-order-link {
+    display:inline-flex;align-items:center;
+    color:#e63946;font-size:.72rem;margin-top:.4rem;
+    text-decoration:none;font-weight:600;
+    background:rgba(230,57,70,0.1);
+    border:1px solid rgba(230,57,70,0.2);
+    border-radius:20px;padding:3px 10px;
+    transition:all .2s ease;
+}
+.bubble-order-link:hover {
+    background:rgba(230,57,70,0.2);
+    color:#e63946;
+}
+
+/* ── Input chat ────────────────────────────── */
+.chat-input {
+    flex:1;
+    background:#161618;
+    border:1px solid rgba(255,255,255,0.1);
+    color:#fff;
+    border-radius:12px;
+    padding:.7rem 1rem;
+    font-size:.875rem;
+    resize:none;
+    outline:none;
+    transition:border-color .2s;
+    font-family:inherit;
+    min-height:42px;
+    max-height:120px;
+    overflow-y:auto;
+    line-height:1.5;
+}
+.chat-input:focus { border-color:#e63946; }
+.chat-input::placeholder { color:rgba(255,255,255,0.3); }
+
+/* ── Boton enviar ──────────────────────────── */
+.btn-send {
+    width:42px;height:42px;
+    background:#e63946;
+    border:none;border-radius:12px;
+    color:#fff;font-size:.9rem;
+    display:flex;align-items:center;justify-content:center;
+    cursor:pointer;flex-shrink:0;
+    transition:all .2s ease;
+}
+.btn-send:hover { background:#c1121f;transform:translateY(-1px); }
+.btn-send:disabled { opacity:.5;cursor:not-allowed;transform:none; }
+
+/* ── Select2 tema oscuro ───────────────────── */
+.select2-container--default .select2-selection--single {
+    background:#161618 !important;
+    border:1px solid rgba(255,255,255,0.1) !important;
+    border-radius:12px !important;
+    height:38px !important;
+    display:flex;align-items:center;
+}
+.select2-container--default .select2-selection--single .select2-selection__rendered {
+    color:#fff !important;line-height:38px !important;
+    padding-left:12px !important;font-size:.85rem !important;
+}
+.select2-container--default .select2-selection--single .select2-selection__placeholder {
+    color:rgba(255,255,255,0.3) !important;
+}
+.select2-container--default .select2-selection--single .select2-selection__arrow {
+    height:36px !important;right:8px !important;
+}
+.select2-container--default .select2-selection--single .select2-selection__arrow b {
+    border-color:rgba(255,255,255,0.3) transparent transparent transparent !important;
+}
+.select2-container--default.select2-container--open .select2-selection--single {
+    border-color:rgba(230,57,70,0.5) !important;
+    box-shadow:0 0 0 3px rgba(230,57,70,0.1) !important;
+}
+.select2-dropdown {
+    background:#16161f !important;
+    border:1px solid rgba(255,255,255,0.12) !important;
+    border-radius:8px !important;
+    box-shadow:0 8px 24px rgba(0,0,0,0.4) !important;
+    z-index:9999 !important;
+}
+.select2-container--default .select2-search--dropdown { padding:8px !important;background:#16161f !important; }
+.select2-container--default .select2-search--dropdown .select2-search__field {
+    background:#1e1e2e !important;border:1px solid rgba(255,255,255,0.15) !important;
+    border-radius:4px !important;color:#fff !important;padding:6px 10px !important;
+}
+.select2-results__options { background:#16161f !important;max-height:200px !important;overflow-y:auto !important; }
+.select2-container--default .select2-results__option {
+    color:#aaa !important;padding:9px 14px !important;font-size:.85rem !important;background:#16161f !important;
+}
+.select2-container--default .select2-results__option--highlighted[aria-selected] {
+    background:rgba(230,57,70,0.18) !important;color:#fff !important;
+}
+.select2-container--default .select2-selection__clear {
+    color:rgba(255,255,255,0.4) !important;margin-right:20px !important;line-height:38px !important;
+}
+.select2-container { width:100% !important; }
+
+/* ── Animaciones ───────────────────────────── */
+@keyframes fadeInUp {
+    from { opacity:0;transform:translateY(8px); }
+    to   { opacity:1;transform:translateY(0); }
+}
+@keyframes pulse-dot {
+    0%,100% { opacity:1;transform:scale(1); }
+    50%      { opacity:.6;transform:scale(1.3); }
+}
+.burbuja { animation:fadeInUp .25s ease-out; }
+</style>
+
+<script>
+const chatScroll  = document.getElementById('chat-scroll');
+const form        = document.getElementById('form-mensaje');
+const textarea    = document.getElementById('chat-textarea');
+const btnEnviar   = document.getElementById('btn-enviar');
+const selectOrden = document.getElementById('select-orden');
+const inicialUser = '{{ user.nombre|slice:":1"|upper }}';
+
+// Scroll al fondo
+function scrollFondo() {
+    chatScroll.scrollTop = chatScroll.scrollHeight;
+}
+scrollFondo();
+
+// Select2 para ordenes
+if (selectOrden) {
+    $(selectOrden).select2({
+        placeholder: 'Referenciar una orden (opcional)',
+        allowClear: true,
+        language: {
+            noResults: () => 'Sin ordenes',
+            searching: () => 'Buscando...'
+        }
+    });
+}
+
+// Autoexpand textarea
+textarea.addEventListener('input', () => {
+    textarea.style.height = 'auto';
+    textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
+});
+
+// Enter envia, Shift+Enter nueva linea
+textarea.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        form.dispatchEvent(new Event('submit', { cancelable: true }));
+    }
+});
+
+// Construir burbuja del usuario
+function construirBurbujaUsuario(msg) {
+    const div = document.createElement('div');
+    div.className = 'burbuja d-flex gap-3 align-items-start flex-row-reverse';
+    div.dataset.id = msg.id || '';
+    div.innerHTML = `
+        <div class="avatar-user">${inicialUser}</div>
+        <div style="max-width:75%;">
+            <div class="bubble-user">
+                <p class="bubble-text">${linkificar(msg.texto)}</p>
+                ${msg.order_id ? `
+                <a href="/ticket_pdf/${msg.link_id}/" target="_blank" class="bubble-order-link">
+                    <i class="fas fa-link me-1"></i>${msg.order_id}
+                    <i class="fas fa-external-link-alt ms-1" style="font-size:.65rem;opacity:.7;"></i>
+                </a>` : ''}
+            </div>
+            <small class="bubble-meta" style="text-align:right;display:block;">${msg.fecha}</small>
+        </div>`;
+    return div;
+}
+
+// Construir burbuja del admin
+function construirBurbujaAdmin(msg) {
+    const div = document.createElement('div');
+    div.className = 'burbuja d-flex gap-3 align-items-start';
+    div.dataset.id = msg.id || '';
+    div.innerHTML = `
+        <div class="avatar-pt">PT</div>
+        <div style="max-width:75%;">
+            <div class="bubble-admin">
+                <p class="bubble-text">${msg.texto.replace(/</g,'&lt;').replace(/\n/g,'<br>')}</p>
+            </div>
+            <small class="bubble-meta">Pago Tech &nbsp;·&nbsp; ${msg.fecha}</small>
+        </div>`;
+    return div;
+}
+
+function quitarEstadoVacio() {
+    const empty = document.getElementById('empty-state');
+    if (empty) empty.remove();
+}
+
+// Envio AJAX
+form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const texto = textarea.value.trim();
+    if (!texto) return;
+
+    const originalHTML = btnEnviar.innerHTML;
+    btnEnviar.disabled = true;
+    btnEnviar.innerHTML = '<span class="spinner-border spinner-border-sm" style="width:14px;height:14px;"></span>';
+
+    try {
+        const res  = await fetch(form.action, {
+            method:  'POST',
+            body:    new FormData(form),
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+        });
+        const data = await res.json();
+
+        if (data.ok) {
+            quitarEstadoVacio();
+            chatScroll.appendChild(construirBurbujaUsuario(data.msg));
+            scrollFondo();
+            ultimoId = Math.max(ultimoId, data.msg.id);
+
+            textarea.value = '';
+            textarea.style.height = 'auto';
+
+            // Reset select2
+            if (selectOrden) {
+                $(selectOrden).val(null).trigger('change');
+            }
+
+            // Actualizar contador
+            const ct = document.getElementById('counter-total');
+            if (ct) ct.textContent = parseInt(ct.textContent || '0') + 1;
+
+        } else {
+            alert(data.error || 'Error al enviar el mensaje.');
+        }
+    } catch {
+        alert('Error de conexion. Intenta de nuevo.');
+    } finally {
+        btnEnviar.disabled = false;
+        btnEnviar.innerHTML = originalHTML;
+    }
+});
+
+// Polling cada 10s — solo busca mensajes nuevos del admin
+let ultimoId = {{ ultimo_id }};
+
+async function pollMensajes() {
+    try {
+        const res  = await fetch(`/mensajes/poll/?ultimo_id=${ultimoId}`, {
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+
+        if (data.mensajes && data.mensajes.length > 0) {
+            quitarEstadoVacio();
+            data.mensajes.forEach(m => {
+                // Evitar duplicados
+                if (document.querySelector(`.burbuja[data-id="${m.id}"]`)) return;
+
+                const burbuja = m.es_admin
+                    ? construirBurbujaAdmin(m)
+                    : construirBurbujaUsuario(m);
+                chatScroll.appendChild(burbuja);
+                ultimoId = Math.max(ultimoId, m.id);
+            });
+            scrollFondo();
+
+            // Actualizar contador no leidos
+            const nl = document.getElementById('counter-noleidos');
+            if (nl) {
+                nl.textContent = data.no_leidos || 0;
+                nl.style.color = data.no_leidos > 0 ? '#e63946' : '#10b981';
+            }
+        }
+    } catch { /* silencioso */ }
+}
+
+document.getElementById('btn-finalizar-chat').addEventListener('click', async () => {
+    if (!confirm('Se enviara un resumen del chat a tu correo. Podras seguir escribiendo cuando quieras.')) return;
+
+    const btn = document.getElementById('btn-finalizar-chat');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm" style="width:12px;height:12px;"></span>';
+
+    try {
+        const fd = new FormData();
+        fd.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+        const res  = await fetch('{% url "finalizar_chat_cliente" %}', {
+            method: 'POST', body: fd,
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        });
+        const data = await res.json();
+        if (data.ok) {
+            btn.innerHTML = '<i class="fas fa-check text-success"></i><span class="d-none d-sm-inline">Resumen enviado</span>';
+        } else {
+            alert(data.error || 'Error al enviar resumen.');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-check-circle text-success"></i><span class="d-none d-sm-inline">Finalizar chat</span>';
+        }
+    } catch {
+        alert('Error de conexion.');
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-check-circle text-success"></i><span class="d-none d-sm-inline">Finalizar chat</span>';
+    }
+});
+
+let pollingCliente = setInterval(pollMensajes, 10000);
+
+document.addEventListener('visibilitychange', () => {
+    clearInterval(pollingCliente);
+    pollingCliente = setInterval(pollMensajes, document.hidden ? 60000 : 10000);
+});
+
+// Ping de actividad
+async function pingActividad() {
+    try {
+        const fd = new FormData();
+        fd.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+        await fetch('{% url "ping_mensajes" %}', {
+            method: 'POST', body: fd,
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        });
+    } catch { /* silencioso */ }
+}
+
+pingActividad();
+setInterval(pingActividad, 30000);
+
+function linkificar(texto) {
+    const urlRegex = /https?:\/\/[^\s<>"']+/g;
+    return texto
+        .replace(/</g, '&lt;')
+        .replace(/\n/g, '<br>')
+        .replace(urlRegex, url => {
+            const urlEscapada = url.replace(/&lt;/g, '<');
+            return `<a href="${urlEscapada}" target="_blank" rel="noopener noreferrer"
+                       style="color:#3b82f6;text-decoration:underline;text-underline-offset:2px;
+                              word-break:break-all;font-size:inherit;"
+                       onclick="event.stopPropagation()">${urlEscapada}</a>`;
+        });
+}
+
+document.querySelectorAll('.bubble-text, .bubble-txt').forEach(el => {
+    if (el.querySelector('a')) return; // ya tiene links, no procesar
+    const urlRegex = /https?:\/\/[^\s<>"']+/g;
+    el.innerHTML = el.innerHTML.replace(urlRegex, url => {
+        return `<a href="${url}" target="_blank" rel="noopener noreferrer"
+                   style="color:#3b82f6;text-decoration:underline;text-underline-offset:2px;
+                          word-break:break-all;font-size:inherit;"
+                   onclick="event.stopPropagation()">${url}</a>`;
+    });
+});
+</script>
+{% endblock %}

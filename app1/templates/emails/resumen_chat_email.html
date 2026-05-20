@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Resumen de conversacion — PagoTech</title>
+<style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; background:#0a0a0b; color:#fff; padding:40px 20px; line-height:1.6; }
+    .wrapper { max-width:520px; margin:0 auto; }
+    .brand { text-align:center; margin-bottom:28px; }
+    .brand-name { font-size:15px; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:#e63946; }
+    .brand-divider { width:32px; height:2px; background:#e63946; margin:10px auto 0; border-radius:9999px; }
+    .card { background:#111113; border-radius:20px; border:1px solid rgba(255,255,255,0.12); overflow:hidden; box-shadow:0 20px 60px rgba(0,0,0,0.6); }
+    .card-header { background:linear-gradient(135deg,#1a1a1d 0%,#111113 100%); border-bottom:1px solid rgba(255,255,255,0.08); padding:32px; position:relative; overflow:hidden; }
+    .card-header::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; background:linear-gradient(90deg,#10b981 0%,#059669 100%); }
+    .header-label { font-size:10px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; color:#10b981; margin-bottom:8px; }
+    .header-title { font-size:22px; font-weight:700; color:#fff; letter-spacing:-0.4px; }
+    .header-sub { font-size:13px; color:#71717a; margin-top:6px; }
+    .card-body { padding:32px; }
+    .data-grid { background:#1a1a1d; border:1px solid rgba(255,255,255,0.08); border-radius:12px; overflow:hidden; margin-bottom:24px; }
+    .data-row { display:flex; align-items:center; padding:14px 20px; border-bottom:1px solid rgba(255,255,255,0.06); gap:16px; }
+    .data-row:last-child { border-bottom:none; }
+    .data-key { font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.6px; color:#71717a; width:110px; flex-shrink:0; }
+    .data-value { font-size:14px; font-weight:500; color:#fff; }
+    .pdf-box { background:rgba(16,185,129,0.06); border:1px solid rgba(16,185,129,0.2); border-radius:12px; padding:20px; display:flex; align-items:center; gap:16px; margin-bottom:24px; }
+    .pdf-icon { font-size:32px; flex-shrink:0; }
+    .pdf-title { font-size:13px; font-weight:700; color:#10b981; margin-bottom:4px; }
+    .pdf-desc { font-size:12px; color:#71717a; }
+    .card-footer { background:#0d0d0f; border-top:1px solid rgba(255,255,255,0.06); padding:20px 32px; }
+    .footer-text { font-size:12px; font-weight:700; letter-spacing:1px; text-transform:uppercase; color:#52525b; }
+    @media only screen and (max-width:560px) {
+        body { padding:20px 12px; }
+        .card-header, .card-body, .card-footer { padding-left:20px; padding-right:20px; }
+    }
+</style>
+</head>
+<body>
+<div class="wrapper">
+    <div class="brand">
+        <div class="brand-name">PagoTech</div>
+        <div class="brand-divider"></div>
+    </div>
+    <div class="card">
+        <div class="card-header">
+            <div class="header-label">Conversacion finalizada</div>
+            <div class="header-title">Resumen de chat</div>
+            <div class="header-sub">
+                {% if es_admin %}
+                La conversacion con {{ cliente_nombre }} ha sido finalizada.
+                {% else %}
+                Hola {{ cliente_nombre }}, tu conversacion con Pago Tech ha finalizado.
+                {% endif %}
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="data-grid">
+                <div class="data-row">
+                    <div class="data-key">Comercio</div>
+                    <div class="data-value">{{ cliente_nombre }}</div>
+                </div>
+                <div class="data-row">
+                    <div class="data-key">Finalizado</div>
+                    <div class="data-value">{{ fecha_cierre }}</div>
+                </div>
+                <div class="data-row">
+                    <div class="data-key">Mensajes</div>
+                    <div class="data-value">{{ total_mensajes }}</div>
+                </div>
+            </div>
+            <div class="pdf-box">
+                <div class="pdf-icon">📄</div>
+                <div>
+                    <div class="pdf-title">Historial adjunto en PDF</div>
+                    <div class="pdf-desc">El historial completo de la conversacion se encuentra adjunto a este correo.</div>
+                </div>
+            </div>
+        </div>
+        <div class="card-footer">
+            <div class="footer-text">PagoTech | Mensaje automatico — no responder a este correo.</div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

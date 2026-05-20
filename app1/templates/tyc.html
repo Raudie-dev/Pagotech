@@ -1,0 +1,613 @@
+{% extends 'base_usuario.html' %}
+{% load static %}
+{% block title %}PagoTech | Términos y Condiciones{% endblock %}
+
+{% block content %}
+
+{# ── OVERLAY BLOQUEANTE ─────────────────────────────────────────────────────── #}
+<div id="tyc-overlay" aria-modal="true" role="dialog" aria-labelledby="tyc-title">
+
+    <div class="tyc-backdrop"></div>
+
+    <div class="tyc-sheet">
+
+        {# ── Encabezado ── #}
+        <div class="tyc-header">
+            <div class="tyc-header-icon">
+                <i class="fas fa-file-contract"></i>
+            </div>
+            <div class="tyc-header-text">
+                <h2 class="tyc-title" id="tyc-title">Términos y Condiciones</h2>
+                <p class="tyc-subtitle">Lectura obligatoria antes de operar en la plataforma</p>
+            </div>
+            <span class="tyc-version-chip">v{{ version }}</span>
+        </div>
+
+        {# ── Barra de progreso ── #}
+        <div class="tyc-progress-bar" aria-hidden="true">
+            <div class="tyc-progress-fill" id="tyc-progress-fill"></div>
+        </div>
+
+        {# ── Cuerpo scrolleable ── #}
+        <div class="tyc-body" id="tyc-scroll" tabindex="0">
+
+            {% if tyc_obj %}
+                {# ── Contenido desde DB renderizado desde Markdown ── #}
+                <div id="tyc-md-content"></div>
+
+            {% else %}
+                {# ── Fallback hardcodeado si no hay versión en DB ── #}
+                <div class="tyc-section">
+                    <span class="tyc-num">01</span>
+                    <div>
+                        <h3 class="tyc-section-title">Definiciones y partes</h3>
+                        <p>En estos términos, <strong>«Pago Tech»</strong> o <strong>«la Plataforma»</strong> refiere al servicio de generación de links de cobro operado por Pago Tech Latam. <strong>«Comercio»</strong> refiere a la persona física o jurídica registrada. <strong>«Cliente Final»</strong> refiere al pagador que abona a través del link generado.</p>
+                    </div>
+                </div>
+
+                <div class="tyc-section">
+                    <span class="tyc-num">02</span>
+                    <div>
+                        <h3 class="tyc-section-title">Aceptación y vigencia</h3>
+                        <p>Al hacer clic en <em>"Acepto y continuar"</em>, el Comercio declara haber leído, comprendido y aceptado en su totalidad estos Términos y Condiciones. Esta aceptación tiene carácter vinculante desde el momento del registro y rige mientras la cuenta permanezca activa.</p>
+                        <p>Pago Tech se reserva el derecho de actualizar estos términos con previo aviso de 15 días calendario. La continuación del uso implica aceptación de la versión vigente.</p>
+                    </div>
+                </div>
+
+                <div class="tyc-section">
+                    <span class="tyc-num">03</span>
+                    <div>
+                        <h3 class="tyc-section-title">Descripción del servicio</h3>
+                        <p>La Plataforma permite al Comercio generar links de pago únicos que sus clientes finales pueden abonar con tarjeta de crédito o débito. Pago Tech actúa exclusivamente como <strong>intermediario tecnológico</strong> entre el Comercio y la pasarela de pago Payzen; no interviene en la relación comercial entre el Comercio y su cliente final, ni garantiza el resultado de las transacciones.</p>
+                        <p>Las funcionalidades incluyen: generación de links de cobro, seguimiento de estado de pago en tiempo real, descarga de comprobantes en PDF y liquidación detallada de comisiones e impuestos.</p>
+                    </div>
+                </div>
+
+                <div class="tyc-section">
+                    <span class="tyc-num">04</span>
+                    <div>
+                        <h3 class="tyc-section-title">Registro, aprobación y acceso</h3>
+                        <p>El Comercio debe completar el formulario de registro con datos verídicos y actualizados. La cuenta queda activa únicamente tras la <strong>aprobación expresa</strong> de un administrador de Pago Tech. El Comercio es responsable de mantener la confidencialidad de sus credenciales de acceso y de todas las operaciones realizadas desde su cuenta.</p>
+                        <p>Pago Tech puede suspender o bloquear el acceso de forma inmediata ante: datos falsos, actividades fraudulentas, incumplimiento de estos términos o instrucción de autoridad competente.</p>
+                    </div>
+                </div>
+
+                <div class="tyc-section">
+                    <span class="tyc-num">05</span>
+                    <div>
+                        <h3 class="tyc-section-title">Comisiones, aranceles e impuestos</h3>
+                        <p>Cada transacción está sujeta a los siguientes conceptos, calculados sobre el monto bruto del cobro:</p>
+                        <ul class="tyc-list">
+                            <li><strong>Arancel de plataforma:</strong> porcentaje aplicado según el tipo de tarjeta (crédito / débito), configurable por el administrador.</li>
+                            <li><strong>Comisión Pago Tech:</strong> porcentaje fijo por el uso del servicio.</li>
+                            <li><strong>Tasa financiera:</strong> aplica en planes de cuotas; varía según el plan seleccionado.</li>
+                            <li><strong>IVA (21% y/o 10,5%):</strong> se aplica sobre los conceptos anteriores conforme a la normativa fiscal vigente en Argentina.</li>
+                        </ul>
+                        <p style="margin-top:.6rem">El monto neto se calcula como: <code>Monto bruto − Arancel − Comisión − Tasa − IVA aplicable</code>. Los valores vigentes son los informados en el panel al momento de generar cada link.</p>
+                    </div>
+                </div>
+
+                <div class="tyc-section">
+                    <span class="tyc-num">06</span>
+                    <div>
+                        <h3 class="tyc-section-title">Procesamiento de pagos y pasarela</h3>
+                        <p>El ingreso de datos de tarjeta se realiza íntegramente en el entorno seguro de <strong>Payzen</strong>, titular del procesamiento. Pago Tech no almacena datos sensibles de tarjetas. Las transacciones están sujetas a las políticas, tiempos de acreditación y condiciones de Payzen y de las redes de tarjetas intervinientes. Pago Tech no es responsable por rechazos, demoras o errores originados en la pasarela o en las entidades bancarias.</p>
+                    </div>
+                </div>
+
+                <div class="tyc-section">
+                    <span class="tyc-num">07</span>
+                    <div>
+                        <h3 class="tyc-section-title">Uso aceptable y prohibiciones</h3>
+                        <p>El Comercio se obliga a utilizar la Plataforma exclusivamente para cobros lícitos conforme a la legislación argentina. Queda <strong>expresamente prohibido</strong>:</p>
+                        <ul class="tyc-list">
+                            <li>Generar links de pago para actividades ilegales, juegos de azar no habilitados o productos/servicios prohibidos por ley.</li>
+                            <li>Realizar transacciones fraudulentas, simuladas o de prueba en el entorno de producción.</li>
+                            <li>Ceder, vender o compartir el acceso a la cuenta con terceros no autorizados.</li>
+                            <li>Intentar vulnerar la seguridad, disponibilidad o integridad de la Plataforma.</li>
+                            <li>Utilizar la Plataforma para lavado de activos o financiamiento de actividades ilícitas.</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="tyc-section">
+                    <span class="tyc-num">08</span>
+                    <div>
+                        <h3 class="tyc-section-title">Privacidad y protección de datos</h3>
+                        <p>Los datos personales del Comercio y de los Clientes Finales son tratados de conformidad con la <strong>Ley 25.326 de Protección de Datos Personales</strong> (Argentina). Pago Tech utiliza los datos exclusivamente para la prestación del servicio, cumplimiento de obligaciones legales y mejora de la Plataforma. No comercializa datos con terceros.</p>
+                    </div>
+                </div>
+
+                <div class="tyc-section">
+                    <span class="tyc-num">09</span>
+                    <div>
+                        <h3 class="tyc-section-title">Limitación de responsabilidad</h3>
+                        <p>Pago Tech no será responsable por: interrupciones del servicio originadas en causas de fuerza mayor, fallas de terceros (pasarela de pago, redes bancarias, proveedores de internet), decisiones comerciales del Comercio ni por daños indirectos o lucro cesante. La responsabilidad máxima de Pago Tech frente al Comercio no excederá el importe de las comisiones abonadas en los últimos 30 días calendario.</p>
+                    </div>
+                </div>
+
+                <div class="tyc-section">
+                    <span class="tyc-num">10</span>
+                    <div>
+                        <h3 class="tyc-section-title">Comunicaciones y notificaciones</h3>
+                        <p>Todas las notificaciones operativas (aprobación de cuenta, confirmación de pago, liquidaciones) se enviarán al email declarado al momento del registro. El Comercio debe mantener su dirección de correo actualizada. Las comunicaciones enviadas al email registrado se considerarán válidamente notificadas.</p>
+                    </div>
+                </div>
+
+                <div class="tyc-section">
+                    <span class="tyc-num">11</span>
+                    <div>
+                        <h3 class="tyc-section-title">Modificaciones del servicio</h3>
+                        <p>Pago Tech puede modificar, suspender o discontinuar funcionalidades de la Plataforma en cualquier momento, con notificación previa de al menos 10 días hábiles, salvo razones de seguridad o cumplimiento normativo que requieran acción inmediata. Las modificaciones de comisiones y aranceles serán comunicadas con 15 días de anticipación.</p>
+                    </div>
+                </div>
+
+                <div class="tyc-section" style="border-bottom:none">
+                    <span class="tyc-num">12</span>
+                    <div>
+                        <h3 class="tyc-section-title">Jurisdicción y ley aplicable</h3>
+                        <p>Estos términos se rigen por la legislación de la <strong>República Argentina</strong>. Para cualquier controversia derivada de su interpretación o ejecución, las partes se someten a la jurisdicción de los <strong>Tribunales Ordinarios de la Ciudad Autónoma de Buenos Aires</strong>, con renuncia expresa a cualquier otro fuero que pudiera corresponder.</p>
+                    </div>
+                </div>
+
+            {% endif %}
+
+        </div>
+        {# /tyc-body #}
+
+        {# ── Footer ── #}
+        <div class="tyc-footer">
+
+            <div class="tyc-read-hint" id="tyc-read-hint">
+                <i class="fas fa-arrow-down me-2"></i>Desplázate hasta el final para continuar
+            </div>
+
+            <div class="tyc-action-row" id="tyc-action-row" style="display:none">
+                <form method="post" id="tyc-form">
+                    {% csrf_token %}
+
+                    <label class="tyc-check-label" for="acepto">
+                        <input type="checkbox" id="acepto" name="acepto" required class="tyc-checkbox-input">
+                        <span class="tyc-check-box">
+                            <i class="fas fa-check tyc-check-icon"></i>
+                        </span>
+                        <span class="tyc-check-text">
+                            He leído y acepto los Términos y Condiciones
+                        </span>
+                    </label>
+
+                    <button type="submit" id="btn-aceptar" class="btn btn-primary btn-full tyc-btn" disabled>
+                        <i class="fas fa-shield-check me-2"></i>Acepto y continuar
+                    </button>
+
+                </form>
+            </div>
+
+        </div>
+
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<style>
+/* ── Overlay ──────────────────────────────────────────────────────── */
+#tyc-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+}
+@media (min-width: 640px) {
+    #tyc-overlay { align-items: center; padding: 1.5rem; }
+}
+.tyc-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.88);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+}
+
+/* ── Sheet ────────────────────────────────────────────────────────── */
+.tyc-sheet {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 720px;
+    max-height: 92dvh;
+    display: flex;
+    flex-direction: column;
+    background: var(--surface);
+    border: 1px solid var(--border-strong);
+    border-radius: 20px 20px 0 0;
+    overflow: hidden;
+    box-shadow: var(--shadow-xl);
+    animation: tyc-rise .35s cubic-bezier(0.22,1,0.36,1) both;
+}
+@media (min-width: 640px) {
+    .tyc-sheet { border-radius: 20px; }
+}
+@keyframes tyc-rise {
+    from { opacity:0; transform: translateY(28px); }
+    to   { opacity:1; transform: translateY(0); }
+}
+
+/* ── Header ───────────────────────────────────────────────────────── */
+.tyc-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.3rem 1.6rem 1.1rem;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface-elevated);
+    flex-shrink: 0;
+}
+.tyc-header-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: var(--radius-md);
+    background: var(--primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    color: #fff;
+    flex-shrink: 0;
+    box-shadow: 0 4px 14px rgba(230,57,70,.3);
+}
+.tyc-header-text { flex: 1; min-width: 0; }
+.tyc-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0;
+}
+.tyc-subtitle {
+    font-size: 0.73rem;
+    color: var(--text-muted);
+    margin: .15rem 0 0;
+}
+.tyc-version-chip {
+    font-size: .68rem;
+    font-weight: 600;
+    color: var(--primary);
+    background: var(--primary-light);
+    border: 1px solid rgba(230,57,70,.3);
+    border-radius: var(--radius-full);
+    padding: .2em .65em;
+    flex-shrink: 0;
+}
+
+/* ── Progress ─────────────────────────────────────────────────────── */
+.tyc-progress-bar {
+    height: 3px;
+    background: var(--surface-elevated);
+    flex-shrink: 0;
+}
+.tyc-progress-fill {
+    height: 100%;
+    width: 0%;
+    background: var(--primary);
+    transition: width .1s linear;
+}
+
+/* ── Body ─────────────────────────────────────────────────────────── */
+.tyc-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0 1.6rem;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(230,57,70,.25) transparent;
+}
+.tyc-body::-webkit-scrollbar { width: 4px; }
+.tyc-body::-webkit-scrollbar-thumb { background: rgba(230,57,70,.25); border-radius: 2px; }
+
+/* ── Sections hardcodeadas (fallback) ─────────────────────────────── */
+.tyc-section {
+    display: flex;
+    gap: 1rem;
+    padding: 1.15rem 0;
+    border-bottom: 1px solid var(--border);
+}
+.tyc-num {
+    font-size: .63rem;
+    font-weight: 700;
+    letter-spacing: .08em;
+    color: var(--primary);
+    opacity: .65;
+    padding-top: .2rem;
+    flex-shrink: 0;
+    width: 20px;
+}
+.tyc-section-title {
+    font-size: .85rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0 0 .45rem;
+}
+.tyc-section p {
+    font-size: .78rem;
+    color: var(--text-secondary);
+    line-height: 1.7;
+    margin: 0 0 .45rem;
+}
+.tyc-section p:last-child { margin-bottom: 0; }
+.tyc-section strong { color: var(--text-primary); }
+.tyc-section em     { color: var(--primary); font-style: normal; }
+.tyc-section code {
+    font-size: .72rem;
+    color: var(--secondary);
+    background: rgba(6,214,160,.08);
+    padding: .1em .4em;
+    border-radius: var(--radius-sm);
+}
+.tyc-list {
+    margin: .45rem 0 0;
+    padding: 0;
+    list-style: none;
+}
+.tyc-list li {
+    font-size: .78rem;
+    color: var(--text-secondary);
+    line-height: 1.65;
+    padding: .18rem 0 .18rem 1rem;
+    position: relative;
+}
+.tyc-list li::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: .6rem;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: var(--primary);
+    opacity: .65;
+}
+
+/* ── Markdown rendered content (desde DB) ─────────────────────────── */
+#tyc-md-content {
+    padding: .5rem 0;
+}
+#tyc-md-content h1,
+#tyc-md-content h2 {
+    font-size: .85rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0;
+    padding: 1.15rem 0 .45rem;
+    border-top: 1px solid var(--border);
+}
+#tyc-md-content h1:first-child,
+#tyc-md-content h2:first-child {
+    border-top: none;
+    padding-top: .75rem;
+}
+#tyc-md-content h3 {
+    font-size: .82rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: .8rem 0 .35rem;
+}
+#tyc-md-content p {
+    font-size: .78rem;
+    color: var(--text-secondary);
+    line-height: 1.7;
+    margin: 0 0 .45rem;
+}
+#tyc-md-content p:last-child { margin-bottom: 0; }
+#tyc-md-content strong { color: var(--text-primary); }
+#tyc-md-content em     { color: var(--primary); font-style: normal; }
+#tyc-md-content ul {
+    margin: .45rem 0;
+    padding: 0;
+    list-style: none;
+}
+#tyc-md-content ul li {
+    font-size: .78rem;
+    color: var(--text-secondary);
+    line-height: 1.65;
+    padding: .18rem 0 .18rem 1rem;
+    position: relative;
+}
+#tyc-md-content ul li::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: .6rem;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: var(--primary);
+    opacity: .65;
+}
+#tyc-md-content code {
+    font-size: .72rem;
+    color: var(--secondary);
+    background: rgba(6,214,160,.08);
+    padding: .1em .4em;
+    border-radius: var(--radius-sm);
+}
+#tyc-md-content hr {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: .5rem 0;
+}
+
+/* ── Footer ───────────────────────────────────────────────────────── */
+.tyc-footer {
+    flex-shrink: 0;
+    padding: 1rem 1.6rem 1.35rem;
+    border-top: 1px solid var(--border-strong);
+    background: var(--surface-elevated);
+}
+.tyc-read-hint {
+    text-align: center;
+    font-size: .75rem;
+    color: var(--text-muted);
+    padding: .3rem 0;
+    animation: hint-blink 2.2s ease-in-out infinite;
+}
+@keyframes hint-blink {
+    0%,100% { opacity:.35; }
+    50%      { opacity:.85; }
+}
+
+/* ── Action row ───────────────────────────────────────────────────── */
+#tyc-form {
+    display: flex;
+    flex-direction: column;
+    gap: .85rem;
+    animation: tyc-fadein .3s ease-out;
+}
+@keyframes tyc-fadein {
+    from { opacity:0; transform: translateY(8px); }
+    to   { opacity:1; transform: translateY(0); }
+}
+.tyc-check-label {
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    cursor: pointer;
+    padding: .7rem .9rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    transition: border-color .2s, background .2s;
+    user-select: none;
+}
+.tyc-check-label:hover { border-color: var(--border-strong); }
+.tyc-checkbox-input {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+    pointer-events: none;
+}
+.tyc-check-box {
+    width: 21px;
+    height: 21px;
+    border: 2px solid var(--border-strong);
+    border-radius: var(--radius-sm);
+    background: var(--surface-elevated);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all .18s ease;
+}
+.tyc-check-icon {
+    font-size: 9px;
+    color: #fff;
+    opacity: 0;
+    transform: scale(.3);
+    transition: all .15s ease;
+}
+.tyc-check-label.is-checked .tyc-check-box {
+    background: var(--primary);
+    border-color: var(--primary);
+    box-shadow: 0 0 8px rgba(230,57,70,.3);
+}
+.tyc-check-label.is-checked .tyc-check-icon {
+    opacity: 1;
+    transform: scale(1);
+}
+.tyc-check-label.is-checked {
+    border-color: rgba(230,57,70,.35);
+    background: var(--primary-light);
+}
+.tyc-check-text {
+    font-size: .8rem;
+    color: var(--text-secondary);
+    line-height: 1.4;
+}
+.tyc-btn {
+    padding: .85rem 1.5rem;
+    font-size: .875rem;
+    font-weight: 600;
+    border-radius: var(--radius-sm);
+    transition: var(--transition);
+    opacity: .4;
+    pointer-events: none;
+    cursor: not-allowed;
+}
+.tyc-btn.unlocked {
+    opacity: 1;
+    pointer-events: auto;
+    cursor: pointer;
+}
+.tyc-btn.unlocked:hover {
+    background: var(--primary-dark);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 20px rgba(230,57,70,.4);
+}
+</style>
+
+<script>
+(function () {
+    const scrollEl = document.getElementById('tyc-scroll');
+    const fillEl   = document.getElementById('tyc-progress-fill');
+    const hintEl   = document.getElementById('tyc-read-hint');
+    const actionEl = document.getElementById('tyc-action-row');
+    const checkEl  = document.getElementById('acepto');
+    const labelEl  = checkEl.closest('.tyc-check-label');
+    const btnEl    = document.getElementById('btn-aceptar');
+
+    /* ── Render Markdown desde DB ────────────────────────────────── */
+    {% if tyc_obj %}
+    const mdContent = document.getElementById('tyc-md-content');
+    if (mdContent && typeof marked !== 'undefined') {
+        marked.setOptions({ breaks: true, gfm: true });
+        const _tyc_raw = "{{ tyc_obj.contenido|escapejs }}";
+        mdContent.innerHTML = marked.parse(_tyc_raw);
+    }
+    {% endif %}
+
+    /* ── Progress + unlock ───────────────────────────────────────── */
+    function onScroll() {
+        const { scrollTop, scrollHeight, clientHeight } = scrollEl;
+        const max = scrollHeight - clientHeight;
+        const pct = max <= 0 ? 100 : Math.min(100, (scrollTop / max) * 100);
+        fillEl.style.width = pct + '%';
+        if (pct >= 96) reveal();
+    }
+
+    function reveal() {
+        if (actionEl.style.display === 'flex' || actionEl.style.display === 'block') return;
+        hintEl.style.display   = 'none';
+        actionEl.style.display = 'block';
+    }
+
+    scrollEl.addEventListener('scroll', onScroll, { passive: true });
+
+    /* Pequeño delay para que marked.js termine de renderizar antes de medir */
+    setTimeout(() => {
+        if (scrollEl.scrollHeight <= scrollEl.clientHeight + 4) reveal();
+        onScroll();
+    }, 120);
+
+    /* ── Checkbox → activa botón ─────────────────────────────────── */
+    checkEl.addEventListener('change', function () {
+        if (this.checked) {
+            labelEl.classList.add('is-checked');
+            btnEl.classList.add('unlocked');
+            btnEl.removeAttribute('disabled');
+        } else {
+            labelEl.classList.remove('is-checked');
+            btnEl.classList.remove('unlocked');
+            btnEl.setAttribute('disabled', '');
+        }
+    });
+
+    /* ── Bloquear ESC ────────────────────────────────────────────── */
+    document.addEventListener('keydown', e => {
+        if (e.key === 'Escape') e.preventDefault();
+    });
+})();
+</script>
+{% endblock %}

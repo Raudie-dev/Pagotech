@@ -1,527 +1,1166 @@
-{% extends "base_usuario.html" %}
-{% load static %}
-{% block title %}PagoTech | Crear Link{% endblock %}
-
-{% block content %}
+{% extends "base_usuario.html" %} {% load static %} {% block title %}PagoTech |
+Crear Link{% endblock %} {% block content %}
 <div class="mb-5">
-    <div class="d-flex align-items-center justify-content-between">
-        <div>
-            <h2 class="text-white fw-bold mb-2 animate-slide-up">Crear Link de Pago</h2>
-            <p class="text-muted mb-0">Genera una orden de cobro instantánea con PagoTech Latam.</p>
-        </div>
-        <div class="stats-mini d-none d-lg-flex gap-3">
-            <div class="stat-pill">
-                <i class="fas fa-shield-check text-success me-2"></i>
-                <span class="text-white-50 small">Pago Seguro</span>
-            </div>
-            <div class="stat-pill">
-                <i class="fas fa-bolt text-warning me-2"></i>
-                <span class="text-white-50 small">Instantáneo</span>
-            </div>
-        </div>
+  <div class="d-flex align-items-center justify-content-between">
+    <div>
+      <h2 class="text-white fw-bold mb-2 animate-slide-up">
+        Crear Link de Pago
+      </h2>
+      <p class="text-muted mb-0">
+        Genera una orden de cobro instantánea con PagoTech Latam.
+      </p>
     </div>
+    <div class="d-flex align-items-center gap-3">
+      <div class="stats-mini d-none d-lg-flex gap-3">
+        <div class="stat-pill">
+          <i class="fas fa-shield-check text-success me-2"></i>
+          <span class="text-white-50 small">Pago Seguro</span>
+        </div>
+        <div class="stat-pill">
+          <i class="fas fa-bolt text-warning me-2"></i>
+          <span class="text-white-50 small">Instantáneo</span>
+        </div>
+      </div>
+      <button
+        type="button"
+        id="btn-abrir-calculadora"
+        class="btn-calc-trigger"
+        data-bs-toggle="modal"
+        data-bs-target="#modalCalculadora"
+        title="Calculadora de precio"
+      >
+        <i class="fas fa-calculator"></i>
+        <span class="btn-calc-label">Calculadora</span>
+      </button>
+    </div>
+  </div>
 </div>
 
 <div class="card-glass mb-5 animate-fade-in" id="card-main">
-    <div class="card-body p-4 p-lg-5">
-        <form id="form-crear-link" method="post">
-            {% csrf_token %}
-            
-            <div class="row g-4">
-                <!-- MONTO -->
-                <div class="col-md-6 col-lg-4">
-                    <label class="form-label-enhanced">
-                        <i class="fas fa-dollar-sign text-primary me-2"></i>
-                        Monto a cobrar al cliente
-                    </label>
-                    <div class="input-wrapper">
-                        <div class="input-icon"><i class="fas fa-dollar-sign"></i></div>
-                        <input type="text" 
-                            inputmode="decimal"
-                            name="monto" 
-                            class="form-control-enhanced" 
-                            placeholder="0,00" 
-                            required 
-                            id="input-monto"
-                            pattern="[0-9]+([,][0-9]{1,2})?"
-                            title="Ingresa un número con coma como separador decimal (ej: 123,45)">
-                        <div class="input-suffix">ARS</div>
-                    </div>
-                    <small class="form-hint">Ingresar la cantidad que deseas recibir</small>
-                </div>
+  <div class="card-body p-4 p-lg-5">
+    <form id="form-crear-link" method="post">
+      {% csrf_token %}
 
-                <!-- CUOTAS DINÁMICAS -->
-                <div class="col-md-6 col-lg-4">
-                    <label class="form-label-enhanced">
-                        <i class="fas fa-calendar-alt text-danger me-2"></i>
-                        Plan de Financiación
-                    </label>
-                    <div class="select-wrapper" id="wrapper-cuotas">
-                        <select name="cuotas" class="form-select-enhanced" id="select-cuotas">
-                            <option value="1">1 Pago (Contado)</option>
-                            {% for plan in planes %}
-                                <option value="{{ plan.numero_cuota }}">{{ plan.nombre }}</option>
-                            {% endfor %}
-                        </select>
-                        <i class="fas fa-chevron-down select-arrow"></i>
-                    </div>
-                    <small class="form-hint" id="hint-cuotas">Selecciona las cuotas para tu cliente</small>
-                </div>
+      <div class="row g-4">
+        <!-- MONTO -->
+        <div class="col-md-6 col-lg-4">
+          <label class="form-label-enhanced">
+            <i class="fas fa-dollar-sign text-primary me-2"></i>
+            Monto a cobrar al cliente
+          </label>
+          <div class="input-wrapper">
+            <div class="input-icon"><i class="fas fa-dollar-sign"></i></div>
+            <input
+              type="text"
+              inputmode="decimal"
+              name="monto"
+              class="form-control-enhanced"
+              placeholder="0,00"
+              required
+              id="input-monto"
+              pattern="[0-9]+([,][0-9]{1,2})?"
+              title="Ingresa un número con coma como separador decimal (ej: 123,45)"
+            />
+            <div class="input-suffix">ARS</div>
+          </div>
+          <small class="form-hint"
+            >Ingresar la cantidad que deseas recibir</small
+          >
+        </div>
 
-                <!-- TIPO TARJETA -->
-                <div class="col-md-12 col-lg-4">
-                    <label class="form-label-enhanced">
-                        <i class="fas fa-credit-card text-info me-2"></i>
-                        Medio de Pago
-                    </label>
-                    <div class="select-wrapper">
-                        <select name="tipo_tarjeta" class="form-select-enhanced" id="select-tipo">
-                            <option value="debito">Tarjeta de Débito</option>
-                            <option value="credito" selected>Tarjeta de Crédito</option>
-                        </select>
-                        <i class="fas fa-chevron-down select-arrow"></i>
-                    </div>
-                    <small class="form-hint">Las tasas se aplicarán dinámicamente</small>
-                </div>
+        <!-- CUOTAS DINÁMICAS -->
+        <div class="col-md-6 col-lg-4">
+          <label class="form-label-enhanced">
+            <i class="fas fa-calendar-alt text-danger me-2"></i>
+            Plan de Financiación
+          </label>
+          <div class="select-wrapper" id="wrapper-cuotas">
+            <select
+              name="cuotas"
+              class="form-select-enhanced"
+              id="select-cuotas"
+            >
+              <option value="1">1 Pago (Contado)</option>
+              {% for plan in planes %}
+              <option value="{{ plan.numero_cuota }}">{{ plan.nombre }}</option>
+              {% endfor %}
+            </select>
+            <i class="fas fa-chevron-down select-arrow"></i>
+          </div>
+          <small class="form-hint" id="hint-cuotas"
+            >Selecciona las cuotas para tu cliente</small
+          >
+        </div>
 
-                <!-- PREVIEW DE CÁLCULO -->
-                <div class="col-12">
-                    <div class="calculation-preview" id="calc-preview" style="display: none;">
-                        <div class="row g-3 align-items-center">
-                            <div class="col-md-4">
-                                <div class="calc-item">
-                                    <span class="calc-label">El cliente pagará (Total)</span>
-                                    <span class="calc-value text-white" id="preview-bruto">$0.00</span>
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="calc-item">
-                                    <span class="calc-label">Costos Asociados</span>
-                                    <span class="calc-value text-danger" id="preview-comision">-$0.00</span>
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="calc-item highlight">
-                                    <span class="calc-label">Tú recibes (Neto)</span>
-                                    <span class="calc-value text-success fw-bold" id="preview-neto">$0.00</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+        <!-- TIPO TARJETA -->
+        <div class="col-md-12 col-lg-4">
+          <label class="form-label-enhanced">
+            <i class="fas fa-credit-card text-info me-2"></i>
+            Medio de Pago
+          </label>
+          <div class="select-wrapper">
+            <select name="tipo_tarjeta" class="form-select-enhanced" id="select-tipo">
+                <option value="debito">Tarjeta de Débito</option>
+                <option value="credito" selected>Tarjeta de Crédito</option>
+                {% for tc in tarjetas_custom %}
+                <option value="custom_{{ tc.slug }}">{{ tc.nombre }}</option>
+                {% endfor %}
+            </select>
+            <i class="fas fa-chevron-down select-arrow"></i>
+          </div>
+          <small class="form-hint">Las tasas se aplicarán dinámicamente</small>
+        </div>
 
-                <!-- DESCRIPCIÓN -->
-                <div class="col-12">
-                    <label class="form-label-enhanced">
-                        <i class="fas fa-pen-nib text-warning me-2"></i>
-                        Concepto o Descripción <span class="optional-badge">Opcional</span>
-                    </label>
-                    <div class="input-wrapper">
-                        <div class="input-icon"><i class="fas fa-align-left"></i></div>
-                        <input type="text" name="descripcion" class="form-control-enhanced" placeholder="Ej: Venta de productos..." maxlength="100" id="input-descripcion">
-                    </div>
+        <!-- PREVIEW DE CÁLCULO -->
+        <div class="col-12">
+          <div
+            class="calculation-preview"
+            id="calc-preview"
+            style="display: none"
+          >
+            <div class="row g-3 align-items-center">
+              <div class="col-md-4">
+                <div class="calc-item">
+                  <span class="calc-label">El cliente pagará (Total)</span>
+                  <span class="calc-value text-white" id="preview-bruto"
+                    >$0.00</span
+                  >
                 </div>
-
-                <div class="col-12 mt-4">
-                    <button type="button" class="btn-generate-link" id="btn-confirmar-modal">
-                        <span class="btn-content">
-                            <i class="fas fa-link me-2"></i> GENERAR ENLACE SEGURO
-                        </span>
-                    </button>
+              </div>
+              <div class="col-md-4">
+                <div class="calc-item">
+                  <span class="calc-label">Costos Asociados</span>
+                  <span class="calc-value text-danger" id="preview-comision"
+                    >-$0.00</span
+                  >
                 </div>
+              </div>
+              <div class="col-md-4">
+                <div class="calc-item highlight">
+                  <span class="calc-label">Tú recibes (Neto)</span>
+                  <span
+                    class="calc-value text-success fw-bold"
+                    id="preview-neto"
+                    >$0.00</span
+                  >
+                </div>
+              </div>
             </div>
-        </form>
-    </div>
+          </div>
+        </div>
+
+        <!-- DESCRIPCIÓN -->
+        <div class="col-12">
+          <label class="form-label-enhanced">
+            <i class="fas fa-pen-nib text-warning me-2"></i>
+            Concepto o Descripción <span class="optional-badge">Opcional</span>
+          </label>
+          <div class="input-wrapper">
+            <div class="input-icon"><i class="fas fa-align-left"></i></div>
+            <input
+              type="text"
+              name="descripcion"
+              class="form-control-enhanced"
+              placeholder="Ej: Venta de productos..."
+              maxlength="100"
+              id="input-descripcion"
+            />
+          </div>
+        </div>
+
+        <div class="col-12 mt-4">
+          <button
+            type="button"
+            class="btn-generate-link"
+            id="btn-confirmar-modal"
+          >
+            <span class="btn-content">
+              <i class="fas fa-link me-2"></i> GENERAR ENLACE SEGURO
+            </span>
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
 </div>
 
 <!-- HISTORIAL DE COBROS -->
-{% if links %}
-    {% include "partials/tabla_links.html" %}
-{% endif %}
+{% if links %} {% include "partials/tabla_links.html" %} {% endif %}
 
 <!-- MODALES (CONFIRMACIÓN / ÉXITO) -->
 <div class="modal fade" id="modalConfirmacion" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content modal-dark">
-            <div class="modal-header">
-                <h5 class="modal-title"><i class="fas fa-check-circle text-primary me-2"></i> Confirmar Link</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body" id="resumen-datos-modal"></div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-                <button type="button" id="btn-crear-link-final" class="btn btn-primary">Crear Ahora</button>
-            </div>
-        </div>
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content modal-dark">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="fas fa-check-circle text-primary me-2"></i> Confirmar Link
+        </h5>
+        <button
+          type="button"
+          class="btn-close btn-close-white"
+          data-bs-dismiss="modal"
+        ></button>
+      </div>
+      <div class="modal-body" id="resumen-datos-modal"></div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+          Cerrar
+        </button>
+        <button type="button" id="btn-crear-link-final" class="btn btn-primary">
+          Crear Ahora
+        </button>
+      </div>
     </div>
+  </div>
 </div>
 
 {% if link_creado %}
-<div class="modal fade show" id="modalLinkGenerado" tabindex="-1" style="display: block; background: rgba(0,0,0,0.85); backdrop-filter: blur(10px);">
-    <div class="modal-dialog modal-dialog-centered animate-slide-up">
-        <!-- Usamos modal-dark según tu CSS -->
-        <div class="modal-content modal-dark p-2"> 
-            <div class="modal-body text-center p-4">
-                
-                <!-- Icono con animación pulse y gradiente verde de tu CSS -->
-                <div class="success-circle mb-4">
-                    <i class="fas fa-check"></i>
-                </div>
-
-                <h3 class="text-white fw-bold mb-2">¡Link Generado!</h3>
-                <p class="text-muted small mb-4">El cliente podrá realizar el pago por un total de <span class="text-success-bright fw-bold">${{ link_creado.monto_total }}</span></p>
-
-                <!-- Estructura exacta de tu clase .link-generated-box -->
-                <div class="text-start mb-1">
-                    <label class="form-label-enhanced">Enlace de cobro:</label>
-                </div>
-                <div class="link-generated-box mb-4">
-                    <input type="text" value="{{ link_creado.url }}" class="link-generated-input" readonly id="final-link">
-                    <button class="btn-copy-success" onclick="copyFinalLink()" id="btn-copy-modal">
-                        <i class="fas fa-copy"></i>
-                    </button>
-                </div>
-
-                <!-- Botón con efecto .btn-generate-link y .btn-shine de tu CSS -->
-                <button class="btn-generate-link" onclick="window.location.reload()">
-                    <span class="btn-content">
-                        <i class="fas fa-arrow-left me-2"></i> FINALIZAR Y VOLVER
-                    </span>
-                    <div class="btn-shine"></div>
-                </button>
-                
-            </div>
+<div
+  class="modal fade show"
+  id="modalLinkGenerado"
+  tabindex="-1"
+  style="
+    display: block;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(10px);
+  "
+>
+  <div class="modal-dialog modal-dialog-centered animate-slide-up">
+    <!-- Usamos modal-dark según tu CSS -->
+    <div class="modal-content modal-dark p-2">
+      <div class="modal-body text-center p-4">
+        <!-- Icono con animación pulse y gradiente verde de tu CSS -->
+        <div class="success-circle mb-4">
+          <i class="fas fa-check"></i>
         </div>
+
+        <h3 class="text-white fw-bold mb-2">¡Link Generado!</h3>
+        <p class="text-muted small mb-4">
+          El cliente podrá realizar el pago por un total de
+          <span class="text-success-bright fw-bold"
+            >${{ link_creado.monto_total }}</span
+          >
+        </p>
+
+        <!-- Estructura exacta de tu clase .link-generated-box -->
+        <div class="text-start mb-1">
+          <label class="form-label-enhanced">Enlace de cobro:</label>
+        </div>
+        <div class="link-generated-box mb-4">
+          <input
+            type="text"
+            value="{{ link_creado.url }}"
+            class="link-generated-input"
+            readonly
+            id="final-link"
+          />
+          <button
+            class="btn-copy-success"
+            onclick="copyFinalLink()"
+            id="btn-copy-modal"
+          >
+            <i class="fas fa-copy"></i>
+          </button>
+        </div>
+
+        <!-- Botón con efecto .btn-generate-link y .btn-shine de tu CSS -->
+        <button class="btn-generate-link" onclick="window.location.reload()">
+          <span class="btn-content">
+            <i class="fas fa-arrow-left me-2"></i> FINALIZAR Y VOLVER
+          </span>
+          <div class="btn-shine"></div>
+        </button>
+      </div>
     </div>
+  </div>
 </div>
 {% endif %}
-{% endblock %}
+<!-- MODAL CALCULADORA -->
+<div
+  class="modal fade"
+  id="modalCalculadora"
+  tabindex="-1"
+  aria-labelledby="modalCalculadoraLabel"
+  aria-hidden="true"
+>
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content modal-dark">
+      <div class="modal-header">
+        <div class="d-flex align-items-center gap-3">
+          <div class="calc-modal-icon">
+            <i class="fas fa-calculator"></i>
+          </div>
+          <div>
+            <h5 class="modal-title mb-0" id="modalCalculadoraLabel">
+              Calculadora de precio
+            </h5>
+            <p class="text-muted small mb-0" style="font-size: 0.75rem">
+              Calcula cuanto cobrarle al cliente segun tu recargo
+            </p>
+          </div>
+        </div>
+        <button
+          type="button"
+          class="btn-close btn-close-white"
+          data-bs-dismiss="modal"
+        ></button>
+      </div>
 
-{% block extra_js %}
+      <div class="modal-body" style="padding: 1.5rem">
+        <div class="row g-3 mb-3">
+          <!-- Costo base -->
+          <div class="col-12">
+            <label class="form-label-enhanced">
+              <i class="fas fa-tag text-primary me-2"></i>
+              Tu costo / precio base
+            </label>
+            <div class="input-wrapper">
+              <div class="input-icon"><i class="fas fa-dollar-sign"></i></div>
+              <input
+                type="text"
+                inputmode="decimal"
+                id="calc-costo"
+                class="form-control-enhanced"
+                placeholder="0,00"
+                autocomplete="off"
+              />
+              <div class="input-suffix">ARS</div>
+            </div>
+          </div>
+
+          <!-- Tipo de recargo -->
+          <div class="col-6">
+            <label class="form-label-enhanced">
+              <i class="fas fa-percent text-warning me-2"></i>
+              Tipo de recargo
+            </label>
+            <div class="select-wrapper">
+              <select id="calc-tipo-recargo" class="form-select-enhanced">
+                <option value="porcentaje">Porcentaje (%)</option>
+                <option value="fijo">Monto fijo (ARS)</option>
+              </select>
+              <i class="fas fa-chevron-down select-arrow"></i>
+            </div>
+          </div>
+
+          <!-- Valor recargo -->
+          <div class="col-6">
+            <label class="form-label-enhanced">
+              <i class="fas fa-plus-circle text-success me-2"></i>
+              <span id="calc-label-recargo">Recargo (%)</span>
+            </label>
+            <div class="input-wrapper">
+              <div class="input-icon">
+                <i class="fas fa-percent" id="calc-icon-recargo"></i>
+              </div>
+              <input
+                type="text"
+                inputmode="decimal"
+                id="calc-recargo"
+                class="form-control-enhanced"
+                placeholder="0"
+                autocomplete="off"
+              />
+            </div>
+          </div>
+        </div>
+
+        <!-- Resultado -->
+        <div id="calc-resultado" style="display: none">
+          <div
+            class="calculation-preview"
+            style="opacity: 1; transform: none; margin-top: 0"
+          >
+            <div class="row g-2">
+              <div class="col-4">
+                <div class="calc-item">
+                  <span class="calc-label">Precio base</span>
+                  <span
+                    class="calc-value text-white"
+                    id="calc-res-costo"
+                    style="font-size: 1.1rem"
+                    >$0,00</span
+                  >
+                </div>
+              </div>
+              <div class="col-4">
+                <div class="calc-item">
+                  <span class="calc-label">Recargo</span>
+                  <span
+                    class="calc-value text-warning"
+                    id="calc-res-recargo"
+                    style="font-size: 1.1rem"
+                    >+$0,00</span
+                  >
+                </div>
+              </div>
+              <div class="col-4">
+                <div class="calc-item highlight">
+                  <span class="calc-label">Precio al cliente</span>
+                  <span
+                    class="calc-value text-success fw-bold"
+                    id="calc-res-total"
+                    style="font-size: 1.1rem"
+                    >$0,00</span
+                  >
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer" style="gap: 0.75rem">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+          Cerrar
+        </button>
+        <button
+          type="button"
+          id="btn-usar-precio"
+          class="btn btn-primary"
+          disabled
+        >
+          <i class="fas fa-arrow-right me-2"></i>Usar este precio
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %} {% block extra_js %}
 <script>
-document.addEventListener('DOMContentLoaded', () => {
+  document.addEventListener("DOMContentLoaded", () => {
     // --- ELEMENTOS DEL DOM ---
-    const card = document.getElementById('card-main');
-    if(card) { card.style.opacity = '1'; card.style.transform = 'translateY(0)'; }
+    const card = document.getElementById("card-main");
+    if (card) {
+      card.style.opacity = "1";
+      card.style.transform = "translateY(0)";
+    }
 
-    const modalConfirmacion = new bootstrap.Modal(document.getElementById('modalConfirmacion'));
-    const form = document.getElementById('form-crear-link');
-    const inputMonto = document.getElementById('input-monto');
-    const selectTipo = document.getElementById('select-tipo');
-    const selectCuotas = document.getElementById('select-cuotas');
-    const calcPreview = document.getElementById('calc-preview');
+    const modalConfirmacion = new bootstrap.Modal(
+      document.getElementById("modalConfirmacion"),
+    );
+    const form = document.getElementById("form-crear-link");
+    const inputMonto = document.getElementById("input-monto");
+    const selectTipo = document.getElementById("select-tipo");
+    const selectCuotas = document.getElementById("select-cuotas");
+    const calcPreview = document.getElementById("calc-preview");
 
     // Funcion para mostrar/ocultar cuotas según el tipo de tarjeta
+// Planes por tarjeta custom (inyectados desde Django)
+    const planesPorTarjeta = {{ planes_por_tarjeta|safe }};
+
+    // Planes de crédito genérico (los que ya renderiza Django en el select)
+    const planesCreditoBase = [
+      {% for plan in planes %}
+      { numero_cuota: {{ plan.numero_cuota }}, nombre: "{{ plan.nombre|escapejs }}" },
+      {% endfor %}
+    ];
+
     function actualizarCuotasSegunTipo() {
-        const cuotaContado = selectCuotas.querySelector('option[value="1"]');
+      const tipo = selectTipo.value;
 
-        if (selectTipo.value === 'debito') {
-            if (cuotaContado) cuotaContado.style.display = "block";
-            selectCuotas.value = "1";
-            selectCuotas.disabled = true;
-            selectCuotas.parentElement.style.opacity = "0.5";
-        } else {
-            if (cuotaContado) cuotaContado.style.display = "none";
-            if (selectCuotas.value === "1") selectCuotas.selectedIndex = 1; // Evita que quede seleccionada
-            selectCuotas.disabled = false;
-            selectCuotas.parentElement.style.opacity = "1";
-        }
+      // Limpiar select — dejar solo "1 Pago (Contado)"
+      selectCuotas.innerHTML = '<option value="1">1 Pago (Contado)</option>';
 
+      if (tipo === 'debito') {
+        selectCuotas.value = '1';
+        selectCuotas.disabled = true;
+        selectCuotas.parentElement.style.opacity = '0.5';
         updatePreview();
+        return;
+      }
+
+      selectCuotas.disabled = false;
+      selectCuotas.parentElement.style.opacity = '1';
+
+      let planes = [];
+      if (tipo === 'credito') {
+        planes = planesCreditoBase;
+      } else if (tipo.startsWith('custom_')) {
+        const slug = tipo.replace('custom_', '');
+        planes = planesPorTarjeta[slug] || [];
+      }
+
+      planes.forEach(p => {
+        const opt = document.createElement('option');
+        opt.value = p.numero_cuota;
+        opt.textContent = p.nombre;
+        selectCuotas.appendChild(opt);
+      });
+
+      // Si hay planes, seleccionar el primero automáticamente
+      if (planes.length > 0) {
+        selectCuotas.selectedIndex = 1;
+      }
+
+      updatePreview();
     }
 
     // ========== 1. LÓGICA DE COPIADO (PORTAPAPELES) ==========
-    
+
     function copyToClipboard(text, button) {
-        if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
-            copyForMobile(text, button);
-        } else {
-            copyForDesktop(text, button);
-        }
+      if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+        copyForMobile(text, button);
+      } else {
+        copyForDesktop(text, button);
+      }
     }
-    
+
     function copyForDesktop(text, button) {
-        if (navigator.clipboard && window.isSecureContext) {
-            navigator.clipboard.writeText(text).then(() => showCopySuccess(button))
-                .catch(() => fallbackCopyText(text, button));
-        } else {
-            fallbackCopyText(text, button);
-        }
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard
+          .writeText(text)
+          .then(() => showCopySuccess(button))
+          .catch(() => fallbackCopyText(text, button));
+      } else {
+        fallbackCopyText(text, button);
+      }
     }
-    
+
     function copyForMobile(text, button) {
-        const tempInput = document.createElement('input');
-        tempInput.value = text;
-        tempInput.style.position = 'absolute'; tempInput.style.left = '-1000px';
-        document.body.appendChild(tempInput);
-        tempInput.select();
-        tempInput.setSelectionRange(0, 99999);
-        try {
-            if (document.execCommand('copy')) showCopySuccess(button);
-            else alert("Copia manual: " + text);
-        } catch (err) { alert("Copia manual: " + text); }
-        document.body.removeChild(tempInput);
+      const tempInput = document.createElement("input");
+      tempInput.value = text;
+      tempInput.style.position = "absolute";
+      tempInput.style.left = "-1000px";
+      document.body.appendChild(tempInput);
+      tempInput.select();
+      tempInput.setSelectionRange(0, 99999);
+      try {
+        if (document.execCommand("copy")) showCopySuccess(button);
+        else alert("Copia manual: " + text);
+      } catch (err) {
+        alert("Copia manual: " + text);
+      }
+      document.body.removeChild(tempInput);
     }
-    
+
     function fallbackCopyText(text, button) {
-        const textArea = document.createElement('textarea');
-        textArea.value = text;
-        textArea.style.position = 'fixed'; textArea.style.left = '-9999px';
-        document.body.appendChild(textArea);
-        textArea.focus(); textArea.select();
-        try {
-            if (document.execCommand('copy')) showCopySuccess(button);
-        } catch (err) { console.error('Error fallback copy'); }
-        document.body.removeChild(textArea);
+      const textArea = document.createElement("textarea");
+      textArea.value = text;
+      textArea.style.position = "fixed";
+      textArea.style.left = "-9999px";
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+      try {
+        if (document.execCommand("copy")) showCopySuccess(button);
+      } catch (err) {
+        console.error("Error fallback copy");
+      }
+      document.body.removeChild(textArea);
     }
-    
+
     function showCopySuccess(button) {
-        if (!button) return;
-        const originalHTML = button.innerHTML;
-        const originalBg = button.style.backgroundColor;
-        button.innerHTML = '<i class="fas fa-check"></i>';
-        button.style.backgroundColor = '#10b981';
-        if(typeof showToast === "function") showToast("Copiado al portapapeles", "success");
-        setTimeout(() => {
-            button.innerHTML = originalHTML;
-            button.style.backgroundColor = originalBg;
-        }, 2000);
+      if (!button) return;
+      const originalHTML = button.innerHTML;
+      const originalBg = button.style.backgroundColor;
+      button.innerHTML = '<i class="fas fa-check"></i>';
+      button.style.backgroundColor = "#10b981";
+      if (typeof showToast === "function")
+        showToast("Copiado al portapapeles", "success");
+      setTimeout(() => {
+        button.innerHTML = originalHTML;
+        button.style.backgroundColor = originalBg;
+      }, 2000);
     }
 
     function setupCopyButtons() {
-        document.querySelectorAll('[data-link]').forEach(btn => {
-            btn.onclick = (e) => {
-                e.preventDefault();
-                copyToClipboard(btn.getAttribute('data-link'), btn);
-            };
-        });
+      document.querySelectorAll("[data-link]").forEach((btn) => {
+        btn.onclick = (e) => {
+          e.preventDefault();
+          copyToClipboard(btn.getAttribute("data-link"), btn);
+        };
+      });
     }
 
-    window.copyFinalLink = function() {
-        const inp = document.getElementById('final-link');
-        const btn = document.getElementById('btn-copy-modal');
-        if (inp && btn) copyToClipboard(inp.value, btn);
+    window.copyFinalLink = function () {
+      const inp = document.getElementById("final-link");
+      const btn = document.getElementById("btn-copy-modal");
+      if (inp && btn) copyToClipboard(inp.value, btn);
     };
 
     // ========== 2. FORMATEO Y CÁLCULOS NUMÉRICOS ==========
 
     // Convierte el texto del input (ej: 1.500,50) en un número real (1500.50)
     function obtenerValorNumerico() {
-        let valor = inputMonto.value;
-        if (!valor || valor.trim() === '') return 0;
-        
-        // ELIMINAR puntos de miles y REEMPLAZAR coma por punto decimal
-        const valorLimpio = valor.replace(/\./g, '').replace(',', '.');
-        const num = parseFloat(valorLimpio);
-        return isNaN(num) ? 0 : num;
+      let valor = inputMonto.value;
+      if (!valor || valor.trim() === "") return 0;
+
+      // ELIMINAR puntos de miles y REEMPLAZAR coma por punto decimal
+      const valorLimpio = valor.replace(/\./g, "").replace(",", ".");
+      const num = parseFloat(valorLimpio);
+      return isNaN(num) ? 0 : num;
     }
 
     function formatearMontoConComa(input) {
-        let valor = input.value;
-        if (valor === '') return;
-        
-        // No permitimos puntos, solo comas para el usuario
-        valor = valor.trim().replace(/\./g, ',');
-        valor = valor.replace(/[^0-9,]/g, '');
-        
-        // Evitar múltiples comas
-        const partes = valor.split(',');
-        if (partes.length > 2) valor = partes[0] + ',' + partes.slice(1).join('');
-        
-        // Limitar a 2 decimales
-        if (partes[1] && partes[1].length > 2) {
-            valor = partes[0] + ',' + partes[1].substring(0, 2);
-        }
-        
-        if (input.value !== valor) input.value = valor;
+      let valor = input.value;
+      if (valor === "") return;
+
+      // No permitimos puntos, solo comas para el usuario
+      valor = valor.trim().replace(/\./g, ",");
+      valor = valor.replace(/[^0-9,]/g, "");
+
+      // Evitar múltiples comas
+      const partes = valor.split(",");
+      if (partes.length > 2) valor = partes[0] + "," + partes.slice(1).join("");
+
+      // Limitar a 2 decimales
+      if (partes[1] && partes[1].length > 2) {
+        valor = partes[0] + "," + partes[1].substring(0, 2);
+      }
+
+      if (input.value !== valor) input.value = valor;
     }
 
     async function updatePreview() {
-        const monto = obtenerValorNumerico();
-        const valorRaw = inputMonto.value.trim();
-        
-        // OCULTAR si está vacío o es 0
-        if (valorRaw === '' || monto <= 0) {
-            calcPreview.style.display = 'none';
-            calcPreview.style.opacity = '0';
-            return;
+      const monto = obtenerValorNumerico();
+      const valorRaw = inputMonto.value.trim();
+
+      // OCULTAR si está vacío o es 0
+      if (valorRaw === "" || monto <= 0) {
+        calcPreview.style.display = "none";
+        calcPreview.style.opacity = "0";
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append("monto", monto);
+      formData.append("cuotas", selectCuotas.value);
+      formData.append("tipo_tarjeta", selectTipo.value);
+      formData.append("preview", "1");
+      formData.append("csrfmiddlewaretoken", "{{ csrf_token }}");
+
+      try {
+        const response = await fetch(window.location.pathname, {
+          method: "POST",
+          body: formData,
+        });
+        const data = await response.json();
+
+        if (data.success) {
+          const f = (n) =>
+            n.toLocaleString("es-AR", {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            });
+
+          document.getElementById("preview-bruto").textContent =
+            `$${f(parseFloat(data.monto_venta))}`;
+          document.getElementById("preview-comision").textContent =
+            `-$${f(parseFloat(data.comision))}`;
+          document.getElementById("preview-neto").textContent =
+            `$${f(parseFloat(data.neto))}`;
+
+          calcPreview.style.display = "block";
+          setTimeout(() => {
+            calcPreview.style.opacity = "1";
+          }, 10);
         }
-
-        const formData = new FormData();
-        formData.append('monto', monto);
-        formData.append('cuotas', selectCuotas.value);
-        formData.append('tipo_tarjeta', selectTipo.value);
-        formData.append('preview', '1');
-        formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
-
-        try {
-            const response = await fetch(window.location.pathname, { method: 'POST', body: formData });
-            const data = await response.json();
-            
-            if(data.success) {
-                const f = (n) => n.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-                
-                document.getElementById('preview-bruto').textContent = `$${f(parseFloat(data.monto_venta))}`;
-                document.getElementById('preview-comision').textContent = `-$${f(parseFloat(data.comision))}`;
-                document.getElementById('preview-neto').textContent = `$${f(parseFloat(data.neto))}`;
-                
-                calcPreview.style.display = 'block';
-                setTimeout(() => { calcPreview.style.opacity = '1'; }, 10);
-            }
-        } catch (e) { calcPreview.style.display = 'none'; }
+      } catch (e) {
+        calcPreview.style.display = "none";
+      }
     }
 
     // ========== 3. EVENT LISTENERS ==========
 
-    inputMonto.addEventListener('input', () => {
-        formatearMontoConComa(inputMonto);
-        updatePreview();
+    inputMonto.addEventListener("input", () => {
+      formatearMontoConComa(inputMonto);
+      updatePreview();
     });
 
     // Convierte la tecla punto en coma automáticamente
-    inputMonto.addEventListener('keydown', (e) => {
-        if (e.key === '.' || e.keyCode === 190 || e.keyCode === 110) {
-            e.preventDefault();
-            const start = inputMonto.selectionStart;
-            inputMonto.value = inputMonto.value.substring(0, start) + ',' + inputMonto.value.substring(inputMonto.selectionEnd);
-            inputMonto.selectionStart = inputMonto.selectionEnd = start + 1;
-            updatePreview();
-        }
+    inputMonto.addEventListener("keydown", (e) => {
+      if (e.key === "." || e.keyCode === 190 || e.keyCode === 110) {
+        e.preventDefault();
+        const start = inputMonto.selectionStart;
+        inputMonto.value =
+          inputMonto.value.substring(0, start) +
+          "," +
+          inputMonto.value.substring(inputMonto.selectionEnd);
+        inputMonto.selectionStart = inputMonto.selectionEnd = start + 1;
+        updatePreview();
+      }
     });
 
-    inputMonto.addEventListener('blur', () => {
-        const monto = obtenerValorNumerico();
-        if (monto > 0) {
-            inputMonto.value = monto.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-        } else {
-            inputMonto.value = '';
-            calcPreview.style.display = 'none';
-        }
+    inputMonto.addEventListener("blur", () => {
+      const monto = obtenerValorNumerico();
+      if (monto > 0) {
+        inputMonto.value = monto.toLocaleString("es-AR", {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        });
+      } else {
+        inputMonto.value = "";
+        calcPreview.style.display = "none";
+      }
     });
 
-    selectCuotas.addEventListener('change', updatePreview);
-        
-    selectTipo.addEventListener('change', actualizarCuotasSegunTipo);
+    selectCuotas.addEventListener("change", updatePreview);
+
+    selectTipo.addEventListener("change", actualizarCuotasSegunTipo);
 
     // ========== 4. MODALES Y ENVÍO ==========
 
-    document.getElementById('btn-confirmar-modal').onclick = () => {
-        const monto = obtenerValorNumerico();
-        if (monto <= 0) {
-            if(typeof showToast === "function") showToast("Monto inválido", "danger");
-            return;
-        }
-        document.getElementById('resumen-datos-modal').innerHTML = `
-            <div class="d-flex justify-content-between mb-2 text-white"><span>Total a Cobrar:</span><b>${document.getElementById('preview-bruto').textContent}</b></div>
+    document.getElementById("btn-confirmar-modal").onclick = () => {
+      const monto = obtenerValorNumerico();
+      if (monto <= 0) {
+        if (typeof showToast === "function")
+          showToast("Monto inválido", "danger");
+        return;
+      }
+      document.getElementById("resumen-datos-modal").innerHTML = `
+            <div class="d-flex justify-content-between mb-2 text-white"><span>Total a Cobrar:</span><b>${document.getElementById("preview-bruto").textContent}</b></div>
             <div class="d-flex justify-content-between mb-2 text-white"><span>Medio:</span><b class="text-uppercase">${selectTipo.value}</b></div>
             <div class="d-flex justify-content-between mb-2 text-white"><span>Cuotas:</span><b>${selectCuotas.options[selectCuotas.selectedIndex].text}</b></div>
             <hr class="border-secondary">
-            <div class="d-flex justify-content-between text-success fw-bold"><span>Neto a Recibir:</span><b>${document.getElementById('preview-neto').textContent}</b></div>
+            <div class="d-flex justify-content-between text-success fw-bold"><span>Neto a Recibir:</span><b>${document.getElementById("preview-neto").textContent}</b></div>
         `;
-        modalConfirmacion.show();
+      modalConfirmacion.show();
     };
 
-    document.getElementById('btn-crear-link-final').onclick = function() {
-        this.disabled = true;
-        this.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Generando...';
-        const hiddenMonto = document.createElement('input'); 
-        hiddenMonto.type = 'hidden'; hiddenMonto.name = 'monto'; hiddenMonto.value = obtenerValorNumerico();
-        const hiddenConfirm = document.createElement('input'); 
-        hiddenConfirm.type = 'hidden'; hiddenConfirm.name = 'confirm'; hiddenConfirm.value = '1';
-        form.appendChild(hiddenMonto); form.appendChild(hiddenConfirm);
-        form.submit();
+    document.getElementById("btn-crear-link-final").onclick = function () {
+      this.disabled = true;
+      this.innerHTML =
+        '<span class="spinner-border spinner-border-sm me-2"></span>Generando...';
+      const hiddenMonto = document.createElement("input");
+      hiddenMonto.type = "hidden";
+      hiddenMonto.name = "monto";
+      hiddenMonto.value = obtenerValorNumerico();
+      const hiddenConfirm = document.createElement("input");
+      hiddenConfirm.type = "hidden";
+      hiddenConfirm.name = "confirm";
+      hiddenConfirm.value = "1";
+      form.appendChild(hiddenMonto);
+      form.appendChild(hiddenConfirm);
+      form.submit();
     };
 
     // ========== 5. VERIFICACIÓN DE ESTADOS ==========
 
     function checkPayments() {
-        document.querySelectorAll('.js-check-status').forEach(badge => {
-            if (badge.dataset.finalizado === "true") return;
-            const id = badge.getAttribute('data-id');
-            const statusContainer = document.getElementById(`status-container-${id}`);
+      document.querySelectorAll(".js-check-status").forEach((badge) => {
+        if (badge.dataset.finalizado === "true") return;
+        const id = badge.getAttribute("data-id");
+        const statusContainer = document.getElementById(
+          `status-container-${id}`,
+        );
 
-            fetch(`/verificar-pago-ajax/${id}/`)
-                .then(res => res.json())
-                .then(data => {
-                    if (data.pagado) {
-                        statusContainer.innerHTML = `<span class="status-badge" style="background:rgba(16,185,129,0.1);color:#10b981;padding:5px 12px;border-radius:20px;font-size:11px;"><i class="fas fa-check-circle me-1"></i> ${data.status_txt}</span><a href="/ticket_pdf/${id}/" target="_blank" class="btn-action btn-download ms-2"><i class="fas fa-file-invoice"></i></a>`;
-                        badge.dataset.finalizado = "true";
-                    } else if (data.anulado) {
-                        statusContainer.innerHTML = `<span class="status-badge" style="background:rgba(239,68,68,0.1);color:#ef4444;padding:5px 12px;border-radius:20px;font-size:11px;"><i class="fas fa-times-circle me-1"></i> ${data.status_txt}</span>`;
-                        badge.dataset.finalizado = "true";
-                    } else {
-                        badge.innerHTML = `<i class="fas fa-clock me-1"></i> ${data.status_txt}`;
-                    }
-                });
-        });
+        fetch(`/verificar-pago-ajax/${id}/`)
+          .then((res) => res.json())
+          .then((data) => {
+            if (data.pagado) {
+              statusContainer.innerHTML = `<span class="status-badge" style="background:rgba(16,185,129,0.1);color:#10b981;padding:5px 12px;border-radius:20px;font-size:11px;"><i class="fas fa-check-circle me-1"></i> ${data.status_txt}</span><a href="/ticket_pdf/${id}/" target="_blank" class="btn-action btn-download ms-2"><i class="fas fa-file-invoice"></i></a>`;
+              badge.dataset.finalizado = "true";
+            } else if (data.anulado) {
+              statusContainer.innerHTML = `<span class="status-badge" style="background:rgba(239,68,68,0.1);color:#ef4444;padding:5px 12px;border-radius:20px;font-size:11px;"><i class="fas fa-times-circle me-1"></i> ${data.status_txt}</span>`;
+              badge.dataset.finalizado = "true";
+            } else {
+              badge.innerHTML = `<i class="fas fa-clock me-1"></i> ${data.status_txt}`;
+            }
+          });
+      });
     }
 
     setupCopyButtons();
     setInterval(checkPayments, 60000);
     setTimeout(checkPayments, 1000);
     actualizarCuotasSegunTipo();
-});
+
+    // ========== CALCULADORA DE PRECIO ==========
+
+    const calcCosto = document.getElementById("calc-costo");
+    const calcRecargo = document.getElementById("calc-recargo");
+    const calcTipo = document.getElementById("calc-tipo-recargo");
+    const calcLabel = document.getElementById("calc-label-recargo");
+    const calcIcon = document.getElementById("calc-icon-recargo");
+    const calcResultado = document.getElementById("calc-resultado");
+    const btnUsarPrecio = document.getElementById("btn-usar-precio");
+
+    function parsearNumero(str) {
+      if (!str || str.trim() === "") return 0;
+      return parseFloat(str.replace(/\./g, "").replace(",", ".")) || 0;
+    }
+
+    function formatARS(n) {
+      return n.toLocaleString("es-AR", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      });
+    }
+
+    function formatearInputCalc(input) {
+      let v = input.value.replace(/\./g, ",").replace(/[^0-9,]/g, "");
+      const partes = v.split(",");
+      if (partes.length > 2) v = partes[0] + "," + partes.slice(1).join("");
+      if (partes[1] && partes[1].length > 2)
+        v = partes[0] + "," + partes[1].substring(0, 2);
+      if (input.value !== v) input.value = v;
+    }
+
+    function calcular() {
+      const costo = parsearNumero(calcCosto.value);
+      const recargo = parsearNumero(calcRecargo.value);
+      const tipo = calcTipo.value;
+
+      if (costo <= 0) {
+        calcResultado.style.display = "none";
+        btnUsarPrecio.disabled = true;
+        return;
+      }
+
+      const montoRecargo =
+        tipo === "porcentaje" ? (costo * recargo) / 100 : recargo;
+      const total = costo + montoRecargo;
+
+      document.getElementById("calc-res-costo").textContent =
+        "$" + formatARS(costo);
+      document.getElementById("calc-res-recargo").textContent =
+        "+$" + formatARS(montoRecargo);
+      document.getElementById("calc-res-total").textContent =
+        "$" + formatARS(total);
+
+      calcResultado.style.display = "block";
+      btnUsarPrecio.disabled = total <= 0;
+    }
+
+    function actualizarLabelRecargo() {
+      if (calcTipo.value === "porcentaje") {
+        calcLabel.textContent = "Recargo (%)";
+        calcIcon.className = "fas fa-percent";
+      } else {
+        calcLabel.textContent = "Recargo (ARS)";
+        calcIcon.className = "fas fa-dollar-sign";
+      }
+      calcular();
+    }
+
+    function bloquearPunto(input, cb) {
+      input.addEventListener("keydown", (e) => {
+        if (e.key === "." || e.keyCode === 190 || e.keyCode === 110) {
+          e.preventDefault();
+          const s = input.selectionStart;
+          input.value =
+            input.value.substring(0, s) +
+            "," +
+            input.value.substring(input.selectionEnd);
+          input.selectionStart = input.selectionEnd = s + 1;
+          cb();
+        }
+      });
+    }
+
+    calcCosto.addEventListener("input", () => {
+      formatearInputCalc(calcCosto);
+      calcular();
+    });
+    calcRecargo.addEventListener("input", () => {
+      formatearInputCalc(calcRecargo);
+      calcular();
+    });
+    calcTipo.addEventListener("change", actualizarLabelRecargo);
+    bloquearPunto(calcCosto, calcular);
+    bloquearPunto(calcRecargo, calcular);
+
+    // Limpiar al abrir el modal
+    document
+      .getElementById("modalCalculadora")
+      .addEventListener("show.bs.modal", () => {
+        calcCosto.value = "";
+        calcRecargo.value = "";
+        calcResultado.style.display = "none";
+        btnUsarPrecio.disabled = true;
+        calcTipo.value = "porcentaje";
+        actualizarLabelRecargo();
+      });
+
+    // Usar precio -> copia al form principal y cierra
+    btnUsarPrecio.addEventListener('click', () => {
+        const costo   = parsearNumero(calcCosto.value);
+        const recargo = parsearNumero(calcRecargo.value);
+        const tipo    = calcTipo.value;
+        const total   = costo + (tipo === 'porcentaje' ? (costo * recargo / 100) : recargo);
+
+        if (total <= 0) return;
+
+        // Usar coma como decimal SIN punto de miles para que obtenerValorNumerico lo lea bien
+        const totalFormateado = total.toFixed(2).replace('.', ',');
+        inputMonto.value = totalFormateado;
+
+        formatearMontoConComa(inputMonto);
+        updatePreview();
+
+        bootstrap.Modal.getInstance(document.getElementById('modalCalculadora')).hide();
+        document.getElementById('card-main').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        if (typeof showToast === 'function') showToast('Precio copiado al formulario', 'success');
+    });
+  });
 </script>
 
 <style>
-/* Estilos para botones de copiar en móvil */
-.btn-copy {
+  /* Estilos para botones de copiar en móvil */
+  .btn-copy {
     cursor: pointer;
     transition: all 0.2s ease;
     -webkit-tap-highlight-color: transparent;
-}
+  }
 
-.btn-copy:active {
+  .btn-copy:active {
     transform: scale(0.95);
-}
+  }
 
-/* Mejorar tamaño para toque en móvil */
-@media (max-width: 768px) {
+  /* Mejorar tamaño para toque en móvil */
+  @media (max-width: 768px) {
     .btn-copy {
-        padding: 10px !important;
-        min-width: 44px;
-        min-height: 44px;
+      padding: 10px !important;
+      min-width: 44px;
+      min-height: 44px;
     }
-    
-    .btn-copy i {
-        font-size: 16px;
-    }
-}
 
-.js-check-status {
+    .btn-copy i {
+      font-size: 16px;
+    }
+  }
+
+  .js-check-status {
     transition: all 0.4s ease;
     min-width: 100px; /* Evita que el badge "salte" al cambiar el texto */
     display: inline-flex;
     align-items: center;
     justify-content: center;
-}
+  }
 
-/* Estilos para el preview */
-.bg-warning.text-dark.js-check-status {
+  /* Estilos para el preview */
+  .bg-warning.text-dark.js-check-status {
     opacity: 0.9;
     transition: background 0.3s ease;
-}
+  }
 
-.btn-ticket {
+  .btn-ticket {
     animation: fadeInScale 0.5s ease-out forwards;
-}
+  }
 
-@keyframes fadeInScale {
-    from { opacity: 0; transform: scale(0.8); }
-    to { opacity: 1; transform: scale(1); }
-}
+  @keyframes fadeInScale {
+    from {
+      opacity: 0;
+      transform: scale(0.8);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
 
-/* Feedback visual para copiado */
-.btn-copy.copied {
+  /* Feedback visual para copiado */
+  .btn-copy.copied {
     background-color: #10b981 !important;
     color: white !important;
     animation: pulse 0.5s ease;
-}
+  }
 
-@keyframes pulse {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.1); }
-    100% { transform: scale(1); }
+  @keyframes pulse {
+    0% {
+      transform: scale(1);
+    }
+    50% {
+      transform: scale(1.1);
+    }
+    100% {
+      transform: scale(1);
+    }
+  }
+
+  .calc-icon-header {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-md, 12px);
+    background: var(--primary-light, rgba(230, 57, 70, 0.15));
+    border: 1px solid rgba(230, 57, 70, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.95rem;
+    color: var(--primary, #e63946);
+    flex-shrink: 0;
+  }
+
+  /* Boton trigger calculadora */
+  .btn-calc-trigger {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: var(--surface-elevated);
+    border: 1px solid var(--border-strong);
+    color: var(--text-secondary);
+    padding: 0.55rem 1rem;
+    border-radius: var(--radius-md);
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+    white-space: nowrap;
+  }
+  .btn-calc-trigger:hover {
+    background: var(--primary-light);
+    border-color: rgba(230, 57, 70, 0.4);
+    color: var(--primary);
+  }
+  .btn-calc-trigger i {
+    font-size: 0.9rem;
+  }
+  @media (max-width: 576px) {
+    .btn-calc-label {
+      display: none;
+    }
+    .btn-calc-trigger {
+      padding: 0.55rem 0.75rem;
+    }
+  }
+
+  /* Icono header del modal */
+  .calc-modal-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: var(--radius-md);
+    background: var(--primary-light);
+    border: 1px solid rgba(230, 57, 70, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    color: var(--primary);
+    flex-shrink: 0;
+  }
+
+  /* ── MOBILE FIXES ─────────────────────────────────────────────── */
+@media (max-width: 576px) {
+
+    /* Modal calculadora: resultado en columna, no en 3 col-4 apretadas */
+    #calc-resultado .row {
+        flex-direction: column;
+        gap: .5rem !important;
+    }
+    #calc-resultado .col-4 {
+        width: 100%;
+    }
+    #calc-resultado .calc-item,
+    #calc-resultado .calc-item.highlight {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-direction: row;
+        padding: .6rem .75rem;
+        border-radius: 8px;
+        background: rgba(255,255,255,0.03);
+        border: 1px solid rgba(255,255,255,0.06);
+    }
+    #calc-resultado .calc-item.highlight {
+        background: rgba(16,185,129,0.1);
+        border-color: rgba(16,185,129,0.2);
+    }
+    #calc-resultado .calc-label {
+        font-size: .72rem;
+        letter-spacing: 0;
+    }
+    #calc-resultado .calc-value {
+        font-size: .95rem !important;
+    }
+
+    /* Preview principal: mismo tratamiento */
+    #calc-preview .row {
+        flex-direction: column;
+        gap: .5rem !important;
+    }
+    #calc-preview .col-md-4 {
+        width: 100%;
+    }
+    #calc-preview .calc-item,
+    #calc-preview .calc-item.highlight {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-direction: row;
+        padding: .6rem .75rem;
+        border-radius: 8px;
+        background: rgba(255,255,255,0.03);
+        border: 1px solid rgba(255,255,255,0.06);
+    }
+    #calc-preview .calc-item.highlight {
+        background: rgba(16,185,129,0.1);
+        border-color: rgba(16,185,129,0.2);
+    }
+    #calc-preview .calc-label {
+        font-size: .72rem;
+        letter-spacing: 0;
+        text-transform: none;
+    }
+    #calc-preview .calc-value {
+        font-size: 1rem;
+    }
+
+    /* calculation-preview padding mas ajustado */
+    .calculation-preview {
+        padding: 14px;
+    }
+
+    /* Tabla: ocultar columnas menos criticas */
+    .table-modern thead th:nth-child(2),
+    .table-modern tbody td:nth-child(2),
+    .table-modern thead th:nth-child(6),
+    .table-modern tbody td:nth-child(6) {
+        display: none;
+    }
+
+    /* Tabla: ajustar padding */
+    .table-modern thead th,
+    .table-modern tbody td {
+        padding: 14px 8px;
+        font-size: .8rem;
+    }
+
+    .table-modern .ps-4 { padding-left: .75rem !important; }
+    .table-modern .pe-4 { padding-right: .75rem !important; }
+
+    /* Link code mas corto en mobile */
+    .link-code {
+        max-width: 90px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        display: inline-block;
+        font-size: .75rem;
+    }
+
+    /* Amount values mas chicos */
+    .amount-value { font-size: .85rem; }
+    .net-amount   { font-size: .9rem; }
+
+    /* Paginacion mas compacta */
+    .pagination-container {
+        padding: 1rem;
+    }
+    .pagination-info {
+        font-size: .75rem;
+    }
+    .pagination .page-link {
+        padding: 5px 9px;
+        font-size: .78rem;
+    }
+
+    /* Modal calculadora body padding */
+    #modalCalculadora .modal-body {
+        padding: 1rem !important;
+    }
+    #modalCalculadora .modal-footer {
+        padding: .75rem 1rem;
+    }
+    #modalCalculadora .modal-footer .btn {
+        flex: 1;
+    }
+
+    /* Header de pagina: ocultar stats pills, solo mostrar boton calc */
+    .stats-mini {
+        display: none !important;
+    }
 }
 </style>
 {% endblock %}

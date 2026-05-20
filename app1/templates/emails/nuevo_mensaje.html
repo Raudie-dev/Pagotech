@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nuevo mensaje — PagoTech</title>
+<style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #0a0a0b; color: #ffffff; padding: 40px 20px; line-height: 1.6; }
+    .wrapper { max-width: 540px; margin: 0 auto; }
+    .brand { text-align: center; margin-bottom: 28px; }
+    .brand-name { font-size: 15px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: #e63946; }
+    .brand-divider { width: 32px; height: 2px; background: #e63946; margin: 10px auto 0; border-radius: 9999px; }
+    .card { background: #111113; border-radius: 20px; border: 1px solid rgba(255,255,255,0.12); overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.6), 0 0 40px rgba(230,57,70,0.08); }
+    .card-header { background: linear-gradient(135deg, #1a1a1d 0%, #111113 100%); border-bottom: 1px solid rgba(255,255,255,0.08); padding: 32px 32px 28px; position: relative; overflow: hidden; }
+    .card-header::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, #e63946 0%, #c1121f 100%); }
+    .card-header::after { content: ''; position: absolute; top: -60px; right: -60px; width: 180px; height: 180px; background: radial-gradient(circle, rgba(230,57,70,0.12) 0%, transparent 70%); pointer-events: none; }
+    .header-label { font-size: 10px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: #e63946; margin-bottom: 8px; }
+    .header-title { font-size: 22px; font-weight: 700; color: #ffffff; letter-spacing: -0.4px; line-height: 1.3; }
+    .header-sub { font-size: 13px; color: #71717a; margin-top: 6px; }
+    .card-body { padding: 32px; }
+    .data-section-title { font-size: 10px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; color: #71717a; margin-bottom: 12px; }
+    .data-grid { background: #1a1a1d; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; overflow: hidden; margin-bottom: 28px; }
+    .data-row { display: flex; align-items: center; padding: 14px 20px; border-bottom: 1px solid rgba(255,255,255,0.06); gap: 16px; }
+    .data-row:last-child { border-bottom: none; }
+    .data-key { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.6px; color: #71717a; width: 110px; flex-shrink: 0; }
+    .data-value { font-size: 14px; font-weight: 500; color: #ffffff; word-break: break-word; flex: 1; }
+    .msg-box { background: #1a1a1d; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 20px; margin-bottom: 28px; }
+    .msg-text { font-size: 14px; color: #e2e8f0; line-height: 1.7; }
+    .action-section { background: #1a1a1d; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 20px; margin-bottom: 24px; }
+    .action-title { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: #a1a1aa; margin-bottom: 6px; }
+    .action-desc { font-size: 13px; color: #71717a; line-height: 1.5; margin-bottom: 16px; }
+    .btn-primary { display: inline-block; background: #e63946; color: #ffffff !important; text-decoration: none; padding: 11px 24px; border-radius: 9999px; font-weight: 700; font-size: 13px; letter-spacing: 0.3px; box-shadow: 0 4px 12px rgba(230,57,70,0.35); }
+    .card-footer { background: #0d0d0f; border-top: 1px solid rgba(255,255,255,0.06); padding: 20px 32px; }
+    .footer-brand { font-size: 12px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: #52525b; }
+    @media only screen and (max-width: 560px) {
+        body { padding: 20px 12px; }
+        .card-header, .card-body, .card-footer { padding-left: 20px; padding-right: 20px; }
+        .data-key { width: 90px; }
+    }
+</style>
+</head>
+<body>
+<div class="wrapper">
+    <div class="brand">
+        <div class="brand-name">PagoTech</div>
+        <div class="brand-divider"></div>
+    </div>
+    <div class="card">
+        <div class="card-header">
+            <div class="header-label">Nuevo mensaje</div>
+            <div class="header-title">Un comercio te escribio</div>
+            <div class="header-sub">{{ cliente_nombre }} envio un mensaje desde su panel.</div>
+        </div>
+        <div class="card-body">
+            <div class="data-section-title">Mensaje</div>
+            <div class="msg-box">
+                <p class="msg-text">{{ texto }}</p>
+            </div>
+            <div class="data-section-title">Datos del comercio</div>
+            <div class="data-grid">
+                <div class="data-row">
+                    <div class="data-key">Comercio</div>
+                    <div class="data-value">{{ cliente_nombre }}</div>
+                </div>
+                <div class="data-row">
+                    <div class="data-key">Email</div>
+                    <div class="data-value">{{ cliente_email }}</div>
+                </div>
+                {% if link_pago %}
+                <div class="data-row">
+                    <div class="data-key">Orden</div>
+                    <div class="data-value">{{ link_pago.order_id }}</div>
+                </div>
+                {% endif %}
+                <div class="data-row">
+                    <div class="data-key">Fecha</div>
+                    <div class="data-value">{{ fecha }}</div>
+                </div>
+            </div>
+            <div class="action-section">
+                <div class="action-title">Responder</div>
+                <div class="action-desc">Ingresa al panel para responderle directamente al comercio.</div>
+                <a href="{{ admin_url }}" class="btn-primary">Ver conversacion &rarr;</a>
+            </div>
+        </div>
+        <div class="card-footer">
+            <div class="footer-brand">PagoTech | Mensaje automatico — no responder a este correo.</div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

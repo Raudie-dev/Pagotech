@@ -5,6 +5,32 @@
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/usuarios-custom.css' %}">
 <style>
+    /* Select dark para modales */
+    .form-select-dark {
+        background-color: rgba(0,0,0,0.3) !important;
+        border: 1px solid rgba(255,255,255,0.1) !important;
+        color: #fff !important;
+        font-size: 0.85rem;
+        padding: 0.5rem 2.5rem 0.5rem 0.75rem;
+        border-radius: 6px;
+        width: 100%;
+        appearance: none;
+        -webkit-appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236c757d' d='M6 8L1 3h10z'/%3E%3C/svg%3E") !important;
+        background-repeat: no-repeat !important;
+        background-position: right 0.75rem center !important;
+        cursor: pointer;
+        transition: border-color .2s, box-shadow .2s;
+    }
+    .form-select-dark:focus {
+        border-color: #e63946 !important;
+        box-shadow: 0 0 0 0.2rem rgba(230,57,70,0.25) !important;
+        outline: none;
+    }
+    .form-select-dark option {
+        background-color: #1a1d21;
+        color: #ffffff;
+    }
     .input-group-text-custom {
         background: rgba(255,255,255,0.05);
         border-color: rgba(255,255,255,0.1);
@@ -584,6 +610,7 @@
                             <th style="width:150px;">TASA BASE</th>
                             <th class="text-center">DESC. TOTAL</th>
                             <th class="text-center">COEFICIENTE</th>
+                            <th class="text-center">TARJETA</th>
                             <th class="text-center">ESTADO</th>
                             <th class="text-center">
                                 ALCANCE
@@ -639,6 +666,18 @@
                                     <span class="text-success fw-bold">{{ item.coeficiente }}</span>
                                 </td>
                                 <td class="text-center">
+                                    {% if item.obj.tarjeta_custom %}
+                                    <span style="background:rgba(165,180,252,0.1);color:#a5b4fc;
+                                                 border:1px solid rgba(165,180,252,0.2);
+                                                 padding:3px 8px;border-radius:20px;
+                                                 font-size:.7rem;font-weight:700;">
+                                        {{ item.obj.tarjeta_custom.nombre }}
+                                    </span>
+                                    {% else %}
+                                    <span class="badge-global">Genérico</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-center">
                                     <div class="form-check form-switch d-inline-block">
                                         <input class="form-check-input" type="checkbox"
                                                name="activa" {% if item.obj.activa %}checked{% endif %}>
@@ -680,6 +719,133 @@
                         {% endfor %}
                     </tbody>
                 </table>
+            </div>
+        </div>
+    </div>
+    <!-- ══════════ TARJETAS CUSTOM ══════════ -->
+    <div class="row g-4 mt-2">
+        <div class="col-12">
+            <div class="custom-table-container shadow-lg animate-slide-up">
+                <div class="table-header border-bottom border-strong d-flex justify-content-between align-items-center p-3">
+                    <div>
+                        <h6 class="mb-0 text-white fw-bold">
+                            <i class="fas fa-credit-card text-danger me-2"></i>Tarjetas No Bancarias
+                        </h6>
+                        <small class="user-sub-text">Naranja X, Cabal, Tuya y otras tarjetas de comercio.</small>
+                    </div>
+                    <button class="btn btn-sm btn-outline-danger px-3"
+                            data-bs-toggle="modal" data-bs-target="#addTarjetaModal">
+                        <i class="fas fa-plus me-1"></i> Nueva Tarjeta
+                    </button>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0 custom-dark-table">
+                        <thead>
+                            <tr>
+                                <th class="ps-4">NOMBRE</th>
+                                <th class="text-center">ICONO</th>
+                                <th class="text-center">COMISION</th>
+                                <th class="text-center">ARANCEL</th>
+                                <th class="text-center">IVA</th>
+                                <th class="text-center">CUOTAS</th>
+                                <th class="text-center">CODIGO PAYZEN</th>
+                                <th class="text-center">ESTADO</th>
+                                <th class="text-end pe-4">ACCIONES</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for tc in tarjetas_custom %}
+                            <tr class="user-row border-bottom border-opacity-10">
+                                <td class="ps-4">
+                                    <div class="user-name-text">{{ tc.nombre }}</div>
+                                    <small class="user-sub-text font-monospace">{{ tc.slug }}</small>
+                                </td>
+                                <td class="text-center">
+                                    <i class="{{ tc.icono }}" style="font-size:1.2rem;color:#a1a1aa;"></i>
+                                </td>
+                                <td class="text-center">
+                                    <span style="color:#e2e8f0;font-weight:600;">{{ tc.comision }}%</span>
+                                    {% if tc.aplica_iva %}
+                                    <small class="d-block user-sub-text">+IVA {{ tc.iva }}%</small>
+                                    {% endif %}
+                                </td>
+                                <td class="text-center">
+                                    <span style="color:#e2e8f0;font-weight:600;">{{ tc.arancel }}%</span>
+                                </td>
+                                <td class="text-center">
+                                    {% if tc.aplica_iva %}
+                                    <span class="badge-global">SI</span>
+                                    {% else %}
+                                    <span style="background:rgba(107,114,128,.1);color:#9ca3af;border:1px solid rgba(107,114,128,.2);padding:4px 10px;border-radius:20px;font-size:.7rem;font-weight:700;">NO</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-center">
+                                    {% if tc.acepta_cuotas %}
+                                    <span class="badge-global">SI</span>
+                                    {% else %}
+                                    <span style="background:rgba(107,114,128,.1);color:#9ca3af;border:1px solid rgba(107,114,128,.2);padding:4px 10px;border-radius:20px;font-size:.7rem;font-weight:700;">NO</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-center">
+                                    {% if tc.payzen_code %}
+                                    <code style="font-size:.75rem;color:#a5b4fc;background:rgba(99,102,241,0.1);
+                                                padding:3px 8px;border-radius:4px;">{{ tc.payzen_code }}</code>
+                                    {% else %}
+                                    <span class="text-muted" style="font-size:.75rem;">No configurado</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-center">
+                                    {% if tc.activa %}
+                                    <span class="badge-status status-approved">
+                                        <div class="status-dot" style="background:#10b981;box-shadow:0 0 8px #10b981;"></div>
+                                        ACTIVA
+                                    </span>
+                                    {% else %}
+                                    <span class="badge-status status-blocked">
+                                        <div class="status-dot" style="background:#e63946;box-shadow:0 0 8px #e63946;"></div>
+                                        INACTIVA
+                                    </span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-end pe-4">
+                                    <div class="d-flex justify-content-end gap-2">
+                                        <button type="button"
+                                                class="btn btn-sm btn-action-dark"
+                                                data-bs-toggle="modal"
+                                                data-bs-target="#editTarjetaModal"
+                                                data-id="{{ tc.id }}"
+                                                data-nombre="{{ tc.nombre }}"
+                                                data-comision="{{ tc.comision }}"
+                                                data-arancel="{{ tc.arancel }}"
+                                                data-iva="{{ tc.iva }}"
+                                                data-aplica-iva="{{ tc.aplica_iva|yesno:'1,0' }}"
+                                                data-acepta-cuotas="{{ tc.acepta_cuotas|yesno:'1,0' }}"
+                                                data-activa="{{ tc.activa|yesno:'1,0' }}"
+                                                data-icono="{{ tc.icono }}"
+                                                data-orden="{{ tc.orden }}"
+                                                data-payzen-code="{{ tc.payzen_code }}">
+                                            <i class="fas fa-pen text-danger"></i>
+                                        </button>
+                                        <button type="button"
+                                                class="btn btn-sm btn-action-dark"
+                                                onclick="openDeleteTarjeta('{{ tc.id }}','{{ tc.nombre }}')">
+                                            <i class="fas fa-trash-alt text-danger"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="8" class="text-center py-5">
+                                    <i class="fas fa-credit-card display-4 opacity-25 d-block mb-3 text-muted"></i>
+                                    <span class="text-muted">No hay tarjetas custom configuradas.</span>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
@@ -1396,11 +1562,25 @@
                                    class="form-control form-control-dark" required>
                         </div>
                     </div>
+                    
+                    {# ── Tarjeta asociada ── #}
+                    <div class="mb-3">
+                        <label class="form-label text-muted small fw-bold">TARJETA ASOCIADA</label>
+                        <select name="new_tarjeta_custom_id" class="form-select-dark">
+                            <option value="">Crédito genérico (VISA / MC / AMEX)</option>
+                            {% for tc in tarjetas_custom %}
+                            <option value="{{ tc.id }}">{{ tc.nombre }}</option>
+                            {% endfor %}
+                        </select>
+                        <small class="text-muted" style="font-size:.7rem;">
+                            Si asignas una tarjeta, este plan solo aparece cuando el comercio elige esa tarjeta.
+                        </small>
+                    </div>
 
                     {# ── Alcance ── #}
                     <div class="mb-3">
                         <label class="form-label text-muted small fw-bold">ALCANCE</label>
-                        <select name="new_alcance" class="form-control form-control-dark"
+                        <select name="new_alcance" class="form-select-dark"
                                 onchange="toggleNewPlanUsuarios(this.value)">
                             <option value="global">Global — visible para todos</option>
                             <option value="usuarios">Personalizado — solo usuarios asignados</option>
@@ -1437,13 +1617,222 @@
 
                 <div class="modal-footer border-secondary">
                     <button type="button" class="btn btn-dark" data-bs-dismiss="modal">Cerrar</button>
-                    <button type="submit" class="btn btn-danger px-4">CREAR PLAN</button>
+                    <button type="submit" class="btn btn-danger px-4">Crear Plan</button>
                 </div>
             </form>
         </div>
     </div>
 </div>
 
+<!-- Modal Nueva Tarjeta -->
+<div class="modal fade" id="addTarjetaModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content bg-dark border-secondary">
+            <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="add_tarjeta" value="1">
+                <div class="modal-header border-secondary">
+                    <h5 class="modal-title text-white fw-bold">
+                        <i class="fas fa-credit-card text-danger me-2"></i>Nueva Tarjeta
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label class="form-label text-muted small fw-bold">NOMBRE</label>
+                            <input type="text" name="tc_nombre" class="form-control form-control-dark"
+                                   placeholder="Ej: Naranja X" required>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label text-muted small fw-bold">
+                                CODIGO PAYZEN
+                                <span class="text-muted fw-normal ms-1" style="font-size:.7rem;">
+                                    Ej: NARANJA, CABAL, CABAL_DEBIT, TUYA
+                                </span>
+                            </label>
+                            <input type="text" name="tc_payzen_code"
+                                class="form-control form-control-dark"
+                                placeholder="NARANJA"
+                                style="text-transform:uppercase;">
+                            <small class="text-muted" style="font-size:.7rem;">
+                                Este codigo le dice a Payzen que solo muestre esta tarjeta en el formulario de pago.
+                                Debe coincidir exactamente con el codigo de la tabla de medios de pago de Payzen.
+                            </small>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label text-muted small fw-bold">COMISION %</label>
+                            <input type="number" step="0.01" name="tc_comision"
+                                   class="form-control form-control-dark" value="0">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label text-muted small fw-bold">ARANCEL %</label>
+                            <input type="number" step="0.01" name="tc_arancel"
+                                   class="form-control form-control-dark" value="0">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label text-muted small fw-bold">IVA %</label>
+                            <input type="number" step="0.01" name="tc_iva"
+                                   class="form-control form-control-dark" value="21">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label text-muted small fw-bold">ORDEN</label>
+                            <input type="number" name="tc_orden"
+                                   class="form-control form-control-dark" value="0">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label text-muted small fw-bold">
+                                ICONO
+                                <span class="text-muted fw-normal ms-1" style="font-size:.7rem;">
+                                    Clase Font Awesome
+                                </span>
+                            </label>
+                            <input type="text" name="tc_icono"
+                                   class="form-control form-control-dark"
+                                   value="fas fa-credit-card"
+                                   placeholder="fas fa-credit-card">
+                        </div>
+                        <div class="col-12">
+                            <div class="d-flex gap-4">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox"
+                                           name="tc_aplica_iva" id="tc_aplica_iva_new" checked>
+                                    <label class="form-check-label text-white small fw-bold"
+                                           for="tc_aplica_iva_new">Aplica IVA</label>
+                                </div>
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox"
+                                           name="tc_acepta_cuotas" id="tc_acepta_cuotas_new">
+                                    <label class="form-check-label text-white small fw-bold"
+                                           for="tc_acepta_cuotas_new">Acepta cuotas</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-secondary">
+                    <button type="button" class="btn btn-dark" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-danger px-4 fw-bold">CREAR</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Editar Tarjeta -->
+<div class="modal fade" id="editTarjetaModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content bg-dark border-secondary">
+            <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="update_tarjeta" value="1">
+                <input type="hidden" name="tc_id" id="edit_tc_id">
+                <div class="modal-header border-secondary">
+                    <h5 class="modal-title text-white fw-bold">
+                        <i class="fas fa-pen text-danger me-2"></i>Editar Tarjeta
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label class="form-label text-muted small fw-bold">NOMBRE</label>
+                            <input type="text" name="tc_nombre" id="edit_tc_nombre"
+                                   class="form-control form-control-dark" required>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label text-muted small fw-bold">CODIGO PAYZEN</label>
+                            <input type="text" name="tc_payzen_code" id="edit_tc_payzen_code"
+                                class="form-control form-control-dark"
+                                placeholder="NARANJA"
+                                style="text-transform:uppercase;">
+                            <small class="text-muted" style="font-size:.7rem;">
+                                NARANJA, CABAL, CABAL_DEBIT, TUYA — debe coincidir con la tabla de Payzen.
+                            </small>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label text-muted small fw-bold">COMISION %</label>
+                            <input type="number" step="0.01" name="tc_comision" id="edit_tc_comision"
+                                   class="form-control form-control-dark">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label text-muted small fw-bold">ARANCEL %</label>
+                            <input type="number" step="0.01" name="tc_arancel" id="edit_tc_arancel"
+                                   class="form-control form-control-dark">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label text-muted small fw-bold">IVA %</label>
+                            <input type="number" step="0.01" name="tc_iva" id="edit_tc_iva"
+                                   class="form-control form-control-dark">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label text-muted small fw-bold">ORDEN</label>
+                            <input type="number" name="tc_orden" id="edit_tc_orden"
+                                   class="form-control form-control-dark">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label text-muted small fw-bold">ICONO</label>
+                            <input type="text" name="tc_icono" id="edit_tc_icono"
+                                   class="form-control form-control-dark">
+                        </div>
+                        <div class="col-12">
+                            <div class="d-flex gap-4">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox"
+                                           name="tc_aplica_iva" id="edit_tc_aplica_iva">
+                                    <label class="form-check-label text-white small fw-bold"
+                                           for="edit_tc_aplica_iva">Aplica IVA</label>
+                                </div>
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox"
+                                           name="tc_acepta_cuotas" id="edit_tc_acepta_cuotas">
+                                    <label class="form-check-label text-white small fw-bold"
+                                           for="edit_tc_acepta_cuotas">Acepta cuotas</label>
+                                </div>
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox"
+                                           name="tc_activa" id="edit_tc_activa">
+                                    <label class="form-check-label text-white small fw-bold"
+                                           for="edit_tc_activa">Activa</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-secondary">
+                    <button type="button" class="btn btn-dark" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-danger px-4 fw-bold">GUARDAR</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Eliminar Tarjeta -->
+<div class="modal fade modal-confirm-danger" id="deleteTarjetaModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content">
+            <div class="modal-header py-2">
+                <h5 class="modal-title fw-bold"><i class="fas fa-exclamation-triangle me-2"></i>ATENCION</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center py-4">
+                <i class="fas fa-trash-alt text-danger display-6 opacity-75 d-block mb-3"></i>
+                <p class="text-white-50 small mb-1">Eliminar tarjeta:</p>
+                <h6 class="text-white fw-bold" id="delete_tc_nombre_label">—</h6>
+            </div>
+            <div class="modal-footer border-0 justify-content-center pb-4">
+                <form method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="delete_tarjeta" value="1">
+                    <input type="hidden" name="tc_delete_id" id="tc_delete_id">
+                    <button type="button" class="btn btn-dark btn-sm" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-danger btn-sm px-4 fw-bold">ELIMINAR</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 
@@ -1465,6 +1854,28 @@ document.addEventListener('DOMContentLoaded', function () {
             });
         });
     });
+
+    // Modal editar tarjeta
+    document.getElementById('editTarjetaModal').addEventListener('show.bs.modal', function(e) {
+        const btn = e.relatedTarget;
+        document.getElementById('edit_tc_id').value            = btn.dataset.id;
+        document.getElementById('edit_tc_nombre').value        = btn.dataset.nombre;
+        document.getElementById('edit_tc_payzen_code').value   = btn.dataset.payzenCode || '';  // agregar
+        document.getElementById('edit_tc_comision').value      = btn.dataset.comision;
+        document.getElementById('edit_tc_arancel').value       = btn.dataset.arancel;
+        document.getElementById('edit_tc_iva').value           = btn.dataset.iva;
+        document.getElementById('edit_tc_icono').value         = btn.dataset.icono;
+        document.getElementById('edit_tc_orden').value         = btn.dataset.orden;
+        document.getElementById('edit_tc_aplica_iva').checked    = btn.dataset.aplicaIva === '1';
+        document.getElementById('edit_tc_acepta_cuotas').checked = btn.dataset.aceptaCuotas === '1';
+        document.getElementById('edit_tc_activa').checked        = btn.dataset.activa === '1';
+    });
+
+    function openDeleteTarjeta(id, nombre) {
+        document.getElementById('delete_tc_nombre_label').textContent = nombre;
+        document.getElementById('tc_delete_id').value = id;
+        new bootstrap.Modal(document.getElementById('deleteTarjetaModal')).show();
+    }
 });
 
 /* ── Eliminar ──────────────────────────────────────────────────── */
