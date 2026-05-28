@@ -146,6 +146,18 @@
                             <div>
                                 <div class="user-name-text">{{ cliente.nombre }}</div>
                                 <small class="user-sub-text">ID: {{ cliente.id|stringformat:"06d" }}</small>
+                                {% if cliente.fecha_aprobacion %}
+                                <small class="d-block" style="font-size:0.68rem; color:#6c757d;">
+                                    <i class="fas fa-check-circle me-1" style="color:#10b981;"></i>
+                                    Aprobado: {{ cliente.fecha_aprobacion|date:"d/m/Y H:i" }}
+                                </small>
+                                {% endif %}
+                                {% if cliente.fecha_registro %}
+                                <small class="d-block" style="font-size:0.68rem; color:#6c757d;">
+                                    <i class="fas fa-calendar-plus me-1" style="color:#f59e0b;"></i>
+                                    Registro: {{ cliente.fecha_registro|date:"d/m/Y H:i" }}
+                                </small>
+                                {% endif %}
                             </div>
                         </div>
                     </td>

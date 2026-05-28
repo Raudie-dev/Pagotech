@@ -14,6 +14,8 @@ from django.core.validators import validate_email
 from app2.models import ParametroFinanciero, CuotaConfig
 from .models import LinkPago, Cliente
 import logging
+from django.utils import timezone
+
 
 logger = logging.getLogger('app1')
 
@@ -76,7 +78,8 @@ def create_cliente(nombre: str, password: str, email: Optional[str] = None, tele
             email=email,
             telefono=telefono or None,
             aprobado=False,
-            bloqueado=False,  # Agregar valor por defecto
+            bloqueado=False,
+            fecha_registro=timezone.now(),
         )
         cliente.save()
         logger.info(f"create_cliente — cliente creado OK — id={cliente.id} nombre={nombre} email={email}")
@@ -84,14 +87,13 @@ def create_cliente(nombre: str, password: str, email: Optional[str] = None, tele
     except IntegrityError as e:
         logger.error(f"create_cliente — IntegrityError — email={email} error={str(e)}")
         
-        # Verificar si el email existe
         if Cliente.objects.filter(email__iexact=email).exists():
             return None, ['Este correo electrónico ya está registrado.']
-        # Verificar si el telefono existe
-        if Cliente.objects.filter(telefono=telefono).exists():
-            errors.append('Este número de teléfono ya está registrado.')
         
-        return None, ['Hubo un error de integridad. Es posible que el correo ya esté en uso.']
+        if telefono and Cliente.objects.filter(telefono=telefono).exists():
+            return None, ['Este número de teléfono ya está registrado.']
+        
+        return None, [f'Error al registrar. Intentá con otro correo o teléfono.']
     except Exception as e:
         logger.exception(f"create_cliente — error inesperado — email={email}: {e}")
         return None, [f'Error inesperado: {str(e)}']

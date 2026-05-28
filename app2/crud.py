@@ -44,6 +44,8 @@ def approve_cliente(pk: Any) -> Tuple[bool, Optional[str]]:
     if cliente.aprobado:
         return False, 'Cliente ya aprobado.'
     cliente.aprobado = True
+    from django.utils import timezone
+    cliente.fecha_aprobacion = timezone.now()
     try:
         cliente.save()
         return True, None

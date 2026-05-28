@@ -14,6 +14,8 @@ class Cliente(models.Model):
     version_tyc = models.CharField(max_length=20, null=True, blank=True)
     recibir_liquidacion_email = models.BooleanField(default=True)
     ultima_actividad_mensajes = models.DateTimeField(null=True, blank=True)
+    fecha_registro = models.DateTimeField(null=True, blank=True)
+    fecha_aprobacion = models.DateTimeField(null=True, blank=True)
     
 
     def __str__(self):
