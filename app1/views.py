@@ -82,6 +82,15 @@ def register(request):
         elif not re.match(r'^\+?[0-9]{8,15}$', telefono):
             errors.append('Debe comenzar con + y solo números (8-15 dígitos).')
 
+        # Nombre de usuario
+        username_val = request.POST.get('username', '').strip().lower()
+        if not username_val:
+            errors.append('El nombre de usuario es obligatorio.')
+        elif len(username_val) < 3:
+            errors.append('El nombre de usuario debe tener al menos 3 caracteres.')
+        elif not username_val.replace('_', '').replace('.', '').isalnum():
+            errors.append('El nombre de usuario solo puede contener letras, números, puntos y guiones bajos.')
+
         # Contraseña
         if not password:
             errors.append('La contraseña es obligatoria.')
@@ -90,7 +99,7 @@ def register(request):
                 errors.append('La contraseña debe tener al menos 8 caracteres.')
             if not re.search(r'[A-Z]', password):
                 errors.append('La contraseña debe contener al menos una mayúscula.')
-            if not re.search(r'[!@#$%^&*()_\-+=\[\]{}|:;"\'<>,.?/~`]', password):
+            if not re.search(r'[!@#$%^&*()_\-+=\[\]{}|:;"\'\'<>,.?/~`]', password):
                 errors.append('La contraseña debe contener al menos un símbolo.')
 
         # Confirmación de contraseña
@@ -108,7 +117,7 @@ def register(request):
             })
 
         # --- 3. CREAR CLIENTE (CRUD) ---
-        cliente, creation_errors = crud.create_cliente(nombre, password, email, telefono)
+        cliente, creation_errors = crud.create_cliente(nombre, password, email, telefono, username=username_val)
 
         if creation_errors:
             logger.warning(f"Registro rechazado — email={email} — errores={creation_errors}")
@@ -161,35 +170,25 @@ def register(request):
 
 def login_cliente(request):
     if request.method == 'POST':
-        email = request.POST.get('email', '').strip()
+        username = request.POST.get('username', '').strip()
+        email    = request.POST.get('email', '').strip()
         password = request.POST.get('password', '')
 
-        logger.debug(f"Intento de login — email={email}")
+        logger.debug(f"Intento de login — username={username} email={email}")
 
-        try:
-            user = Cliente.objects.get(email__iexact=email)
+        cliente, error_msg = crud.login_cliente_auth(username, email, password)
 
-            if user.bloqueado:
-                logger.warning(f"Login bloqueado — email={email} id={user.id}")
-                messages.error(request, 'Usuario bloqueado')
-
-            elif not user.aprobado:
-                logger.info(f"Login pendiente de aprobación — email={email} id={user.id}")
-                messages.error(request, 'Cuenta pendiente de aprobación')
-
-            elif check_password(password, user.password):
-                logger.info(f"Login exitoso — email={email} id={user.id} nombre={user.nombre}")
-                request.session['user_id'] = user.id
-                messages.success(request, f"Bienvenido {user.nombre}")
-                return redirect('dashboard')
-
-            else:
-                logger.warning(f"Login fallido — contraseña incorrecta — email={email} id={user.id}")
-                messages.error(request, 'Contraseña incorrecta')
-
-        except Cliente.DoesNotExist:
-            logger.warning(f"Login fallido — correo no registrado — email={email}")
-            messages.error(request, 'Correo no encontrado')
+        if error_msg:
+            messages.error(request, error_msg)
+        else:
+            logger.info(f"Login exitoso — id={cliente.id} username={username} rol={cliente.rol}")
+            request.session['user_id'] = cliente.id
+            request.session['user_rol'] = cliente.rol
+            messages.success(request, f"Bienvenido {cliente.nombre}")
+            # Secundarios van directo a crear link
+            if cliente.es_secundario:
+                return redirect('crear_link')
+            return redirect('dashboard')
 
     return render(request, 'login.html')
 
@@ -237,6 +236,10 @@ def dashboard(request):
     if not cliente:
         logger.warning(f"Dashboard — cliente id={user_id} no encontrado en DB, redirigiendo")
         return redirect('login_cliente')
+
+    # Los usuarios secundarios no acceden al dashboard
+    if cliente.es_secundario:
+        return redirect('crear_link')
     
     # ── Guard TyC ──────────────────────────────────────────────
     if not cliente.acepto_tyc or cliente.version_tyc != _get_tyc_version_actual():
@@ -265,12 +268,16 @@ def creacion_link(request):
 
     cliente = crud.get_cliente(user_id)
 
+    # Para usuarios secundarios: el cliente del negocio es el principal
+    cliente_negocio = cliente.principal if cliente.es_secundario else cliente
+    cliente_pk_negocio = cliente_negocio.id
+
     config = ParametroFinanciero.objects.first()
     if not config:
         logger.warning("Creación link — ParametroFinanciero no configurado, usando fallback")
         config = ParametroFinanciero.objects.create()
 
-    planes_activos = app2_crud.list_cuotas_para_usuario(user_id)
+    planes_activos = app2_crud.list_cuotas_para_usuario(cliente_pk_negocio)
     logger.debug(f"Creación link — usuario={cliente.nombre} id={user_id} planes_activos={planes_activos.count()}")
 
     if request.method == 'POST':
@@ -278,8 +285,8 @@ def creacion_link(request):
         # --- CASO A: AJAX Preview ---
         if 'preview' in request.POST:
             try:
-                # Modelo ABSORBE: monto ingresado = lo que cobra al cliente
-                monto_cobrado = Decimal(request.POST.get('monto', '0'))
+                # Modelo TRASLADA: monto ingresado = lo que quiere RECIBIR el comercio
+                monto_neto    = Decimal(request.POST.get('monto', '0'))
                 cuotas_num    = int(request.POST.get('cuotas', '1'))
                 tipo          = request.POST.get('tipo_tarjeta', 'credito')
 
@@ -320,19 +327,21 @@ def creacion_link(request):
                         ar_eff   = Decimal(str(config.arancel_plataforma)) * (1 + iva_f)
                         tasa_eff = Decimal('0')
 
-                total_desc    = tasa_eff + pt_eff + ar_eff
-                descuento_pesos = (monto_cobrado * (total_desc / 100)).quantize(
+                total_desc = tasa_eff + pt_eff + ar_eff
+
+                # Modelo TRASLADA: calcular monto que paga el cliente
+                monto_cliente   = (monto_neto / (1 - total_desc / 100)).quantize(
                     Decimal('0.01'), rounding=ROUND_HALF_UP
                 )
-                neto_vendedor = (monto_cobrado - descuento_pesos).quantize(
+                descuento_pesos = (monto_cliente - monto_neto).quantize(
                     Decimal('0.01'), rounding=ROUND_HALF_UP
                 )
 
                 return JsonResponse({
                     'success':     True,
-                    'monto_venta': float(monto_cobrado),    # lo que paga el cliente
-                    'comision':    float(descuento_pesos),  # descuento Payway
-                    'neto':        float(neto_vendedor)     # lo que recibe el vendedor
+                    'monto_venta': float(monto_cliente),    # lo que paga el cliente
+                    'comision':    float(descuento_pesos),  # aranceles trasladados al cliente
+                    'neto':        float(monto_neto)        # lo que recibe el comercio (= lo ingresado)
                 })
             except Exception as e:
                 logger.error(f"Error en preview — usuario={user_id}: {e}")
@@ -349,7 +358,10 @@ def creacion_link(request):
                 f"tipo={tipo} cuotas={cuotas} descripcion='{desc}'"
             )
 
-            link_obj, errors = crud.create_link(user_id, monto_contado, int(cuotas), tipo, desc)
+            link_obj, errors = crud.create_link(
+                cliente_pk_negocio, monto_contado, int(cuotas), tipo, desc,
+                creado_por_pk=user_id
+            )
 
             if not errors:
                 logger.info(
@@ -366,37 +378,44 @@ def creacion_link(request):
                     messages.error(request, e)
 
     # GET — Carga de tabla
-    all_links = crud.list_links_for_cliente(user_id)
+    # Los secundarios ven solo sus propios links; los principales ven todos los del negocio
+    if cliente.es_secundario:
+        all_links = crud.list_links_for_cliente(cliente_pk_negocio).filter(creado_por=cliente)
+    else:
+        all_links = crud.list_links_for_cliente(cliente_pk_negocio).select_related('creado_por')
+
     paginator = Paginator(all_links, 10)
     page_obj = paginator.get_page(request.GET.get('page'))
     link_creado = request.session.pop('link_recien_creado', None)
     tarjetas_custom = TarjetaCustom.objects.filter(activa=True).order_by('orden', 'nombre')
 
     logger.debug(f"Creación link GET — usuario={user_id} total_links={all_links.count()}")
-    
+
     from app2 import crud as admin_crud
     import json
-    planes_credito = admin_crud.list_cuotas_para_usuario(cliente.id)
+    planes_credito = admin_crud.list_cuotas_para_usuario(cliente_pk_negocio)
 
     tarjetas_custom = TarjetaCustom.objects.filter(activa=True).order_by('orden', 'nombre')
 
     planes_por_tarjeta = {}
     for tc in tarjetas_custom:
         if tc.acepta_cuotas:
-            planes = admin_crud.list_cuotas_para_tarjeta_custom(cliente.id, tc.slug)
+            planes = admin_crud.list_cuotas_para_tarjeta_custom(cliente_pk_negocio, tc.slug)
             planes_por_tarjeta[tc.slug] = [
                 {'numero_cuota': p.numero_cuota, 'nombre': p.nombre}
                 for p in planes
             ]
-            
+
     return render(request, 'creacion_link.html', {
-        'user': cliente,
-        'links': page_obj,
-        'planes': planes_activos,
-        'link_creado': link_creado,
-        'tarjetas_custom': tarjetas_custom,
-        'config': config,
-        'planes':            planes_credito,       # compatibilidad con el template actual
+        'user':              cliente,
+        'cliente_negocio':   cliente_negocio,
+        'es_operador':       cliente.es_secundario,
+        'links':             page_obj,
+        'planes':            planes_activos,
+        'link_creado':       link_creado,
+        'tarjetas_custom':   tarjetas_custom,
+        'config':            config,
+        'planes':            planes_credito,
         'planes_por_tarjeta': json.dumps(planes_por_tarjeta),
         'tarjetas_custom':   tarjetas_custom
     })
@@ -569,11 +588,16 @@ def gestion_perfil(request):
         logger.warning(f"Perfil — cliente id={user_id} no encontrado en DB")
         return redirect('login_cliente')
 
+    # Usuarios secundarios no acceden al perfil
+    if cliente.es_secundario:
+        return redirect('crear_link')
+
     logger.debug(f"Perfil cargado — usuario={cliente.nombre} id={user_id}")
 
     if request.method == 'POST':
         data = {
             'nombre': request.POST.get('nombre'),
+            'username': request.POST.get('username'),
             'email': request.POST.get('email'),
             'telefono': request.POST.get('telefono'),
             'password': request.POST.get('password') if request.POST.get('password') else None,
@@ -598,6 +622,116 @@ def gestion_perfil(request):
                     messages.error(request, error)
 
     return render(request, 'perfil.html', {'user': cliente})
+
+def set_username(request):
+    user_id = request.session.get('user_id')
+    if not user_id:
+        return redirect('login_cliente')
+    
+    if request.method == 'POST':
+        username = request.POST.get('username', '').strip().lower()
+        if len(username) < 3 or not username.replace('_', '').replace('.', '').isalnum():
+            messages.error(request, 'El nombre de usuario es inválido.')
+        else:
+            if Cliente.objects.filter(username__iexact=username).exists():
+                messages.error(request, 'Ese nombre de usuario ya está en uso.')
+            else:
+                cliente = crud.get_cliente(user_id)
+                if cliente:
+                    cliente.username = username
+                    cliente.save()
+                    messages.success(request, f'Nombre de usuario configurado como @{username}')
+    
+    return redirect('dashboard')
+
+
+def gestion_operadores(request):
+    """Vista para que el usuario principal gestione sus operadores secundarios."""
+    user_id = request.session.get('user_id')
+    if not user_id:
+        return redirect('login_cliente')
+
+    cliente = crud.get_cliente(user_id)
+    if not cliente or cliente.es_secundario:
+        return redirect('crear_link')
+
+    if request.method == 'POST':
+        accion = request.POST.get('accion')
+
+        # --- Crear nuevo operador ---
+        if accion == 'crear':
+            username = request.POST.get('username', '').strip()
+            nombre   = request.POST.get('nombre', '').strip()
+            password = request.POST.get('password', '').strip()
+            operador, errors = crud.create_operador(user_id, username, nombre, password)
+            if errors:
+                for e in errors:
+                    messages.error(request, e)
+            else:
+                messages.success(request, f'Operador @{operador.username} creado correctamente.')
+            return redirect('operadores')
+
+        # --- Bloquear / Desbloquear ---
+        if accion in ('bloquear', 'desbloquear'):
+            op_id = request.POST.get('operador_id')
+            try:
+                op = Cliente.objects.get(pk=op_id, principal=cliente, rol=Cliente.ROL_SECUNDARIO)
+                op.bloqueado = (accion == 'bloquear')
+                op.save()
+                msg = 'bloqueado' if op.bloqueado else 'desbloqueado'
+                messages.success(request, f'Operador @{op.username} {msg}.')
+            except Cliente.DoesNotExist:
+                messages.error(request, 'Operador no encontrado.')
+            return redirect('operadores')
+
+        # --- Editar ---
+        if accion == 'editar':
+            op_id = request.POST.get('operador_id')
+            nombre = request.POST.get('nombre', '').strip()
+            username = request.POST.get('username', '').strip().lower()
+            password = request.POST.get('password', '').strip()
+            try:
+                op = Cliente.objects.get(pk=op_id, principal=cliente, rol=Cliente.ROL_SECUNDARIO)
+                if nombre:
+                    op.nombre = nombre.upper()
+                if username:
+                    if username != op.username and Cliente.objects.filter(username__iexact=username).exclude(pk=op.pk).exists():
+                        messages.error(request, 'El nombre de usuario ya está en uso.')
+                    else:
+                        op.username = username
+                if password:
+                    from django.contrib.auth.hashers import make_password
+                    if len(password) >= 6:
+                        op.password = make_password(password)
+                    else:
+                        messages.error(request, 'La contraseña debe tener al menos 6 caracteres.')
+                op.save()
+                messages.success(request, f'Operador @{op.username} actualizado.')
+            except Cliente.DoesNotExist:
+                messages.error(request, 'Operador no encontrado.')
+            return redirect('operadores')
+
+
+        # --- Eliminar ---
+        if accion == 'eliminar':
+            op_id = request.POST.get('operador_id')
+            ok, err = crud.delete_operador(op_id, user_id)
+            if ok:
+                messages.success(request, 'Operador eliminado.')
+            else:
+                messages.error(request, err)
+            return redirect('operadores')
+
+    operadores = crud.list_operadores(user_id)
+    # Links del negocio con info de quién los creó
+    todos_links = crud.list_links_for_cliente(user_id).select_related('creado_por')[:50]
+
+    return render(request, 'gestion_operadores.html', {
+        'user':       cliente,
+        'operadores': operadores,
+        'links':      todos_links,
+    })
+
 
 def mensajes_cliente(request):
     user_id = request.session.get('user_id')

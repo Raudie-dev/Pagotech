@@ -59,26 +59,46 @@
             <h6 class="text-muted">Panel de Usuario</h6>
         </div>
         <ul class="nav flex-column">
-            <li class="nav-item">
-                <a class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}" href="{% url 'dashboard' %}">
-                    <i class="fas fa-tachometer-alt"></i> Dashboard
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link {% if request.resolver_match.url_name == 'crear_link' %}active{% endif %}" href="{% url 'crear_link' %}">
-                    <i class="fas fa-link"></i> Crear Link
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link {% if request.resolver_match.url_name == 'mensajes_cliente' %}active{% endif %}" href="{% url 'mensajes_cliente' %}">
-                    <i class="fas fa-comments"></i> Mensajes
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link {% if request.resolver_match.url_name == 'perfil' %}active{% endif %}" href="{% url 'perfil' %}">
-                    <i class="fas fa-user-circle"></i> Mi Perfil
-                </a>
-            </li>
+            {% if user.es_secundario %}
+                {# ── Menú reducido para operadores ── #}
+                <li class="nav-item">
+                    <a class="nav-link {% if request.resolver_match.url_name == 'crear_link' %}active{% endif %}" href="{% url 'crear_link' %}">
+                        <i class="fas fa-link"></i> Crear Link
+                    </a>
+                </li>
+            {% else %}
+                {# ── Menú completo para el principal ── #}
+                <li class="nav-item">
+                    <a class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}" href="{% url 'dashboard' %}">
+                        <i class="fas fa-tachometer-alt"></i> Dashboard
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if request.resolver_match.url_name == 'crear_link' %}active{% endif %}" href="{% url 'crear_link' %}">
+                        <i class="fas fa-link"></i> Crear Link
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if request.resolver_match.url_name == 'operadores' %}active{% endif %}" href="{% url 'operadores' %}">
+                        <i class="fas fa-users-cog"></i> Operadores
+                        {% with cnt=user.operadores.count %}
+                            {% if cnt > 0 %}
+                                <span class="badge ms-auto" style="background:rgba(239,68,68,0.2);color:#ef4444;border:1px solid rgba(239,68,68,0.3);border-radius:12px;font-size:0.65rem;padding:2px 7px;">{{ cnt }}</span>
+                            {% endif %}
+                        {% endwith %}
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if request.resolver_match.url_name == 'mensajes_cliente' %}active{% endif %}" href="{% url 'mensajes_cliente' %}">
+                        <i class="fas fa-comments"></i> Mensajes
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if request.resolver_match.url_name == 'perfil' %}active{% endif %}" href="{% url 'perfil' %}">
+                        <i class="fas fa-user-circle"></i> Mi Perfil
+                    </a>
+                </li>
+            {% endif %}
         </ul>
     </aside>
 
@@ -131,6 +151,50 @@
             <path d="M12 0C5.373 0 0 5.373 0 12c0 2.126.556 4.121 1.523 5.854L.057 23.926a.75.75 0 00.918.918l6.073-1.466A11.943 11.943 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.891 0-3.668-.495-5.21-1.362l-.374-.214-3.871.935.952-3.788-.233-.389A9.955 9.955 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/>
         </svg>
     </a>
+    {% endif %}
+
+    {% if user and user.id and not user.username %}
+    <!-- Modal Force Username -->
+    <div class="modal fade" id="modalForceUsername" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content" style="background:#1a1a2e;border:1px solid rgba(59,130,246,0.3);">
+                <form action="{% url 'set_username' %}" method="post">
+                    {% csrf_token %}
+                    <div class="modal-header" style="border-bottom:1px solid rgba(255,255,255,0.08);">
+                        <h5 class="modal-title text-white fw-bold">
+                            <i class="fas fa-at text-primary me-2"></i> Configura tu nombre de usuario
+                        </h5>
+                    </div>
+                    <div class="modal-body">
+                        <p class="text-muted small mb-4">
+                            Hola {{ user.nombre }}. Hemos actualizado el sistema para soportar <strong>operadores secundarios</strong>. Para usar esta función y mejorar la seguridad, necesitas elegir un nombre de usuario único para tu cuenta principal.
+                        </p>
+                        <div class="mb-3">
+                            <label class="form-label text-secondary small fw-bold">Nombre de usuario</label>
+                            <div class="input-group">
+                                <span class="input-group-text" style="background:#0f0f1a;border:1px solid rgba(255,255,255,0.1);color:#6c757d;">@</span>
+                                <input type="text" class="form-control" name="username" placeholder="mi.negocio" required minlength="3" style="background:#0f0f1a;border:1px solid rgba(255,255,255,0.1);color:#fff;" pattern="[a-zA-Z0-9._]+">
+                            </div>
+                            <small class="text-muted d-block mt-1">Mínimo 3 caracteres. Solo letras, números, puntos y guiones bajos.</small>
+                        </div>
+                    </div>
+                    <div class="modal-footer" style="border-top:1px solid rgba(255,255,255,0.08);">
+                        <button type="submit" class="btn btn-primary px-4 w-100">
+                            <i class="fas fa-save me-2"></i> Guardar y Continuar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var myModal = new bootstrap.Modal(document.getElementById('modalForceUsername'), {
+                keyboard: false
+            });
+            myModal.show();
+        });
+    </script>
     {% endif %}
 </body>
 </html>

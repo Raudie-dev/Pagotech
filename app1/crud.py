@@ -39,16 +39,27 @@ def get_payzen_auth_header():
 # CLIENTES
 # ==============================================================================
 
-def create_cliente(nombre: str, password: str, email: Optional[str] = None, telefono: Optional[str] = None) -> Tuple[Optional[Cliente], List[str]]:
+def create_cliente(nombre: str, password: str, email: Optional[str] = None, telefono: Optional[str] = None, username: Optional[str] = None) -> Tuple[Optional[Cliente], List[str]]:
     errors: List[str] = []
 
-    nombre = (nombre or '').strip().upper()
-    email = (email or '').strip().lower() if email else None
+    nombre   = (nombre   or '').strip().upper()
+    email    = (email    or '').strip().lower() if email    else None
+    username = (username or '').strip().lower() if username else None
 
-    logger.debug(f"create_cliente — nombre={nombre} email={email} telefono={telefono}")
+    logger.debug(f"create_cliente — nombre={nombre} email={email} username={username} telefono={telefono}")
 
     if not nombre:
         errors.append('El nombre es obligatorio.')
+    if not username:
+        errors.append('El nombre de usuario es obligatorio.')
+    elif len(username) < 3:
+        errors.append('El nombre de usuario debe tener al menos 3 caracteres.')
+    elif not username.replace('_', '').replace('.', '').isalnum():
+        errors.append('El nombre de usuario solo puede contener letras, números, puntos y guiones bajos.')
+    else:
+        if Cliente.objects.filter(username__iexact=username).exists():
+            errors.append('Este nombre de usuario ya está en uso.')
+
     if not password:
         errors.append('La contraseña es obligatoria.')
     elif len(password) < 8:
@@ -60,8 +71,7 @@ def create_cliente(nombre: str, password: str, email: Optional[str] = None, tele
         except ValidationError:
             errors.append('El formato del correo electrónico no es válido.')
 
-        # Usar iexact para ignorar mayúsculas/minúsculas
-        if Cliente.objects.filter(email__iexact=email).exists():
+        if Cliente.objects.filter(email__iexact=email, rol=Cliente.ROL_PRINCIPAL).exists():
             logger.warning(f"create_cliente — email ya registrado: {email}")
             errors.append('Este correo electrónico ya está registrado.')
     else:
@@ -74,11 +84,13 @@ def create_cliente(nombre: str, password: str, email: Optional[str] = None, tele
     try:
         cliente = Cliente(
             nombre=nombre,
+            username=username,
             password=make_password(password),
             email=email,
             telefono=telefono or None,
             aprobado=False,
             bloqueado=False,
+            rol=Cliente.ROL_PRINCIPAL,
             fecha_registro=timezone.now(),
         )
         cliente.save()
@@ -86,17 +98,143 @@ def create_cliente(nombre: str, password: str, email: Optional[str] = None, tele
         return cliente, []
     except IntegrityError as e:
         logger.error(f"create_cliente — IntegrityError — email={email} error={str(e)}")
-        
+
         if Cliente.objects.filter(email__iexact=email).exists():
             return None, ['Este correo electrónico ya está registrado.']
-        
+
         if telefono and Cliente.objects.filter(telefono=telefono).exists():
             return None, ['Este número de teléfono ya está registrado.']
-        
+
+        if username and Cliente.objects.filter(username__iexact=username).exists():
+            return None, ['Este nombre de usuario ya está en uso.']
+
         return None, [f'Error al registrar. Intentá con otro correo o teléfono.']
     except Exception as e:
         logger.exception(f"create_cliente — error inesperado — email={email}: {e}")
         return None, [f'Error inesperado: {str(e)}']
+
+
+def login_cliente_auth(username: str, email: str, password: str) -> Tuple[Optional[Cliente], Optional[str]]:
+    """
+    Autentica un cliente por username + email del negocio + contraseña.
+    Para usuarios secundarios, el email del negocio es el del usuario principal.
+    Retorna (cliente, None) si OK, (None, mensaje_error) si falla.
+    """
+    username = (username or '').strip().lower()
+    email    = (email    or '').strip().lower()
+
+    logger.debug(f"login_cliente_auth — username={username} email={email}")
+
+    cliente = None
+    if username:
+        try:
+            cliente = Cliente.objects.select_related('principal').get(username__iexact=username)
+            # Verificar email del negocio para este usuario
+            email_negocio = cliente.principal.email if cliente.es_secundario and cliente.principal else cliente.email
+            if not email_negocio or email_negocio.lower() != email:
+                logger.warning(f"login_cliente_auth — email no coincide — username={username}")
+                return None, 'Usuario o contraseña incorrectos.'
+        except Cliente.DoesNotExist:
+            pass
+    
+    # Si no se encontró por username o no se proporcionó, buscar a los usuarios antiguos (principales) por email
+    if not cliente and email:
+        # Los secundarios DEBEN usar username, solo los principales antiguos pueden no tenerlo
+        clientes_legacy = Cliente.objects.filter(email__iexact=email, rol=Cliente.ROL_PRINCIPAL)
+        if clientes_legacy.exists():
+            cliente = clientes_legacy.first()
+            # Si el cliente ya tiene un username configurado y el usuario no lo ingresó, forzar a que lo use (opcional, o le permitimos login igual)
+            # Vamos a permitirle login igual para que sea fluido.
+        else:
+            logger.warning(f"login_cliente_auth — cliente no encontrado por email={email} y username={username}")
+            return None, 'Usuario o contraseña incorrectos.'
+
+    if not cliente:
+        return None, 'Usuario o contraseña incorrectos.'
+
+    if cliente.bloqueado:
+        return None, 'Tu cuenta está bloqueada. Contacta al administrador.'
+
+    # Para principales: verificar aprobación
+    if cliente.es_principal and not cliente.aprobado:
+        return None, 'Tu cuenta está pendiente de aprobación.'
+
+    # Para secundarios: verificar que el principal esté aprobado y el secundario no bloqueado
+    if cliente.es_secundario:
+        principal = cliente.principal
+        if not principal or not principal.aprobado or principal.bloqueado:
+            return None, 'La cuenta principal no está habilitada.'
+
+    from django.contrib.auth.hashers import check_password
+    if not check_password(password, cliente.password):
+        logger.warning(f"login_cliente_auth — contraseña incorrecta — username={username}")
+        return None, 'Usuario o contraseña incorrectos.'
+
+    logger.info(f"login_cliente_auth — OK — id={cliente.id} username={username} rol={cliente.rol}")
+    return cliente, None
+
+
+def create_operador(principal_pk: Any, username: str, nombre: str, password: str) -> Tuple[Optional[Cliente], List[str]]:
+    """Crea un usuario operador (secundario) asociado a un principal."""
+    errors: List[str] = []
+
+    principal = get_cliente(principal_pk)
+    if not principal or principal.es_secundario:
+        return None, ['Principal no válido.']
+
+    username = (username or '').strip().lower()
+    nombre   = (nombre   or '').strip()
+
+    if not username:
+        errors.append('El nombre de usuario es obligatorio.')
+    elif len(username) < 3:
+        errors.append('El nombre de usuario debe tener al menos 3 caracteres.')
+    elif not username.replace('_', '').replace('.', '').isalnum():
+        errors.append('Solo letras, números, puntos y guiones bajos.')
+    elif Cliente.objects.filter(username__iexact=username).exists():
+        errors.append('Este nombre de usuario ya está en uso.')
+
+    if not nombre:
+        errors.append('El nombre es obligatorio.')
+
+    if not password or len(password) < 6:
+        errors.append('La contraseña debe tener al menos 6 caracteres.')
+
+    if errors:
+        return None, errors
+
+    try:
+        operador = Cliente.objects.create(
+            nombre=nombre.upper(),
+            username=username,
+            password=make_password(password),
+            email=None,          # los secundarios no tienen email propio
+            telefono=None,
+            rol=Cliente.ROL_SECUNDARIO,
+            principal=principal,
+            aprobado=True,       # activación automática
+            bloqueado=False,
+            fecha_registro=timezone.now(),
+        )
+        logger.info(f"create_operador — OK id={operador.id} username={username} principal={principal_pk}")
+        return operador, []
+    except IntegrityError:
+        return None, ['Error al crear el operador. Verificá los datos.']
+
+
+def list_operadores(principal_pk: Any):
+    """Lista los operadores secundarios de un principal."""
+    return Cliente.objects.filter(principal_id=principal_pk, rol=Cliente.ROL_SECUNDARIO).order_by('nombre')
+
+
+def delete_operador(operador_pk: Any, principal_pk: Any) -> Tuple[bool, Optional[str]]:
+    """Elimina un operador, verificando que pertenece al principal."""
+    try:
+        op = Cliente.objects.get(pk=operador_pk, principal_id=principal_pk, rol=Cliente.ROL_SECUNDARIO)
+        op.delete()
+        return True, None
+    except Cliente.DoesNotExist:
+        return False, 'Operador no encontrado.'
 
 
 def get_cliente(pk: Any) -> Optional[Cliente]:
@@ -136,6 +274,17 @@ def update_cliente(pk: Any, data: Dict[str, Any]) -> List[str]:
     telefono = data.get('telefono')
     if telefono is not None:
         cliente.telefono = telefono.strip() or None
+
+    username = data.get('username')
+    if username is not None:
+        username = username.strip().lower()
+        if username:
+            if username != cliente.username and Cliente.objects.filter(username__iexact=username).exclude(pk=pk).exists():
+                return ['El nombre de usuario ya está en uso.']
+            cliente.username = username
+        else:
+            # We don't allow clearing the username if it's already set, but just in case:
+            pass
 
     password = data.get('password')
     if password:
@@ -201,10 +350,12 @@ def get_dashboard_stats(cliente_pk: Any) -> Dict[str, Any]:
 # LINKS DE PAGO
 # ==============================================================================
 
-def create_link(cliente_pk, monto_contado, cuotas=1, tipo_tarjeta='credito', descripcion=None):
+def create_link(cliente_pk, monto_contado, cuotas=1, tipo_tarjeta='credito', descripcion=None, creado_por_pk=None):
     """
-    Modelo ABSORBE: el vendedor ingresa el precio que cobra al cliente.
-    Payway descuenta sobre ese precio y el vendedor recibe el neto resultante.
+    Modelo TRASLADA: el vendedor ingresa el monto neto que desea recibir.
+    Los aranceles se suman al monto del vendedor para calcular lo que pagará el cliente:
+        monto_cliente = monto_neto / (1 - total_desc_pct / 100)
+    Así el comercio recibe exactamente lo que ingresó.
     """
     logger.info(
         f"create_link — cliente={cliente_pk} monto_cobrado={monto_contado} "
@@ -231,8 +382,8 @@ def create_link(cliente_pk, monto_contado, cuotas=1, tipo_tarjeta='credito', des
         )
 
     try:
-        # El monto ingresado ES lo que cobra al cliente (precio bruto)
-        monto_cobrado = Decimal(str(monto_contado))
+        # El monto ingresado ES lo que quiere RECIBIR el vendedor (monto neto)
+        monto_cobrado = Decimal(str(monto_contado))  # neto deseado por el comercio
 
         if tipo_tarjeta == 'debito':
             # Débito: siempre usa config global, sin tasa de financiación
@@ -343,19 +494,20 @@ def create_link(cliente_pk, monto_contado, cuotas=1, tipo_tarjeta='credito', des
             logger.error(f"create_link — tasas superan el 100%: {total_desc_pct}%")
             return None, ["Error crítico: La sumatoria de tasas supera el 100%. Verifique la configuración."]
 
-        # 3. Cálculo modelo ABSORBE
-        # El vendedor cobra monto_cobrado al cliente
-        # Payway descuenta el porcentaje y le liquida el neto
-        commission_amount = (monto_cobrado * (total_desc_pct / 100)).quantize(
+        # 3. Cálculo modelo TRASLADA
+        # El vendedor ingresó monto_cobrado = lo que quiere RECIBIR (neto)
+        # Se calcula lo que pagará el cliente sumando los aranceles por encima
+        monto_cliente = (monto_cobrado / (1 - total_desc_pct / 100)).quantize(
             Decimal('0.01'), rounding=ROUND_HALF_UP
         )
-        receiver_amount = (monto_cobrado - commission_amount).quantize(
+        commission_amount = (monto_cliente - monto_cobrado).quantize(
             Decimal('0.01'), rounding=ROUND_HALF_UP
         )
+        receiver_amount = monto_cobrado  # el comercio recibe exactamente lo ingresado
 
         logger.debug(
-            f"create_link — ABSORBE: cobrado={monto_cobrado} "
-            f"descuento={commission_amount} neto_vendedor={receiver_amount}"
+            f"create_link — TRASLADA: neto_deseado={monto_cobrado} "
+            f"monto_cliente={monto_cliente} aranceles_trasladados={commission_amount}"
         )
         
         # ── Desglose proporcional para guardar en DB ───────────────────
@@ -371,6 +523,10 @@ def create_link(cliente_pk, monto_contado, cuotas=1, tipo_tarjeta='credito', des
             d_ar   = Decimal('0.00')
             d_tasa = Decimal('0.00')
             d_com  = commission_amount
+
+        # Reasignamos para que el payload y el modelo usen el monto del cliente
+        monto_cobrado_original = monto_cobrado  # neto del comercio
+        monto_cobrado = monto_cliente            # lo que paga el cliente
 
         # IVA desglosado
         d_iva_21  = Decimal('0.00')
@@ -398,7 +554,7 @@ def create_link(cliente_pk, monto_contado, cuotas=1, tipo_tarjeta='credito', des
                 base_sin_iva = (d_ar + d_com) / (1 + iva_f)
                 d_iva_21 = (d_ar + d_com - base_sin_iva).quantize(Decimal('0.01'), ROUND_HALF_UP)
 
-        d_cuota_valor = (monto_cobrado / cuotas).quantize(Decimal('0.01'), ROUND_HALF_UP)
+        d_cuota_valor = (monto_cliente / cuotas).quantize(Decimal('0.01'), ROUND_HALF_UP)
 
         logger.debug(
             f"create_link — desglose: ar={d_ar} com={d_com} tasa={d_tasa} "
@@ -470,7 +626,7 @@ def create_link(cliente_pk, monto_contado, cuotas=1, tipo_tarjeta='credito', des
             link_obj = LinkPago.objects.create(
                 cliente=cliente,
                 order_id=order_id,
-                monto=monto_cobrado,          # lo que paga el cliente
+                monto=monto_cliente,          # lo que paga el cliente
                 cuotas=cuotas,
                 tipo_tarjeta=tipo_tarjeta,
                 descripcion=descripcion or '',
@@ -483,12 +639,13 @@ def create_link(cliente_pk, monto_contado, cuotas=1, tipo_tarjeta='credito', des
                 desglose_tasa=d_tasa,
                 desglose_iva_21=d_iva_21,
                 desglose_iva_105=d_iva_105,
-                desglose_cuota_valor=d_cuota_valor
+                desglose_cuota_valor=d_cuota_valor,
+                creado_por_id=creado_por_pk,
             )
             logger.info(
                 f"create_link — link creado OK — id={link_obj.id} order_id={order_id} "
-                f"cliente={cliente.nombre} cobrado={monto_cobrado} "
-                f"descuento={commission_amount} neto={receiver_amount} "
+                f"cliente={cliente.nombre} neto_comercio={monto_cobrado_original} "
+                f"monto_cliente={monto_cliente} aranceles={commission_amount} "
                 f"tipo={tipo_tarjeta} cuotas={cuotas}"
             )
             return link_obj, []

@@ -38,14 +38,19 @@ document.addEventListener("DOMContentLoaded", function () {
       // Obtener datos del botón data-*
       const id = button.getAttribute("data-id");
       const nombre = button.getAttribute("data-nombre");
+      const username = button.getAttribute("data-username");
       const email = button.getAttribute("data-email");
       const telefono = button.getAttribute("data-telefono");
       const aprobado = button.getAttribute("data-aprobado"); // "1" o "0"
       const bloqueado = button.getAttribute("data-bloqueado"); // "1" o "0"
+      const rol = button.getAttribute("data-rol"); // "1" (Principal) o "2" (Operador)
 
       // Asignar valores a los inputs
       document.getElementById("edit_id").value = id || "";
       document.getElementById("edit_nombre").value = nombre || "";
+      if (document.getElementById("edit_username")) {
+          document.getElementById("edit_username").value = username && username !== "undefined" && username !== "null" ? username : "";
+      }
       document.getElementById("edit_email").value = email || "";
       document.getElementById("edit_telefono").value = telefono || "";
 
@@ -57,6 +62,33 @@ document.addEventListener("DOMContentLoaded", function () {
       // Marcar switches correctamente (comparando con "1")
       document.getElementById("edit_aprobado").checked = aprobado === "1";
       document.getElementById("edit_bloqueado").checked = bloqueado === "1";
+
+      // Mostrar/Ocultar campos según el rol
+      const divEmail = document.getElementById("div_edit_email");
+      const divTelefono = document.getElementById("div_edit_telefono");
+      const divAprobado = document.getElementById("div_edit_aprobado");
+      
+      const inputEmail = document.getElementById("edit_email");
+      const inputTelefono = document.getElementById("edit_telefono");
+      const inputAprobado = document.getElementById("edit_aprobado");
+      
+      if (rol === "2") {
+          if (divEmail) divEmail.style.display = "none";
+          if (divTelefono) divTelefono.style.display = "none";
+          if (divAprobado) divAprobado.style.display = "none";
+          
+          if (inputEmail) inputEmail.disabled = true;
+          if (inputTelefono) inputTelefono.disabled = true;
+          if (inputAprobado) inputAprobado.disabled = true;
+      } else {
+          if (divEmail) divEmail.style.display = "block";
+          if (divTelefono) divTelefono.style.display = "block";
+          if (divAprobado) divAprobado.style.display = "block";
+          
+          if (inputEmail) inputEmail.disabled = false;
+          if (inputTelefono) inputTelefono.disabled = false;
+          if (inputAprobado) inputAprobado.disabled = false;
+      }
     });
   }
 

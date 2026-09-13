@@ -1,0 +1,40 @@
+# Cambia a PROD para usar MySQL, o LOCAL para SQLite
+ENVIRONMENT=PROD
+
+# Configuración MySQL
+DB_NAME=pagotech_db
+DB_USER=pagotech_user
+DB_PASSWORD="v~s%6]@3K#$X2_xT"
+DB_HOST=148.251.239.17
+DB_PORT=3306
+
+# Configuración SQLite
+DB_NAME_SQLITE=pagotech.sqlite3
+
+# Otras variables recomendadas
+DEBUG=False
+SECRET_KEY=django-insecure-4y8s5^1l@i@bz90rjcqxuda!6oknb4m&_d+w2b()k&5ec68j&6
+
+# Configuración de hosts permitidos
+
+# Desarrollo
+# ALLOWED_HOSTS=*
+
+# Producción
+ALLOWED_HOSTS=pagotech.com,148.251.239.17,www.pagotech.com,www.pagotech.com.ar,pagotech.com.ar
+
+# Configuración PayZen
+PAYZEN_SHOP_ID=17684447
+
+# Clave de test
+# PAYZEN_REST_PASS=testpassword_CnrSZ0lrDIoW0e9felr9dauGFvoYdxH5gaOurRkXDAtkf
+
+# Clave de Produccion
+PAYZEN_REST_PASS=prodpassword_teicb45PdvtedDUgFJBI8zQ2VhpGZZmOZIdQkNVp33mxh
+
+PAYZEN_URL=https://api.payzen.lat/api-payment/V4/Charge/CreatePaymentOrder
+PAYZEN_CHECK_URL=https://api.payzen.lat/api-payment/V4/Order/Get
+
+# WHATSAPP
+WHATSAPP_NUMBER=+5492923541829
+WHATSAPP_MESSAGE=Hola, necesito ayuda con Pago Tech.

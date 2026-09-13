@@ -50,6 +50,7 @@ def gestion_usuarios(request):
         if edit_id:
             data = {
                 'nombre': request.POST.get('edit_nombre'),
+                'username': request.POST.get('edit_username'),
                 'email': request.POST.get('edit_email'),
                 'telefono': request.POST.get('edit_telefono'),
                 'password': request.POST.get('edit_password'), 
@@ -89,34 +90,37 @@ def gestion_usuarios(request):
 
     # --- LÓGICA GET (Búsqueda y Estadísticas) ---
     q = request.GET.get('q', '').strip()
-    
-    # 1. Obtener todos los clientes que ya están aprobados (base para las estadísticas)
-    # Filtramos por aprobado=True desde el inicio
-    aprobados_base = admin_crud.list_clientes({'aprobado': True})
-    
-    # 2. Usuarios Totales (Solo Aprobados)
+
+    # Solo mostrar usuarios PRINCIPALES aprobados (los secundarios se ven en el desplegable)
+    from app1.models import Cliente
+    aprobados_base = admin_crud.list_clientes({'aprobado': True}).filter(rol=Cliente.ROL_PRINCIPAL)
+
     total_users_aprobados = aprobados_base.count()
-    
-    # 3. Usuarios Bloqueados (Que estén aprobados pero tengan la marca de bloqueo)
-    blocked_count = aprobados_base.filter(bloqueado=True).count()
-    
-    # 4. Usuarios Activos (Aprobados que NO están bloqueados)
-    activos_count = aprobados_base.filter(bloqueado=False).count()
+    blocked_count         = aprobados_base.filter(bloqueado=True).count()
+    activos_count         = aprobados_base.filter(bloqueado=False).count()
 
-    # 5. Lista para la tabla (Aprobados + filtro de búsqueda si existe)
-    clientes_qs = admin_crud.list_clientes({'aprobado': True, 'q': q})
+    clientes_qs = admin_crud.list_clientes({'aprobado': True, 'q': q}).filter(rol=Cliente.ROL_PRINCIPAL)
 
-    # --- LÓGICA DE PAGINACIÓN ---
-    paginator = Paginator(clientes_qs, 10) # 10 registros por página
-    page_number = request.GET.get('page')  # Obtener el número de página de la URL (?page=2)
-    page_obj = paginator.get_page(page_number)
+    # --- PAGINACIÓN ---
+    paginator   = Paginator(clientes_qs, 10)
+    page_number = request.GET.get('page')
+    page_obj    = paginator.get_page(page_number)
+
+    # Operadores por cada principal (para el desplegable)
+    operadores_por_cliente = {}
+    for c in page_obj:
+        ops = admin_crud.list_operadores_de(c.id)
+        if ops:
+            operadores_por_cliente[c.id] = ops
+
     context = {
         'user': user_admin,
-        'clientes': page_obj,        
+        'clientes': page_obj,
         'q': q,
-        'total_users': total_users_aprobados, 
-        'activos_count': activos_count,      
+        'total_users': total_users_aprobados,
+        'activos_count': activos_count,
         'blocked_count': blocked_count,
+        'operadores_por_cliente': operadores_por_cliente,
     }
     return render(request, 'gestion_usuarios.html', context)
 
@@ -200,11 +204,27 @@ def aprobacion(request):
                 messages.error(request, err)
             return redirect('aprobacion')
 
+        # 4. Acción: Rechazar solicitud
+        reject_id = request.POST.get('reject_id')
+        if reject_id:
+            comentario = request.POST.get('reject_comentario', '').strip()
+            if not comentario:
+                messages.error(request, 'Debe ingresar un motivo de rechazo.')
+                return redirect('aprobacion')
+            ok, err = admin_crud.rechazar_cliente(reject_id, comentario, admin_pk=user_id)
+            if ok:
+                messages.warning(request, 'Solicitud rechazada y registrada en el historial.')
+            else:
+                messages.error(request, err)
+            return redirect('aprobacion')
+
     # GET
     pending_clients = admin_crud.list_pending_clientes()
+    rechazos = admin_crud.list_rechazos()
     return render(request, 'aprobacion.html', {
-        'user': user, 
-        'pending_clients': pending_clients
+        'user': user,
+        'pending_clients': pending_clients,
+        'rechazos': rechazos,
     })
 
 def logout(request):

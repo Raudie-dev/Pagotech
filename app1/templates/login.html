@@ -64,16 +64,29 @@
                     {% csrf_token %}
                     
                     <div class="form-group">
-                        <label for="email">Correo electrónico</label>
+                        <label for="username">Nombre de usuario <span style="font-size: 0.75rem; color: #64748b; font-weight: normal;">(Opcional para cuentas antiguas)</span></label>
+                        <div class="input-wrapper">
+                            <i class="fas fa-user input-icon"></i>
+                            <input 
+                                type="text" 
+                                id="username" 
+                                name="username" 
+                                placeholder="tu.usuario"
+                                autofocus
+                            >
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="email">Correo del negocio</label>
                         <div class="input-wrapper">
                             <i class="fas fa-envelope input-icon"></i>
                             <input 
                                 type="email" 
                                 id="email" 
                                 name="email" 
-                                placeholder="tu@correo.com"
+                                placeholder="negocio@correo.com"
                                 required
-                                autofocus
                             >
                         </div>
                     </div>

@@ -20,4 +20,6 @@ urlpatterns = [
     path('mensajes/poll/', views.poll_mensajes, name='poll_mensajes'),
     path('mensajes/finalizar/', views.finalizar_chat_cliente, name='finalizar_chat_cliente'),
     path('mensajes/ping/', views.ping_mensajes, name='ping_mensajes'),
+    path('operadores/', views.gestion_operadores, name='operadores'),
+    path('set-username/', views.set_username, name='set_username'),
 ]

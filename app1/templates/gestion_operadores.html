@@ -1,0 +1,285 @@
+{% extends "base_usuario.html" %}
+{% load static %}
+{% block title %}PagoTech | Operadores{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="mb-1 text-white"><i class="fas fa-users-cog text-danger me-2"></i> Operadores</h2>
+        <p class="text-muted small mb-0">Gestiona los usuarios que pueden crear links en nombre de tu negocio.</p>
+    </div>
+    <button class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#modalCrearOperador">
+        <i class="fas fa-plus me-2"></i> Nuevo Operador
+    </button>
+</div>
+
+<!-- Stats -->
+<div class="row g-3 mb-4">
+    <div class="col-sm-4">
+        <div class="card h-100" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);">
+            <div class="card-body d-flex align-items-center gap-3">
+                <i class="fas fa-users text-danger fa-2x"></i>
+                <div>
+                    <div class="text-muted small">Operadores activos</div>
+                    <div class="h3 fw-bold text-white mb-0">{{ operadores|length }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-4">
+        <div class="card h-100" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);">
+            <div class="card-body d-flex align-items-center gap-3">
+                <i class="fas fa-link text-info fa-2x"></i>
+                <div>
+                    <div class="text-muted small">Links del negocio</div>
+                    <div class="h3 fw-bold text-white mb-0">{{ links|length }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tabla operadores -->
+<div class="card mb-5" style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);">
+    <div class="card-header d-flex align-items-center gap-2" style="border-bottom:1px solid rgba(255,255,255,0.08);">
+        <i class="fas fa-id-badge text-danger"></i>
+        <span class="text-white fw-semibold">Mis Operadores</span>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-borderless table-hover align-middle mb-0" style="color:#ccc; --bs-table-bg:transparent; --bs-table-hover-bg:rgba(255,255,255,0.05);">
+            <thead style="font-size:0.72rem;letter-spacing:0.05em;color:#6c757d;">
+                <tr>
+                    <th class="ps-4">OPERADOR</th>
+                    <th>USUARIO</th>
+                    <th class="text-center">ESTADO</th>
+                    <th class="text-end pe-4">ACCIONES</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for op in operadores %}
+                <tr>
+                    <td class="ps-4">
+                        <div class="d-flex align-items-center gap-3">
+                            <div style="width:36px;height:36px;border-radius:10px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.25);display:flex;align-items:center;justify-content:center;color:#ef4444;font-weight:700;">
+                                {{ op.nombre|slice:":1" }}
+                            </div>
+                            <div>
+                                <div class="text-white fw-semibold small">{{ op.nombre }}</div>
+                                <small class="text-muted">Operador</small>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        <span style="background:rgba(255,255,255,0.07);border-radius:6px;padding:3px 10px;font-size:0.8rem;color:#94a3b8;">
+                            @{{ op.username }}
+                        </span>
+                    </td>
+                    <td class="text-center">
+                        {% if op.bloqueado %}
+                            <span style="background:rgba(239,68,68,0.12);color:#ef4444;border:1px solid rgba(239,68,68,0.25);border-radius:20px;padding:3px 12px;font-size:0.7rem;font-weight:600;">BLOQUEADO</span>
+                        {% else %}
+                            <span style="background:rgba(16,185,129,0.12);color:#10b981;border:1px solid rgba(16,185,129,0.25);border-radius:20px;padding:3px 12px;font-size:0.7rem;font-weight:600;">ACTIVO</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-end pe-4">
+                        <div class="d-flex justify-content-end gap-2">
+                            <button type="button" class="btn btn-sm" style="background:rgba(59,130,246,0.15);border:1px solid rgba(59,130,246,0.3);color:#3b82f6;border-radius:8px;" title="Editar" data-bs-toggle="modal" data-bs-target="#modalEditarOperador-{{ op.id }}">
+                                <i class="fas fa-pen me-1"></i> Editar
+                            </button>
+                            {% if op.bloqueado %}
+                            <form method="post" class="d-inline">
+                                {% csrf_token %}
+                                <input type="hidden" name="accion" value="desbloquear">
+                                <input type="hidden" name="operador_id" value="{{ op.id }}">
+                                <button type="submit" class="btn btn-sm" style="background:rgba(16,185,129,0.15);border:1px solid rgba(16,185,129,0.3);color:#10b981;border-radius:8px;" title="Desbloquear">
+                                    <i class="fas fa-unlock me-1"></i> Desbloq.
+                                </button>
+                            </form>
+                            {% else %}
+                            <form method="post" class="d-inline">
+                                {% csrf_token %}
+                                <input type="hidden" name="accion" value="bloquear">
+                                <input type="hidden" name="operador_id" value="{{ op.id }}">
+                                <button type="submit" class="btn btn-sm" style="background:rgba(245,158,11,0.15);border:1px solid rgba(245,158,11,0.3);color:#f59e0b;border-radius:8px;" title="Bloquear">
+                                    <i class="fas fa-ban me-1"></i> Bloquear
+                                </button>
+                            </form>
+                            {% endif %}
+                            <form method="post" class="d-inline" onsubmit="return confirm('¿Eliminar operador @{{ op.username }}? Esta acción no se puede deshacer.')">
+                                {% csrf_token %}
+                                <input type="hidden" name="accion" value="eliminar">
+                                <input type="hidden" name="operador_id" value="{{ op.id }}">
+                                <button type="submit" class="btn btn-sm" style="background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.3);color:#ef4444;border-radius:8px;" title="Eliminar">
+                                    <i class="fas fa-trash me-1"></i> Eliminar
+                                </button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="4" class="text-center py-5 text-muted">
+                        <i class="fas fa-users fa-2x mb-3 d-block opacity-25"></i>
+                        No tenés operadores creados aún.<br>
+                        <button class="btn btn-sm btn-danger mt-3" data-bs-toggle="modal" data-bs-target="#modalCrearOperador">
+                            <i class="fas fa-plus me-1"></i> Crear primer operador
+                        </button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Tabla de links con operador -->
+{% if links %}
+<div class="d-flex align-items-center gap-2 mb-3">
+    <h5 class="text-white mb-0"><i class="fas fa-history text-danger me-2"></i> Actividad reciente de links</h5>
+</div>
+<div class="card" style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);">
+    <div class="table-responsive">
+        <table class="table table-borderless table-hover align-middle mb-0" style="color:#ccc; font-size:0.83rem; --bs-table-bg:transparent; --bs-table-hover-bg:rgba(255,255,255,0.05);">
+            <thead style="font-size:0.72rem;letter-spacing:0.05em;color:#6c757d;">
+                <tr>
+                    <th class="ps-4">DESCRIPCIÓN</th>
+                    <th>MONTO CLIENTE</th>
+                    <th>RECIBES</th>
+                    <th>OPERADOR</th>
+                    <th class="text-center">ESTADO</th>
+                    <th class="text-end pe-4">FECHA</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for link in links %}
+                <tr>
+                    <td class="ps-4">
+                        <span class="text-white small">{{ link.descripcion|default:"—"|truncatechars:35 }}</span>
+                    </td>
+                    <td>
+                        <span class="text-white fw-semibold">${{ link.monto|floatformat:2 }}</span>
+                    </td>
+                    <td>
+                        <span style="color:#10b981;">${{ link.receiver_amount|floatformat:2 }}</span>
+                    </td>
+                    <td>
+                        {% if link.creado_por %}
+                            <span style="background:rgba(255,255,255,0.07);border-radius:6px;padding:2px 8px;font-size:0.75rem;color:#94a3b8;">
+                                @{{ link.creado_por.username }}
+                            </span>
+                        {% else %}
+                            <span class="text-muted small">Principal</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-center">
+                        {% if link.pagado %}
+                            <span style="background:rgba(16,185,129,0.12);color:#10b981;border:1px solid rgba(16,185,129,0.2);border-radius:20px;padding:2px 10px;font-size:0.7rem;font-weight:600;">PAGADO</span>
+                        {% else %}
+                            <span style="background:rgba(245,158,11,0.12);color:#f59e0b;border:1px solid rgba(245,158,11,0.2);border-radius:20px;padding:2px 10px;font-size:0.7rem;font-weight:600;">PENDIENTE</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-end pe-4">
+                        <small class="text-muted">{{ link.created_at|date:"d/m/Y H:i" }}</small>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+<!-- Modal Crear Operador -->
+<div class="modal fade" id="modalCrearOperador" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="background:#1a1a2e;border:1px solid rgba(239,68,68,0.2);">
+            <form method="post" id="formCrearOperador">
+                {% csrf_token %}
+                <input type="hidden" name="accion" value="crear">
+                <div class="modal-header" style="border-bottom:1px solid rgba(255,255,255,0.08);">
+                    <h5 class="modal-title text-white fw-bold">
+                        <i class="fas fa-user-plus text-danger me-2"></i> Crear Operador
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted small mb-4">
+                        El operador podrá iniciar sesión con su usuario y contraseña usando el correo de tu negocio
+                        <strong class="text-white">{{ user.email }}</strong>.
+                        Solo tendrá acceso a crear links de pago.
+                    </p>
+                    <div class="mb-3">
+                        <label class="form-label text-secondary small fw-bold">Nombre <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" name="nombre" placeholder="Nombre del operador" required style="background:#0f0f1a;border:1px solid rgba(255,255,255,0.1);color:#fff;">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-secondary small fw-bold">Nombre de usuario <span class="text-danger">*</span></label>
+                        <div class="input-group">
+                            <span class="input-group-text" style="background:#0f0f1a;border:1px solid rgba(255,255,255,0.1);color:#6c757d;">@</span>
+                            <input type="text" class="form-control" name="username" placeholder="usuario.operador" required minlength="3" style="background:#0f0f1a;border:1px solid rgba(255,255,255,0.1);color:#fff;" pattern="[a-zA-Z0-9._]+">
+                        </div>
+                        <small class="text-muted">Solo letras, números, puntos y guiones bajos.</small>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-secondary small fw-bold">Contraseña <span class="text-danger">*</span></label>
+                        <input type="password" class="form-control" name="password" placeholder="Mínimo 6 caracteres" required minlength="6" style="background:#0f0f1a;border:1px solid rgba(255,255,255,0.1);color:#fff;" autocomplete="new-password">
+                        <small class="text-muted">Podrás cambiarla más adelante.</small>
+                    </div>
+                </div>
+                <div class="modal-footer" style="border-top:1px solid rgba(255,255,255,0.08);">
+                    <button type="button" class="btn btn-dark px-4" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-danger px-4">
+                        <i class="fas fa-user-plus me-2"></i> Crear Operador
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modales de Edición (uno por cada operador) -->
+{% for op in operadores %}
+<div class="modal fade" id="modalEditarOperador-{{ op.id }}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="background:#1a1a2e;border:1px solid rgba(59,130,246,0.3);">
+            <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="accion" value="editar">
+                <input type="hidden" name="operador_id" value="{{ op.id }}">
+                <div class="modal-header" style="border-bottom:1px solid rgba(255,255,255,0.08);">
+                    <h5 class="modal-title text-white fw-bold">
+                        <i class="fas fa-user-edit text-primary me-2"></i> Editar Operador
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label text-secondary small fw-bold">Nombre</label>
+                        <input type="text" class="form-control" name="nombre" value="{{ op.nombre }}" required style="background:#0f0f1a;border:1px solid rgba(255,255,255,0.1);color:#fff;">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-secondary small fw-bold">Nombre de usuario</label>
+                        <div class="input-group">
+                            <span class="input-group-text" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.05);color:#94a3b8;">@</span>
+                            <input type="text" class="form-control" name="username" value="{{ op.username }}" required minlength="3" pattern="[a-zA-Z0-9._]+" style="background:#0f0f1a;border:1px solid rgba(255,255,255,0.1);color:#fff;">
+                        </div>
+                        <small class="text-muted d-block mt-1">Solo letras, números, puntos y guiones bajos.</small>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-secondary small fw-bold">Nueva contraseña</label>
+                        <input type="password" class="form-control" name="password" placeholder="Dejar en blanco para no cambiar" minlength="6" style="background:#0f0f1a;border:1px solid rgba(255,255,255,0.1);color:#fff;" autocomplete="new-password">
+                        <small class="text-muted">Mínimo 6 caracteres.</small>
+                    </div>
+                </div>
+                <div class="modal-footer" style="border-top:1px solid rgba(255,255,255,0.08);">
+                    <button type="button" class="btn btn-dark px-4" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary px-4">
+                        <i class="fas fa-save me-2"></i> Guardar Cambios
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endfor %}
+{% endblock %}

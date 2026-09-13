@@ -7,7 +7,15 @@ from .models import User_admin
 from .models import ParametroFinanciero, CuotaConfig
 
 def list_pending_clientes() -> List[Cliente]:
-    return list(Cliente.objects.filter(aprobado=False))
+    return list(Cliente.objects.filter(aprobado=False, rol=Cliente.ROL_PRINCIPAL))
+
+def list_operadores_de(principal_pk):
+    """Lista los operadores (secundarios) asociados a un usuario principal."""
+    return list(Cliente.objects.filter(
+        principal_id=principal_pk,
+        rol=Cliente.ROL_SECUNDARIO
+    ).order_by('nombre'))
+
 
 def list_clientes(filters: Optional[Dict[str, Any]] = None):
     qs = Cliente.objects.all()
@@ -52,6 +60,44 @@ def approve_cliente(pk: Any) -> Tuple[bool, Optional[str]]:
     except IntegrityError:
         return False, 'Error al aprobar cliente.'
 
+def rechazar_cliente(pk: Any, comentario: str, admin_pk: Any = None) -> Tuple[bool, Optional[str]]:
+    """
+    Rechaza una solicitud de cuenta:
+    - Copia los datos del cliente a RechazoSolicitud
+    - Elimina el registro de Cliente
+    """
+    from app1.models import RechazoSolicitud
+    cliente = get_cliente(pk)
+    if not cliente:
+        return False, 'Cliente no encontrado.'
+    if cliente.aprobado:
+        return False, 'Este cliente ya fue aprobado, no se puede rechazar.'
+
+    admin = None
+    if admin_pk:
+        try:
+            admin = User_admin.objects.get(pk=admin_pk)
+        except User_admin.DoesNotExist:
+            pass
+
+    try:
+        RechazoSolicitud.objects.create(
+            nombre=cliente.nombre,
+            email=cliente.email,
+            telefono=cliente.telefono,
+            comentario=comentario.strip(),
+            rechazado_por=admin,
+        )
+        cliente.delete()
+        return True, None
+    except Exception as e:
+        return False, f'Error al rechazar solicitud: {str(e)}'
+
+def list_rechazos():
+    from app1.models import RechazoSolicitud
+    return RechazoSolicitud.objects.select_related('rechazado_por').all()
+
+
 def set_bloqueo(pk: Any, bloqueado: bool = True) -> Tuple[bool, Optional[str]]:
     cliente = get_cliente(pk)
     if not cliente:
@@ -79,6 +125,12 @@ def update_cliente(pk: Any, data: Dict[str, Any]) -> Tuple[bool, Optional[str]]:
     if 'email' in data: cliente.email = data['email']
     if 'telefono' in data: cliente.telefono = data['telefono']
     
+    if 'username' in data and data['username']:
+        new_username = data['username'].strip().lower()
+        if Cliente.objects.filter(username__iexact=new_username).exclude(pk=cliente.pk).exists():
+            return False, 'El nombre de usuario ya está en uso por otra cuenta.'
+        cliente.username = new_username
+
     # NUEVA LÓGICA PARA LA CONTRASEÑA
     if 'password' in data and data['password']: # Si la contraseña viene en el dict y no está vacía
         cliente.password = make_password(data['password'])

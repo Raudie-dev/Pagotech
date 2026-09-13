@@ -72,6 +72,15 @@
                     </div>
 
                     <div class="form-group">
+                        <label for="username">Nombre de usuario</label>
+                        <div class="input-wrapper" id="wrapper-username">
+                            <i class="fas fa-at input-icon"></i>
+                            <input type="text" id="username" name="username" placeholder="mi.usuario" value="{{ data.username|default:'' }}" required autocomplete="username">
+                        </div>
+                        <span class="error-msg" id="msg-username">Mínimo 3 caracteres. Solo letras, números, puntos y guiones bajos.</span>
+                    </div>
+
+                    <div class="form-group">
                         <label for="email">Correo electrónico</label>
                         <div class="input-wrapper" id="wrapper-email">
                             <i class="fas fa-envelope input-icon"></i>

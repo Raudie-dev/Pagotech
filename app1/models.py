@@ -3,19 +3,60 @@ from decimal import Decimal
 import uuid
 
 class Cliente(models.Model):
-    nombre = models.CharField(max_length=100)
-    password = models.CharField(max_length=128)
+    ROL_PRINCIPAL   = 'principal'
+    ROL_SECUNDARIO  = 'secundario'
+    ROL_CHOICES     = [
+        (ROL_PRINCIPAL,  'Principal'),
+        (ROL_SECUNDARIO, 'Secundario / Operador'),
+    ]
+
+    nombre    = models.CharField(max_length=100)
+    username  = models.CharField(
+        max_length=50, unique=True, null=True, blank=True,
+        help_text="Nombre de usuario único para iniciar sesión"
+    )
+    password  = models.CharField(max_length=128)
     bloqueado = models.BooleanField(default=False)
-    email = models.EmailField(max_length=150, unique=True, null=True, blank=True)
-    telefono = models.CharField(max_length=20, null=True, blank=True, unique=True)
-    aprobado = models.BooleanField(default=False)
+    email     = models.EmailField(max_length=150, null=True, blank=True)
+    telefono  = models.CharField(max_length=20, null=True, blank=True, unique=True)
+    aprobado  = models.BooleanField(default=False)
     acepto_tyc = models.BooleanField(default=False)
-    fecha_acepto_tyc = models.DateTimeField(null=True, blank=True)
-    version_tyc = models.CharField(max_length=20, null=True, blank=True)
+    fecha_acepto_tyc  = models.DateTimeField(null=True, blank=True)
+    version_tyc       = models.CharField(max_length=20, null=True, blank=True)
     recibir_liquidacion_email = models.BooleanField(default=True)
     ultima_actividad_mensajes = models.DateTimeField(null=True, blank=True)
-    fecha_registro = models.DateTimeField(null=True, blank=True)
-    fecha_aprobacion = models.DateTimeField(null=True, blank=True)
+    fecha_registro    = models.DateTimeField(null=True, blank=True)
+    fecha_aprobacion  = models.DateTimeField(null=True, blank=True)
+
+    # ── Roles ────────────────────────────────────────────────────────────
+    rol = models.CharField(
+        max_length=20,
+        choices=ROL_CHOICES,
+        default=ROL_PRINCIPAL,
+    )
+    # Para usuarios secundarios: referencia al usuario principal
+    principal = models.ForeignKey(
+        'self',
+        on_delete=models.CASCADE,
+        null=True, blank=True,
+        related_name='operadores',
+        help_text="Usuario principal al que pertenece este operador"
+    )
+
+    @property
+    def es_principal(self):
+        return self.rol == self.ROL_PRINCIPAL
+
+    @property
+    def es_secundario(self):
+        return self.rol == self.ROL_SECUNDARIO
+
+    @property
+    def email_negocio(self):
+        """Email del negocio: propio si es principal, del principal si es secundario."""
+        if self.es_secundario and self.principal:
+            return self.principal.email
+        return self.email
     
 
     def __str__(self):
@@ -33,7 +74,7 @@ class LinkPago(models.Model):
     cliente = models.ForeignKey(Cliente, on_delete=models.CASCADE, related_name='links')
     monto = models.DecimalField(max_digits=12, decimal_places=2)
     cuotas = models.PositiveSmallIntegerField(default=1)
-    tipo_tarjeta = models.CharField(max_length=10, choices=TIPO_TARJETA_CHOICES, default='credito')
+    tipo_tarjeta = models.CharField(max_length=50, choices=TIPO_TARJETA_CHOICES, default='credito')
     descripcion = models.TextField(null=True, blank=True)
     order_id = models.CharField(max_length=50, unique=True, null=True, blank=True)
     pagado = models.BooleanField(default=False)
@@ -49,6 +90,13 @@ class LinkPago(models.Model):
     receiver_amount = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('0.00'))
 
     # enlace generado (random por ahora)
+    creado_por = models.ForeignKey(
+        'Cliente',
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name='links_creados',
+        help_text="Operador que generó este link (puede ser el principal u otro operador)"
+    )
     link = models.CharField(max_length=255, unique=True, default=uuid.uuid4)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -114,3 +162,25 @@ class SesionChat(models.Model):
 
     def __str__(self):
         return f"Sesion {self.id} — {self.cliente.nombre} ({'cerrada' if self.cerrada else 'activa'})"
+
+class RechazoSolicitud(models.Model):
+    """Registro de solicitudes de cuenta rechazadas por un administrador."""
+    nombre        = models.CharField(max_length=100)
+    email         = models.EmailField(null=True, blank=True)
+    telefono      = models.CharField(max_length=20, null=True, blank=True)
+    comentario    = models.TextField(help_text="Motivo del rechazo")
+    rechazado_en  = models.DateTimeField(auto_now_add=True)
+    rechazado_por = models.ForeignKey(
+        'app2.User_admin',
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name='rechazos',
+    )
+
+    class Meta:
+        ordering = ['-rechazado_en']
+        verbose_name = "Rechazo de Solicitud"
+        verbose_name_plural = "Rechazos de Solicitudes"
+
+    def __str__(self):
+        return f"Rechazo — {self.nombre} ({self.rechazado_en.strftime('%d/%m/%Y') if self.rechazado_en else ''})"

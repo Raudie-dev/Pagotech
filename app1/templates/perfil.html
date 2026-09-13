@@ -38,11 +38,20 @@
                             </div>
                         </div>
                         <div class="col-md-6">
+                            <label class="form-label text-muted small fw-bold">Nombre de usuario</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-dark-lighter border-secondary text-muted"><i class="fas fa-at"></i></span>
+                                <input type="text" name="username" class="form-control bg-dark-lighter border-secondary text-white" 
+                                       value="{{ user.username|default_if_none:'' }}" pattern="[a-zA-Z0-9._]+" minlength="3">
+                            </div>
+                            <small class="text-muted d-block mt-1" style="font-size: 0.7rem;">Solo letras, números, puntos y guiones bajos.</small>
+                        </div>
+                        <div class="col-md-6">
                             <label class="form-label text-muted small fw-bold">Correo Electrónico</label>
                             <div class="input-group">
                                 <span class="input-group-text bg-dark-lighter border-secondary text-muted"><i class="fas fa-envelope"></i></span>
                                 <input type="email" name="email" class="form-control bg-dark-lighter border-secondary text-white" 
-                                       value="{{ user.email }}" required>
+                                       value="{{ user.email }}" required {% if user.es_secundario %}disabled{% endif %}>
                             </div>
                         </div>
                         <div class="col-md-6">

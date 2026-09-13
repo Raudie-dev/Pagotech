@@ -46,7 +46,7 @@ Crear Link{% endblock %} {% block content %}
         <div class="col-md-6 col-lg-4">
           <label class="form-label-enhanced">
             <i class="fas fa-dollar-sign text-primary me-2"></i>
-            Monto a cobrar al cliente
+            Monto que deseas recibir
           </label>
           <div class="input-wrapper">
             <div class="input-icon"><i class="fas fa-dollar-sign"></i></div>
@@ -64,7 +64,7 @@ Crear Link{% endblock %} {% block content %}
             <div class="input-suffix">ARS</div>
           </div>
           <small class="form-hint"
-            >Ingresar la cantidad que deseas recibir</small
+            >Los aranceles se suman al precio del cliente</small
           >
         </div>
 
@@ -122,7 +122,7 @@ Crear Link{% endblock %} {% block content %}
               <div class="col-md-4">
                 <div class="calc-item">
                   <span class="calc-label">El cliente pagará (Total)</span>
-                  <span class="calc-value text-white" id="preview-bruto"
+                  <span class="calc-value text-warning fw-bold" id="preview-bruto"
                     >$0.00</span
                   >
                 </div>
@@ -131,7 +131,7 @@ Crear Link{% endblock %} {% block content %}
                 <div class="calc-item">
                   <span class="calc-label">Costos Asociados</span>
                   <span class="calc-value text-danger" id="preview-comision"
-                    >-$0.00</span
+                    >+$0.00</span
                   >
                 </div>
               </div>
@@ -709,11 +709,12 @@ Crear Link{% endblock %} {% block content %}
         return;
       }
       document.getElementById("resumen-datos-modal").innerHTML = `
-            <div class="d-flex justify-content-between mb-2 text-white"><span>Total a Cobrar:</span><b>${document.getElementById("preview-bruto").textContent}</b></div>
+            <div class="d-flex justify-content-between mb-2 text-white"><span>Monto que recibirás:</span><b class="text-success">${document.getElementById("preview-neto").textContent}</b></div>
+            <div class="d-flex justify-content-between mb-2 text-white"><span>Costos Asociados:</span><b class="text-danger">+${document.getElementById("preview-comision").textContent.replace(/^[\+\-]/, '')}</b></div>
             <div class="d-flex justify-content-between mb-2 text-white"><span>Medio:</span><b class="text-uppercase">${selectTipo.value}</b></div>
             <div class="d-flex justify-content-between mb-2 text-white"><span>Cuotas:</span><b>${selectCuotas.options[selectCuotas.selectedIndex].text}</b></div>
             <hr class="border-secondary">
-            <div class="d-flex justify-content-between text-success fw-bold"><span>Neto a Recibir:</span><b>${document.getElementById("preview-neto").textContent}</b></div>
+            <div class="d-flex justify-content-between text-warning fw-bold"><span>El cliente pagará:</span><b>${document.getElementById("preview-bruto").textContent}</b></div>
         `;
       modalConfirmacion.show();
     };

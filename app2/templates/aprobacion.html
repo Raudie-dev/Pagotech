@@ -4,6 +4,14 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/usuarios-custom.css' %}">
+<style>
+  .rechazo-table th { font-size: 0.72rem; letter-spacing: 0.05em; color: #6c757d; }
+  .rechazo-table td { font-size: 0.83rem; vertical-align: middle; }
+  .comentario-cell { max-width: 320px; white-space: pre-wrap; word-break: break-word; color: #f1a1a1; }
+  .badge-rechazado { background: rgba(239,68,68,0.13); color: #ef4444; border: 1px solid rgba(239,68,68,0.25); border-radius: 20px; padding: 3px 10px; font-size: 0.7rem; font-weight: 600; letter-spacing: 0.04em; }
+  #modalRechazo .modal-content { background: #1a1a2e; border: 1px solid rgba(239,68,68,0.2); }
+  #modalRechazo .modal-header { border-bottom: 1px solid rgba(239,68,68,0.15); }
+</style>
 {% endblock %}
 
 {% block content %}
@@ -18,28 +26,38 @@
     </div>
 </div>
 
-<!-- Tarjeta de Resumen Rápido -->
+<!-- Resumen -->
 <div class="row g-4 mb-4">
     <div class="col-md-4">
-        <!-- La clase border-danger activa el color en el CSS -->
         <div class="card h-100 hover-lift border-start border-danger border-4">
             <div class="card-body d-flex align-items-center">
-                <!-- Quitamos clases manuales de Bootstrap para usar el estilo del CSS -->
                 <div class="icon-box me-3">
                     <i class="fas fa-clock text-danger h4 mb-0"></i>
                 </div>
                 <div class="flex-grow-1">
-                    <!-- Cambiado text-black por text-muted para visibilidad -->
                     <div class="card-subtitle text-muted mb-1">Pendientes de Revisión</div>
                     <div class="h2 fw-bold mb-0 text-white">{{ pending_clients|length }}</div>
                 </div>
             </div>
         </div>
     </div>
+    <div class="col-md-4">
+        <div class="card h-100 hover-lift border-start border-secondary border-4">
+            <div class="card-body d-flex align-items-center">
+                <div class="icon-box me-3">
+                    <i class="fas fa-times-circle text-danger h4 mb-0"></i>
+                </div>
+                <div class="flex-grow-1">
+                    <div class="card-subtitle text-muted mb-1">Rechazados (historial)</div>
+                    <div class="h2 fw-bold mb-0 text-white">{{ rechazos|length }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
-<!-- Tabla de Registros Pendientes -->
-<div class="custom-table-container animate-slide-up">
+<!-- Tabla de Pendientes -->
+<div class="custom-table-container animate-slide-up mb-5">
     <div class="table-responsive">
         <table class="table table-hover align-middle mb-0 custom-dark-table">
             <thead>
@@ -84,19 +102,47 @@
                     </td>
                     <td class="text-end pe-4">
                         <div class="d-flex justify-content-end gap-2">
+                            <!-- Aprobar -->
                             <form method="post" class="d-inline">
                                 {% csrf_token %}
                                 <input type="hidden" name="approve_id" value="{{ cliente.id }}">
-                                <button type="submit" class="btn btn-sm btn-success btn-icon" style="background: #10b981; border:none; width:36px; height:36px; border-radius:8px; color:white;">
+                                <button type="submit"
+                                    class="btn btn-sm btn-icon"
+                                    style="background:#10b981;border:none;width:36px;height:36px;border-radius:8px;color:white;"
+                                    title="Aprobar solicitud">
                                     <i class="fas fa-check"></i>
                                 </button>
                             </form>
-                            <button class="btn btn-sm btn-action-dark" data-bs-toggle="modal" data-bs-target="#editUserModal"
-                                    data-id="{{ cliente.id }}" data-nombre="{{ cliente.nombre }}"
-                                    data-email="{{ cliente.email|default:'' }}" data-telefono="{{ cliente.telefono|default:'' }}">
+                            <!-- Rechazar -->
+                            <button type="button"
+                                class="btn btn-sm btn-icon"
+                                style="background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.3);width:36px;height:36px;border-radius:8px;color:#ef4444;"
+                                title="Rechazar solicitud"
+                                data-bs-toggle="modal"
+                                data-bs-target="#modalRechazo"
+                                data-id="{{ cliente.id }}"
+                                data-nombre="{{ cliente.nombre }}">
+                                <i class="fas fa-times"></i>
+                            </button>
+                            <!-- Editar -->
+                            <button class="btn btn-sm btn-action-dark"
+                                data-bs-toggle="modal"
+                                data-bs-target="#editUserModal"
+                                data-id="{{ cliente.id }}"
+                                data-nombre="{{ cliente.nombre }}"
+                                data-email="{{ cliente.email|default:'' }}"
+                                data-telefono="{{ cliente.telefono|default:'' }}"
+                                title="Editar datos">
                                 <i class="fas fa-pen"></i>
                             </button>
                         </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="4" class="text-center py-5 text-muted">
+                        <i class="fas fa-inbox fa-2x mb-3 d-block opacity-25"></i>
+                        No hay solicitudes pendientes
                     </td>
                 </tr>
                 {% endfor %}
@@ -105,7 +151,57 @@
     </div>
 </div>
 
-<!-- Modal para Editar Usuario (Estilo PagoTech) -->
+<!-- Historial de Rechazos -->
+{% if rechazos %}
+<div class="mb-3 d-flex align-items-center gap-2">
+    <h5 class="text-white mb-0"><i class="fas fa-history text-danger me-2"></i>Historial de Rechazos</h5>
+    <span class="badge-rechazado">{{ rechazos|length }}</span>
+</div>
+<div class="custom-table-container animate-slide-up">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0 custom-dark-table rechazo-table">
+            <thead>
+                <tr>
+                    <th class="ps-4">SOLICITANTE</th>
+                    <th>CONTACTO</th>
+                    <th>MOTIVO DE RECHAZO</th>
+                    <th>RECHAZADO POR</th>
+                    <th class="text-end pe-4">FECHA</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for rechazo in rechazos %}
+                <tr>
+                    <td class="ps-4">
+                        <div class="d-flex align-items-center">
+                            <div class="user-avatar me-3" style="color:#ef4444;border-color:rgba(239,68,68,0.2);font-size:0.85rem;">
+                                {{ rechazo.nombre|slice:":1"|upper }}
+                            </div>
+                            <span class="text-white-50 small">{{ rechazo.nombre }}</span>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="d-flex flex-column">
+                            <span class="text-white-50 small">{{ rechazo.email|default:"—" }}</span>
+                            <small style="color:#6c757d;">{{ rechazo.telefono|default:"Sin teléfono" }}</small>
+                        </div>
+                    </td>
+                    <td class="comentario-cell">{{ rechazo.comentario }}</td>
+                    <td>
+                        <span class="text-white-50 small">{{ rechazo.rechazado_por.nombre|default:"—" }}</span>
+                    </td>
+                    <td class="text-end pe-4">
+                        <small style="color:#6c757d;">{{ rechazo.rechazado_en|date:"d/m/Y H:i" }}</small>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+<!-- Modal Editar -->
 <div class="modal fade" id="editUserModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content shadow-lg">
@@ -145,28 +241,73 @@
     </div>
 </div>
 
+<!-- Modal Rechazo -->
+<div class="modal fade" id="modalRechazo" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content shadow-lg" style="background:#1a1a2e;border:1px solid rgba(239,68,68,0.2);">
+            <form method="post" id="formRechazo">
+                {% csrf_token %}
+                <input type="hidden" name="reject_id" id="reject_id">
+                <div class="modal-header" style="border-bottom:1px solid rgba(239,68,68,0.15);">
+                    <h5 class="modal-title text-white fw-bold">
+                        <i class="fas fa-times-circle text-danger me-2"></i> Rechazar Solicitud
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-white-50 small mb-3">
+                        Estás por rechazar la solicitud de
+                        <strong class="text-white" id="reject-nombre-display">este usuario</strong>.
+                        Esta acción no se puede deshacer.
+                    </p>
+                    <label class="form-label text-secondary small fw-bold">
+                        Motivo del rechazo <span class="text-danger">*</span>
+                    </label>
+                    <textarea
+                        name="reject_comentario"
+                        id="reject_comentario"
+                        class="form-control"
+                        rows="4"
+                        placeholder="Ej: Documentación incompleta, datos inválidos, solicitud duplicada..."
+                        required
+                        minlength="5"
+                        style="background:#0f0f1a;border:1px solid rgba(239,68,68,0.3);color:#fff;resize:vertical;"
+                    ></textarea>
+                    <small class="text-muted mt-1 d-block">Mínimo 5 caracteres. Este comentario quedará en el historial.</small>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-dark px-4" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-danger px-4">
+                        <i class="fas fa-times me-2"></i>Confirmar Rechazo
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 {% endblock %}
 
 {% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Modal Editar
     var editModal = document.getElementById('editUserModal');
     editModal.addEventListener('show.bs.modal', function (event) {
         var button = event.relatedTarget;
-        
-        // Extraer info de los atributos data-*
-        var id = button.getAttribute('data-id');
-        var nombre = button.getAttribute('data-nombre') || '';
-        var email = button.getAttribute('data-email') || '';
-        var telefono = button.getAttribute('data-telefono') || '';
-        var aprobado = button.getAttribute('data-aprobado') === '1';
+        document.getElementById('edit_id').value = button.getAttribute('data-id');
+        document.getElementById('edit_nombre').value = button.getAttribute('data-nombre') || '';
+        document.getElementById('edit_email').value = button.getAttribute('data-email') || '';
+        document.getElementById('edit_telefono').value = button.getAttribute('data-telefono') || '';
+    });
 
-        // Llenar los campos del modal
-        document.getElementById('edit_id').value = id;
-        document.getElementById('edit_nombre').value = nombre;
-        document.getElementById('edit_email').value = email;
-        document.getElementById('edit_telefono').value = telefono;
-        document.getElementById('edit_aprobado').checked = aprobado;
+    // Modal Rechazo
+    var modalRechazo = document.getElementById('modalRechazo');
+    modalRechazo.addEventListener('show.bs.modal', function (event) {
+        var button = event.relatedTarget;
+        document.getElementById('reject_id').value = button.getAttribute('data-id');
+        document.getElementById('reject-nombre-display').textContent = button.getAttribute('data-nombre') || 'este usuario';
+        document.getElementById('reject_comentario').value = '';
     });
 });
 </script>

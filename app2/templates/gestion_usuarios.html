@@ -145,7 +145,10 @@
                             </div>
                             <div>
                                 <div class="user-name-text">{{ cliente.nombre }}</div>
-                                <small class="user-sub-text">ID: {{ cliente.id|stringformat:"06d" }}</small>
+                                {% if cliente.username %}
+                                <small class="user-sub-text" style="color:#94a3b8;">@{{ cliente.username }}</small>
+                                {% endif %}
+                                <small class="d-block user-sub-text">ID: {{ cliente.id|stringformat:"06d" }}</small>
                                 {% if cliente.fecha_aprobacion %}
                                 <small class="d-block" style="font-size:0.68rem; color:#6c757d;">
                                     <i class="fas fa-check-circle me-1" style="color:#10b981;"></i>
@@ -157,6 +160,12 @@
                                     <i class="fas fa-calendar-plus me-1" style="color:#f59e0b;"></i>
                                     Registro: {{ cliente.fecha_registro|date:"d/m/Y H:i" }}
                                 </small>
+                                {% endif %}
+                                {# Indicador de operadores #}
+                                {% if cliente.operadores.count > 0 %}
+                                    <button class="btn btn-link btn-sm p-0 text-info text-decoration-none" style="font-size: 0.75rem;" data-bs-toggle="collapse" data-bs-target="#ops-{{ cliente.id }}">
+                                        <i class="fas fa-users-cog me-1"></i>Ver operadores
+                                    </button>
                                 {% endif %}
                             </div>
                         </div>
@@ -204,10 +213,12 @@
                                     data-bs-target="#editUserModal"
                                     data-id="{{ cliente.id }}"
                                     data-nombre="{{ cliente.nombre }}"
+                                    data-username="{{ cliente.username|default:'' }}"
                                     data-email="{{ cliente.email|default:'' }}"
                                     data-telefono="{{ cliente.telefono|default:'' }}"
                                     data-aprobado="{% if cliente.aprobado %}1{% else %}0{% endif %}"
-                                    data-bloqueado="{% if cliente.bloqueado %}1{% else %}0{% endif %}">
+                                    data-bloqueado="{% if cliente.bloqueado %}1{% else %}0{% endif %}"
+                                    data-rol="1">
                                 <i class="fas fa-pen text-danger"></i>
                             </button>
 
@@ -252,7 +263,24 @@
                         </div>
                     </td>
                 </tr>
+                {# ── Fila colapsable de operadores ── #}
+                {% if cliente.operadores.count > 0 %}
+                <tr class="collapse" id="ops-{{ cliente.id }}" style="background:rgba(99,102,241,0.04);">
+                    <td colspan="4" class="ps-5 pe-4 py-2">
+                        <div class="d-flex align-items-center gap-2 mb-2">
+                            <i class="fas fa-users-cog text-info" style="font-size:0.8rem;"></i>
+                            <span class="text-info fw-semibold" style="font-size:0.78rem;">Operadores de {{ cliente.nombre }}</span>
+                        </div>
+                        <div class="d-flex flex-wrap gap-2">
+                            <div class="ops-list-{{ cliente.id }}">
+                                <small class="text-muted">Cargando...</small>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+                {% endif %}
                 {% endfor %}
+
             </tbody>
         </table>
     </div>
@@ -357,11 +385,19 @@
                             <label class="form-label text-secondary small fw-bold">Nombre Completo</label>
                             <input type="text" class="form-control" name="edit_nombre" id="edit_nombre" required>
                         </div>
-                        <div class="col-12">
+                        <div class="col-md-12">
+                            <label class="form-label text-secondary small fw-bold">Nombre de usuario</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-dark border-secondary text-muted">@</span>
+                                <input type="text" class="form-control" name="edit_username" id="edit_username" placeholder="Dejar vacío para no establecer" pattern="[a-zA-Z0-9._]+">
+                            </div>
+                            <small class="text-muted d-block mt-1" style="font-size: 0.7rem;">Solo letras, números, puntos y guiones bajos.</small>
+                        </div>
+                        <div class="col-12" id="div_edit_email">
                             <label class="form-label text-secondary small fw-bold">Correo Electrónico</label>
                             <input type="email" class="form-control" name="edit_email" id="edit_email">
                         </div>
-                        <div class="col-12">
+                        <div class="col-12" id="div_edit_telefono">
                             <label class="form-label text-secondary small fw-bold">Teléfono</label>
                             <input type="tel" class="form-control" name="edit_telefono" id="edit_telefono">
                         </div>
@@ -370,13 +406,13 @@
                         <label class="form-label text-secondary small fw-bold">Nueva Contraseña</label>
                         <div class="input-group">
                             <span class="input-group-text bg-dark border-secondary text-muted"><i class="fas fa-lock"></i></span>
-                            <input type="password" class="form-control" name="edit_password" id="edit_password" placeholder="Dejar en blanco para no cambiar">
+                            <input type="password" class="form-control" name="edit_password" id="edit_password" placeholder="Dejar en blanco para no cambiar" autocomplete="new-password">
                         </div>
                         <small class="text-muted" style="font-size: 0.7rem;">Si no desea cambiar la contraseña, deje este campo vacío.</small>
                     </div>
                     <div class="mt-4 p-3 rounded-3" style="background: var(--surface-elevated);">
                         <div class="row">
-                            <div class="col-md-6">
+                            <div class="col-md-6" id="div_edit_aprobado">
                                 <div class="form-check form-switch">
                                     <input class="form-check-input" type="checkbox" id="edit_aprobado" name="edit_aprobado" value="1">
                                     <label class="form-check-label text-white fw-medium" for="edit_aprobado">
@@ -440,5 +476,79 @@
 {% endblock %}
 
 {% block extra_js %}
-<script src="{% static 'js/usuarios.js' %}"></script>
+<script src="{% static 'js/usuarios.js' %}?v=2"></script>
+<script>
+// Datos de operadores embebidos desde Django
+const operadoresPorCliente = {
+    {% for cliente in clientes %}
+    {% if cliente.operadores.count > 0 %}
+    "{{ cliente.id }}": [
+        {% for op in cliente.operadores.all %}
+        {
+            "id": "{{ op.id }}",
+            "nombre": "{{ op.nombre|escapejs }}",
+            "username": "{{ op.username|escapejs }}",
+            "email": "{{ op.email_negocio|escapejs }}",
+            "bloqueado": {{ op.bloqueado|yesno:"true,false" }}
+        }{% if not forloop.last %},{% endif %}
+        {% endfor %}
+    ],
+    {% endif %}
+    {% endfor %}
+};
+
+document.addEventListener('DOMContentLoaded', function() {
+    Object.entries(operadoresPorCliente).forEach(([clienteId, ops]) => {
+        const container = document.querySelector(`.ops-list-${clienteId}`);
+        if (!container) return;
+        if (!ops || ops.length === 0) {
+            container.innerHTML = '<small class="text-muted">Sin operadores</small>';
+            return;
+        }
+        container.innerHTML = ops.map(op => `
+            <div class="d-flex align-items-center gap-2 mb-1 p-2 rounded" style="background:rgba(255,255,255,0.05);min-width:200px;">
+                <div style="width:28px;height:28px;border-radius:6px;background:rgba(99,102,241,0.15);border:1px solid rgba(99,102,241,0.3);display:flex;align-items:center;justify-content:center;color:#818cf8;font-weight:700;font-size:0.75rem;">
+                    ${op.nombre.charAt(0)}
+                </div>
+                <div class="flex-grow-1">
+                    <div style="font-size:0.78rem;color:#e2e8f0;">${op.nombre}</div>
+                    <div style="font-size:0.68rem;color:#64748b;">@${op.username} | ${op.email}</div>
+                </div>
+                <span style="font-size:0.65rem;padding:2px 7px;border-radius:10px;${op.bloqueado ? 'background:rgba(239,68,68,0.15);color:#ef4444;border:1px solid rgba(239,68,68,0.25);' : 'background:rgba(16,185,129,0.12);color:#10b981;border:1px solid rgba(16,185,129,0.2);'}">
+                    ${op.bloqueado ? 'BLOQ' : 'ACTIVO'}
+                </span>
+                <div class="ms-3 d-flex gap-1">
+                    <button type="button" class="btn btn-sm btn-action-dark" style="padding:0.25rem 0.5rem;" title="Editar"
+                            data-bs-toggle="modal" 
+                            data-bs-target="#editUserModal"
+                            data-id="${op.id}"
+                            data-nombre="${op.nombre}"
+                            data-username="${op.username}"
+                            data-email="${op.email}"
+                            data-telefono=""
+                            data-aprobado="1"
+                            data-bloqueado="${op.bloqueado ? '1' : '0'}"
+                            data-rol="2">
+                        <i class="fas fa-pen text-primary" style="font-size:0.8rem;"></i>
+                    </button>
+                    <form method="post" style="margin:0;">
+                        {% csrf_token %}
+                        <input type="hidden" name="${op.bloqueado ? 'desbloquear_id' : 'bloquear_id'}" value="${op.id}">
+                        <button type="submit" class="btn btn-sm btn-action-dark" style="padding:0.25rem 0.5rem;" title="${op.bloqueado ? 'Desbloquear' : 'Bloquear'}">
+                            <i class="fas ${op.bloqueado ? 'fa-unlock text-success' : 'fa-ban text-warning'}" style="font-size:0.8rem;"></i>
+                        </button>
+                    </form>
+                    <button type="button" class="btn btn-sm btn-action-dark" style="padding:0.25rem 0.5rem;" title="Eliminar"
+                            data-bs-toggle="modal" 
+                            data-bs-target="#deleteUserModal"
+                            data-id="${op.id}"
+                            data-nombre="${op.nombre} (@${op.username})">
+                        <i class="fas fa-trash-alt text-danger" style="font-size:0.8rem;"></i>
+                    </button>
+                </div>
+            </div>
+        `).join('');
+    });
+});
+</script>
 {% endblock %}
