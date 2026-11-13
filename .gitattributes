@@ -1,0 +1,6 @@
+# Proteger archivos propios de la rama destino (ej. master) al hacer merge desde desarrollo
+# Requiere tener activo en el repo: git config merge.ours.driver true
+passenger_wsgi.py merge=ours
+tmp/restart.txt merge=ours
+.env.production merge=ours
+.env.development merge=ours
