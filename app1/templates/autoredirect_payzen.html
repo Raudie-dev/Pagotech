@@ -157,12 +157,12 @@
         </div>
         {% endif %}
 
-        <a href="{{ target_url|safe }}" class="fallback-btn" id="manualLink">Si no redirige automáticamente, haz clic aquí</a>
+        <a href="{{ target_url }}" class="fallback-btn" id="manualLink">Si no redirige automáticamente, haz clic aquí</a>
     </div>
 
     <script>
         document.addEventListener("DOMContentLoaded", function() {
-            window.location.replace("{{ target_url|safe }}");
+            window.location.replace("{{ target_url|escapejs }}");
         });
     </script>
 </body>

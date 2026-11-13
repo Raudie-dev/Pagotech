@@ -748,7 +748,7 @@ def verificar_estado_pago(link_id):
         logger.debug(f"verificar_estado_pago — consultando PayZen — order_id={link.order_id}")
 
         payload = {"orderId": link.order_id}
-        response = requests.post(PAYZEN_CHECK_URL, json=payload, headers=get_payzen_auth_header())
+        response = requests.post(PAYZEN_CHECK_URL, json=payload, headers=get_payzen_auth_header(), timeout=20)
         res_data = response.json()
 
         payzen_status = res_data.get("status")

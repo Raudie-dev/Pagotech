@@ -18,9 +18,8 @@ local_settings.py
 db.sqlite3-journal
 
 # Base de datos SQLite
-# (Nota: Generalmente se ignora, pero si quieres versionar tu pagotech.sqlite3 
-# por ahora, deja esta línea comentada o borrada)
-# db.sqlite3
+*.sqlite3
+db.sqlite3-journal
 
 # --- Migraciones ---
 # Ignorar solo la caché de las migraciones para no ensuciar el repo
@@ -73,3 +72,6 @@ Desktop.ini
 # --- Otros ---
 /assets/.sass-cache/
 .cache/
+*.zip
+tmp/
+logs/

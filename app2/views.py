@@ -15,6 +15,13 @@ from app1.views import _get_or_create_sesion_activa
 
 logger = logging.getLogger(__name__)
 
+def _get_admin_or_none(request):
+    user_id = request.session.get('user_admin_id')
+    if not user_id:
+        return None
+    return User_admin.objects.filter(id=user_id, bloqueado=False).first()
+
+
 def login(request):
     if request.method == 'POST':
         nombre = request.POST.get('nombre', '').strip()
@@ -24,7 +31,7 @@ def login(request):
             user = User_admin.objects.get(nombre=nombre)
             if user.bloqueado:
                 messages.error(request, 'Usuario bloqueado')
-            elif user.password == password or check_password(password, user.password):
+            elif check_password(password, user.password):
                 request.session['user_admin_id'] = user.id
                 return redirect('gestion_usuarios')
             else:
@@ -38,11 +45,10 @@ def login(request):
 
 # Nueva lógica: control = vista de GESTIÓN de usuarios (solo usuarios aprobados)
 def gestion_usuarios(request):
-    user_id = request.session.get('user_admin_id')
-    if not user_id:
+    user_admin = _get_admin_or_none(request)
+    if not user_admin:
         return redirect('login')
-    
-    user_admin = User_admin.objects.get(id=user_id)
+    user_id = user_admin.id
 
     if request.method == 'POST':
         # --- ACCIÓN: EDITAR ---
@@ -233,11 +239,10 @@ def logout(request):
 
 # Gestión de administradores
 def gestion_admins(request):
-    user_id = request.session.get('user_admin_id')
-    if not user_id:
+    current_admin = _get_admin_or_none(request)
+    if not current_admin:
         return redirect('login')
-    
-    current_admin = User_admin.objects.get(id=user_id)
+    user_id = current_admin.id
 
     if request.method == 'POST':
         # 1. ACCIÓN: CREAR
@@ -288,11 +293,10 @@ def gestion_admins(request):
     })
 
 def links_pagos(request):
-    user_id = request.session.get('user_admin_id')
-    if not user_id:
+    user_admin = _get_admin_or_none(request)
+    if not user_admin:
         return redirect('login')
-
-    user_admin = User_admin.objects.get(id=user_id)
+    user_id = user_admin.id
 
     from app1.models import LinkPago, Cliente
     from django.db.models import Q, Sum
@@ -620,11 +624,10 @@ def volver_a_admin(request):
     return redirect('links_pagos')
 
 def liquidaciones(request):
-    user_id = request.session.get('user_admin_id')
-    if not user_id:
+    user_admin = _get_admin_or_none(request)
+    if not user_admin:
         return redirect('login')
-
-    user_admin = User_admin.objects.get(id=user_id)
+    user_id = user_admin.id
 
     from app1.models import LinkPago, Cliente
     from django.db.models import Q, Sum
@@ -752,11 +755,10 @@ def liquidaciones(request):
     })
     
 def mensajes_admin(request, cliente_id=None):
-    user_id = request.session.get('user_admin_id')
-    if not user_id:
+    user_admin = _get_admin_or_none(request)
+    if not user_admin:
         return redirect('login')
-
-    user_admin = User_admin.objects.get(id=user_id)
+    user_id = user_admin.id
 
     from app1.models import MensajeInterno, Cliente, SesionChat
 
@@ -813,11 +815,10 @@ def mensajes_admin(request, cliente_id=None):
 
 
 def responder_mensaje_admin(request, cliente_id):
-    user_id = request.session.get('user_admin_id')
-    if not user_id or request.method != 'POST':
+    user_admin = _get_admin_or_none(request)
+    if not user_admin or request.method != 'POST':
         return JsonResponse({'ok': False, 'error': 'No autorizado'}, status=401)
-
-    user_admin = User_admin.objects.get(id=user_id)
+    user_id = user_admin.id
 
     from app1.models import MensajeInterno, Cliente
     import threading
@@ -900,7 +901,10 @@ def poll_mensajes_admin(request, cliente_id):
 
     from app1.models import MensajeInterno, Cliente
 
-    ultimo_id = int(request.GET.get('ultimo_id', 0))
+    try:
+        ultimo_id = int(request.GET.get('ultimo_id', 0))
+    except (ValueError, TypeError):
+        ultimo_id = 0
 
     try:
         cliente = Cliente.objects.get(id=cliente_id)
@@ -1069,11 +1073,10 @@ def iniciar_chat_admin(request, cliente_id):
     return redirect('mensajes_admin_cliente', cliente_id=cliente_id)
 
 def terminos_condiciones(request):
-    user_id = request.session.get('user_admin_id')
-    if not user_id:
+    user_admin = _get_admin_or_none(request)
+    if not user_admin:
         return redirect('login')
-
-    user_admin = User_admin.objects.get(id=user_id)
+    user_id = user_admin.id
     from .models import TerminosCondiciones
 
     tyc_activo = TerminosCondiciones.objects.filter(activa=True).first()

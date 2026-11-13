@@ -10,7 +10,6 @@ from django.core.paginator import Paginator
 from django.template.loader import get_template
 from django.conf import settings
 from django.template.loader import render_to_string
-from weasyprint import HTML
 import tempfile
 from app2.models import ParametroFinanciero, CuotaConfig
 import os
@@ -214,6 +213,8 @@ def tyc(request):
 
     if request.method == 'POST':
         cliente = crud.get_cliente(user_id)
+        if not cliente:
+            return redirect('login_cliente')
         cliente.acepto_tyc    = True
         cliente.fecha_acepto_tyc = timezone.now()
         cliente.version_tyc   = version_actual
@@ -267,6 +268,8 @@ def creacion_link(request):
         return redirect('login_cliente')
 
     cliente = crud.get_cliente(user_id)
+    if not cliente:
+        return redirect('login_cliente')
 
     # Para usuarios secundarios: el cliente del negocio es el principal
     cliente_negocio = cliente.principal if cliente.es_secundario else cliente
@@ -301,10 +304,10 @@ def creacion_link(request):
                     if tipo.startswith('custom_'):
                         slug = tipo.replace('custom_', '')
                         plan = app2_crud.list_cuotas_para_tarjeta_custom(
-                            user_id, slug
+                            cliente_pk_negocio, slug
                         ).filter(numero_cuota=cuotas_num).first()
                     else:
-                        plan = app2_crud.list_cuotas_para_usuario(user_id).filter(
+                        plan = app2_crud.list_cuotas_para_usuario(cliente_pk_negocio).filter(
                             numero_cuota=cuotas_num
                         ).first()
 
@@ -427,9 +430,19 @@ def creacion_link(request):
 
 def verificar_estado_pago_ajax(request, link_id):
     user_id = request.session.get('user_id')
-    if not user_id:
+    user_admin_id = request.session.get('user_admin_id')
+    if not user_id and not user_admin_id:
         logger.warning(f"Verificación de pago sin sesión — link_id={link_id}")
         return JsonResponse({'error': 'No autorizado'}, status=401)
+
+    if not user_admin_id:
+        cliente = crud.get_cliente(user_id)
+        if not cliente:
+            return JsonResponse({'error': 'No autorizado'}, status=401)
+        cliente_negocio_id = cliente.principal_id if cliente.es_secundario else cliente.id
+        if not LinkPago.objects.filter(id=link_id, cliente_id=cliente_negocio_id).exists():
+            logger.warning(f"IDOR bloqueado en verificar_estado_pago_ajax — link_id={link_id} usuario={user_id}")
+            return JsonResponse({'error': 'No encontrado'}, status=404)
 
     logger.debug(f"Verificando estado de pago — link_id={link_id} usuario={user_id}")
 
@@ -487,11 +500,15 @@ def ticket_pdf(request, link_id):
 
     try:
         # Admin puede ver el PDF de cualquier cliente
-        # Cliente solo puede ver sus propios PDFs
+        # Cliente solo puede ver los PDFs de su negocio
         if user_admin_id:
             link = LinkPago.objects.get(id=link_id)
         else:
-            link = LinkPago.objects.get(id=link_id, cliente_id=user_id)
+            cliente = crud.get_cliente(user_id)
+            if not cliente:
+                return redirect('login_cliente')
+            cliente_negocio_id = cliente.principal_id if cliente.es_secundario else cliente.id
+            link = LinkPago.objects.get(id=link_id, cliente_id=cliente_negocio_id)
             
         config = ParametroFinanciero.objects.first()
 
@@ -545,6 +562,7 @@ def ticket_pdf(request, link_id):
             'lote_nro': link.lote_number if link.lote_number else "001",
         }
 
+        from weasyprint import HTML
         html_string = render_to_string('ticket_pdf.html', context)
         html        = HTML(string=html_string, base_url=request.build_absolute_uri())
         pdf_file    = html.write_pdf()
@@ -558,7 +576,7 @@ def ticket_pdf(request, link_id):
         return HttpResponse("El comprobante solicitado no existe.", status=404)
     except Exception as e:
         logger.exception(f"PDF — error inesperado — link_id={link_id}: {e}")
-        return HttpResponse(f"Error interno: {str(e)}", status=500)
+        return HttpResponse("Error interno al generar el comprobante.", status=500)
 
 def download_ticket(request, link_id):
     user_id = request.session.get('user_id')
@@ -566,13 +584,18 @@ def download_ticket(request, link_id):
         logger.debug(f"Download ticket sin sesión — link_id={link_id}")
         return redirect('login_cliente')
 
+    cliente = crud.get_cliente(user_id)
+    if not cliente:
+        return redirect('login_cliente')
+    cliente_negocio_id = cliente.principal_id if cliente.es_secundario else cliente.id
+
     logger.debug(f"Descargando ticket TXT — link_id={link_id} usuario={user_id}")
 
-    filename, content, errors = crud.get_invoice_for_link(link_id, user_id)
+    filename, content, errors = crud.get_invoice_for_link(link_id, cliente_negocio_id)
 
     if errors:
         logger.warning(f"Download ticket — error obteniendo invoice — link_id={link_id} errores={errors}")
-        return redirect('creacion_link')
+        return redirect('crear_link')
 
     logger.info(f"Ticket TXT descargado — link_id={link_id} usuario={user_id} filename={filename}")
 
@@ -601,7 +624,7 @@ def pagar_link(request, order_id):
         raise Http404("El enlace de pago solicitado no existe.")
 
     target_url = link_obj.payzen_token_url or link_obj.link
-    if not target_url:
+    if not target_url or not str(target_url).startswith(('https://', 'http://')):
         raise Http404("El enlace de pago no tiene una URL de destino válida.")
 
     card_code = link_obj.payzen_card_code
@@ -934,7 +957,10 @@ def poll_mensajes(request):
 
     from .models import MensajeInterno
 
-    ultimo_id = int(request.GET.get('ultimo_id', 0))
+    try:
+        ultimo_id = int(request.GET.get('ultimo_id', 0))
+    except (ValueError, TypeError):
+        ultimo_id = 0
 
     nuevos = MensajeInterno.objects.filter(
         cliente=cliente,
@@ -1067,6 +1093,14 @@ def finalizar_chat_cliente(request):
 
         except Exception as e:
             logger.error(f"Error enviando resumen con PDF: {e}")
+
+    threading.Thread(target=enviar_resumenes, daemon=True).start()
+
+    return JsonResponse({
+        'ok': True,
+        'mensaje': 'Resumen enviado por email.',
+        'fecha_cierre': fecha_cierre,
+    })
 
 def ping_mensajes(request):
     user_id = request.session.get('user_id')

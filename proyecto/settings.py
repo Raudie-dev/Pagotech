@@ -24,13 +24,18 @@ environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
+ENVIRONMENT = env('ENVIRONMENT', default='DEV').upper()
+IS_PROD = ENVIRONMENT == 'PROD'
+
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = env('SECRET_KEY', default='clave-secreta-de-emergencia')
-
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = env.bool('DEBUG', default=True)
-
-ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['*'])
+if IS_PROD:
+    SECRET_KEY = env('SECRET_KEY')
+    DEBUG = env.bool('DEBUG', default=False)
+    ALLOWED_HOSTS = env.list('ALLOWED_HOSTS')
+else:
+    SECRET_KEY = env('SECRET_KEY', default='dev-only-insecure-secret-key-change-in-prod')
+    DEBUG = env.bool('DEBUG', default=True)
+    ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['localhost', '127.0.0.1'])
 
 # Application definition
 
@@ -81,9 +86,7 @@ WSGI_APPLICATION = 'proyecto.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-ENVIRONMENT = env('ENVIRONMENT', default='DEV')
-
-if ENVIRONMENT == 'PROD':
+if IS_PROD:
     # Datos de producción (MySQL)
     DATABASES = {
         'default': {
@@ -159,14 +162,26 @@ STATICFILES_DIRS = [
     BASE_DIR / "assets",  # Carpeta estática existente
 ]
 
-# STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+STORAGES = {
+    'default': {
+        'BACKEND': 'django.core.files.storage.FileSystemStorage',
+    },
+    'staticfiles': {
+        'BACKEND': 'whitenoise.storage.CompressedStaticFilesStorage',
+    },
+}
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-CSRF_TRUSTED_ORIGINS = ['https://demos.raudie.net', 'https://pacify-drizzle-passerby.ngrok-free.dev']
+CSRF_TRUSTED_ORIGINS = env.list('CSRF_TRUSTED_ORIGINS', default=[])
+SITE_URL = env('SITE_URL', default='')
+
+LOG_DIR = BASE_DIR / 'logs'
+os.makedirs(LOG_DIR, exist_ok=True)
+LOG_LEVEL = 'INFO' if IS_PROD else 'DEBUG'
 
 LOGGING = {
     'version': 1,
@@ -185,7 +200,7 @@ LOGGING = {
         },
         'file': {
             'class': 'logging.FileHandler',
-            'filename': 'logs/pagotech.log',  # Carpeta logs/ en la raíz del proyecto
+            'filename': str(LOG_DIR / 'pagotech.log'),
             'formatter': 'verbose',
             'encoding': 'utf-8',
         },
@@ -193,12 +208,12 @@ LOGGING = {
     'loggers': {
         'app1': {
             'handlers': ['console', 'file'],
-            'level': 'DEBUG',
+            'level': LOG_LEVEL,
             'propagate': False,
         },
         'app2': {
             'handlers': ['console', 'file'],
-            'level': 'DEBUG',
+            'level': LOG_LEVEL,
             'propagate': False,
         },
         'django.request': {
@@ -208,6 +223,22 @@ LOGGING = {
         },
     },
 }
+
+# Seguridad de cookies y cabeceras HTTP
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SAMESITE = 'Lax'
+CSRF_COOKIE_SAMESITE = 'Lax'
+SECURE_CONTENT_TYPE_NOSNIFF = True
+X_FRAME_OPTIONS = 'DENY'
+
+if IS_PROD:
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    SECURE_SSL_REDIRECT = env.bool('SECURE_SSL_REDIRECT', default=True)
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_HSTS_SECONDS = env.int('SECURE_HSTS_SECONDS', default=31536000)
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
 
 # Tiempo máximo de sesión en segundos
 SESSION_COOKIE_AGE = 60 * 60 * 2  # 2 horas (ajustá el valor que quieras)
@@ -220,18 +251,15 @@ SESSION_SAVE_EVERY_REQUEST = True
 
 
 # Configuración de correo
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'pagotechnotificaciones@gmail.com'
-EMAIL_HOST_PASSWORD = 'izrjwckymmjeoclj'
+EMAIL_BACKEND = env('EMAIL_BACKEND', default='django.core.mail.backends.smtp.EmailBackend')
+EMAIL_HOST = env('EMAIL_HOST', default='smtp.gmail.com')
+EMAIL_PORT = env.int('EMAIL_PORT', default=587)
+EMAIL_USE_TLS = env.bool('EMAIL_USE_TLS', default=True)
+EMAIL_HOST_USER = env('EMAIL_HOST_USER', default='')
+EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD', default='')
 
 # Definir el receptor de correos para administradores
-EMAIL_RECEPTORES = [
-    'pagotechnotificaciones@gmail.com',
-    
-]
+EMAIL_RECEPTORES = env.list('EMAIL_RECEPTORES', default=[])
 
 WHATSAPP_NUMBER = os.getenv('WHATSAPP_NUMBER', '5491100000000')
 WHATSAPP_MESSAGE = os.getenv('WHATSAPP_MESSAGE', 'Hola, necesito ayuda con Pago Tech.')
