@@ -22,4 +22,5 @@ urlpatterns = [
     path('mensajes/ping/', views.ping_mensajes, name='ping_mensajes'),
     path('operadores/', views.gestion_operadores, name='operadores'),
     path('set-username/', views.set_username, name='set_username'),
+    path('pagar/<str:order_id>/', views.pagar_link, name='pagar_link'),
 ]

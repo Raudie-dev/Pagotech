@@ -581,6 +581,7 @@ def create_link(cliente_pk, monto_contado, cuotas=1, tipo_tarjeta='credito', des
         )
     }
 
+    card_code = None
     if tipo_tarjeta == 'credito':
         payload["transactionOptions"] = {
             "cardOptions": {
@@ -593,18 +594,25 @@ def create_link(cliente_pk, monto_contado, cuotas=1, tipo_tarjeta='credito', des
         slug_tc = tipo_tarjeta.replace('custom_', '')
         try:
             tc_obj = TarjetaCustom.objects.get(slug=slug_tc, activa=True)
-            if tc_obj.payzen_code:
-                payload["paymentCards"] = tc_obj.payzen_code
-                # Si acepta cuotas, agregar installmentNumber
-                if tc_obj.acepta_cuotas and cuotas > 1:
-                    payload["transactionOptions"] = {
-                        "cardOptions": {
-                            "installmentNumber": int(cuotas),
-                            "installmentOptionsEditability": "FORBIDDEN"
-                        }
+            code_to_use = tc_obj.payzen_code.strip().upper() if tc_obj.payzen_code else slug_tc.upper()
+            if code_to_use:
+                card_code = code_to_use
+                payload["paymentCards"] = card_code
+
+            # Si acepta cuotas, agregar installmentNumber
+            if tc_obj.acepta_cuotas and cuotas > 1:
+                payload["transactionOptions"] = {
+                    "cardOptions": {
+                        "installmentNumber": int(cuotas),
+                        "installmentOptionsEditability": "FORBIDDEN"
                     }
+                }
         except TarjetaCustom.DoesNotExist:
-            pass
+            card_code = slug_tc.upper()
+            payload["paymentCards"] = card_code
+    elif tipo_tarjeta.lower() in ['naranja', 'visa', 'mastercard', 'cabal', 'tuya', 'amex', 'argencard', 'diners', 'maestro']:
+        card_code = tipo_tarjeta.upper()
+        payload["paymentCards"] = card_code
 
     logger.debug(
         f"create_link — payload PayZen: order_id={order_id} "
@@ -623,6 +631,20 @@ def create_link(cliente_pk, monto_contado, cuotas=1, tipo_tarjeta='credito', des
 
         if res_data.get("status") == "SUCCESS":
             payment_url = res_data["answer"]["paymentURL"]
+            token_url = payment_url
+            if card_code:
+                try:
+                    r_init = requests.get(payment_url, allow_redirects=False, timeout=5)
+                    loc = r_init.headers.get("Location")
+                    if loc:
+                        token_url = loc.replace("#paymentChoice", "")
+                except Exception as ex_loc:
+                    logger.warning(f"create_link — no se pudo resolver Location de PayZen: {ex_loc}")
+
+                sep = '&' if '?' in token_url else '?'
+                if 'vads_payment_cards=' not in token_url:
+                    token_url = f"{token_url}{sep}vads_payment_cards={card_code}"
+
             link_obj = LinkPago.objects.create(
                 cliente=cliente,
                 order_id=order_id,
@@ -634,6 +656,8 @@ def create_link(cliente_pk, monto_contado, cuotas=1, tipo_tarjeta='credito', des
                 commission_amount=commission_amount,
                 receiver_amount=receiver_amount,  # lo que recibe el vendedor
                 link=payment_url,
+                payzen_card_code=card_code,
+                payzen_token_url=token_url,
                 desglose_arancel=d_ar,
                 desglose_comision=d_com,
                 desglose_tasa=d_tasa,

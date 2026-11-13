@@ -369,7 +369,11 @@ def creacion_link(request):
                     f"monto_bruto={link_obj.monto} neto={link_obj.receiver_amount} "
                     f"comision={link_obj.commission_amount}"
                 )
-                request.session['link_recien_creado'] = {'url': link_obj.link}
+                if link_obj.order_id:
+                    final_url = request.build_absolute_uri(reverse('pagar_link', kwargs={'order_id': link_obj.order_id}))
+                else:
+                    final_url = link_obj.link
+                request.session['link_recien_creado'] = {'url': final_url, 'monto_total': float(link_obj.monto)}
                 messages.success(request, "¡Enlace de pago generado con éxito!")
                 return redirect('crear_link')
             else:
@@ -575,6 +579,42 @@ def download_ticket(request, link_id):
     response = HttpResponse(content, content_type='text/plain; charset=utf-8')
     response['Content-Disposition'] = f'attachment; filename="{filename}"'
     return response
+
+
+def pagar_link(request, order_id):
+    """
+    Página de aterrizaje inteligente para redirigir al cliente de forma transparente
+    directamente al formulario de captura de datos de la tarjeta en PayZen.
+    """
+    logger.debug(f"pagar_link — accediendo con order_id={order_id}")
+    link_obj = None
+    try:
+        link_obj = LinkPago.objects.get(order_id=order_id)
+    except LinkPago.DoesNotExist:
+        if str(order_id).isdigit():
+            try:
+                link_obj = LinkPago.objects.get(id=int(order_id))
+            except LinkPago.DoesNotExist:
+                pass
+
+    if not link_obj:
+        raise Http404("El enlace de pago solicitado no existe.")
+
+    target_url = link_obj.payzen_token_url or link_obj.link
+    if not target_url:
+        raise Http404("El enlace de pago no tiene una URL de destino válida.")
+
+    card_code = link_obj.payzen_card_code
+    if card_code and 'vads_payment_cards=' not in target_url:
+        sep = '&' if '?' in target_url else '?'
+        target_url = f"{target_url}{sep}vads_payment_cards={card_code}"
+
+    return render(request, 'autoredirect_payzen.html', {
+        'target_url': target_url,
+        'card_code': card_code,
+        'monto': link_obj.monto,
+        'descripcion': link_obj.descripcion
+    })
 
 
 def gestion_perfil(request):

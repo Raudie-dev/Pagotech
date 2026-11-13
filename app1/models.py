@@ -83,6 +83,8 @@ class LinkPago(models.Model):
     auth_code = models.CharField(max_length=50, blank=True, null=True) # Número de Autorización
     lote_number = models.CharField(max_length=50, blank=True, null=True) # Cierre de Lote
     nro_transaccion = models.CharField(max_length=50, blank=True, null=True) # ID de Transacción PayZen
+    payzen_card_code = models.CharField(max_length=50, blank=True, null=True, help_text="Marca de tarjeta para auto-redirección")
+    payzen_token_url = models.CharField(max_length=500, blank=True, null=True, help_text="URL directa del token de PayZen")
     
     # comisión y montos calculados
     commission_percent = models.DecimalField(max_digits=5, decimal_places=2, default=Decimal('0.00'))

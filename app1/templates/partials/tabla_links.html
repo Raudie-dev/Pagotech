@@ -74,8 +74,14 @@
                     </td>
                     <td class="text-end pe-4">
                         <div class="action-buttons">
-                            <button class="btn-action btn-copy" data-link="{{ l.link }}"><i class="fas fa-copy"></i></button>
-                            <a href="{{ l.link }}" target="_blank" class="btn-action btn-external"><i class="fas fa-external-link-alt"></i></a>
+                            {% if l.payzen_card_code and l.order_id %}
+                                {% url 'pagar_link' l.order_id as pagar_url %}
+                                <button class="btn-action btn-copy" data-link="{{ request.scheme }}://{{ request.get_host }}{{ pagar_url }}"><i class="fas fa-copy"></i></button>
+                                <a href="{% url 'pagar_link' l.order_id %}" target="_blank" class="btn-action btn-external"><i class="fas fa-external-link-alt"></i></a>
+                            {% else %}
+                                <button class="btn-action btn-copy" data-link="{{ l.link }}"><i class="fas fa-copy"></i></button>
+                                <a href="{{ l.link }}" target="_blank" class="btn-action btn-external"><i class="fas fa-external-link-alt"></i></a>
+                            {% endif %}
                         </div>
                     </td>
 
